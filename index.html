@@ -519,11 +519,39 @@ function mostrarToast(mensagem, tipo = 'success') {
   }, 3500);
 }
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatarData(dataIso) {
+  if (!dataIso) return '';
+  const partes = dataIso.split('-');
+  if (partes.length !== 3) return dataIso;
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+function hojeISO() {
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
 const LOGIN="ALNS",SENHA="ALNS";
 const K_BACKUP="alns_ultimo_backup";
 
 let produtos = [];
 let historico = [];
+
+// Variáveis de Controle e Estado
+let html5QrCodeCheck = null;
+let leitorCheckIniciado = false;
+let produtoEditandoId = null;
+let produtoConferenciaId = null;
+let produtoAtualId = null;
+let fotoProdutoBase64 = null;
+let abrirConferenciaDepoisDeSalvar = false;
 
 // Função para carregar os dados diretamente do Supabase na nuvem
 async function carregarDadosDaNuvem() {
@@ -568,21 +596,22 @@ function registrarAcao(acao,produto,detalhes=""){
 }
 
 async function entrar(){
- const u=loginUsuario.value.trim(),s=loginSenha.value;
+ const u=document.getElementById("loginUsuario").value.trim();
+ const s=document.getElementById("loginSenha").value;
  if(u===LOGIN&&s===SENHA){
   sessionStorage.setItem("alns_logado_v2","sim");
   await carregarDadosDaNuvem();
   mostrarApp();
   mostrarToast("Login realizado com sucesso!","success");
  }else{
-  loginErro.textContent="Login ou senha incorretos.";
+  document.getElementById("loginErro").textContent="Login ou senha incorretos.";
   mostrarToast("Login ou senha incorretos.","error");
  }
 }
 
 function mostrarApp(){
- loginPage.classList.add("hidden");
- app.classList.remove("hidden");
+ document.getElementById("loginPage").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
  atualizarTotais();
 }
 
@@ -889,33 +918,33 @@ function calcularValidadeAutomatica(){
 }
 
 function abrirModalProdutos(){
- modalProdutosLista.classList.remove("hidden");
- busca.value="";
- filtroSetor.value="";
- filtroStatus.value="";
- filtroData.value="";
+ document.getElementById("modalProdutosLista").classList.remove("hidden");
+ document.getElementById("busca").value="";
+ document.getElementById("filtroSetor").value="";
+ document.getElementById("filtroStatus").value="";
+ document.getElementById("filtroData").value="";
  renderizarProdutos();
 }
 
 function abrirModalProdutosComFiltroStatus(statusFiltro){
- modalProdutosLista.classList.remove("hidden");
- busca.value="";
- filtroSetor.value="";
- filtroStatus.value = statusFiltro;
- filtroData.value="";
+ document.getElementById("modalProdutosLista").classList.remove("hidden");
+ document.getElementById("busca").value="";
+ document.getElementById("filtroSetor").value="";
+ document.getElementById("filtroStatus").value = statusFiltro;
+ document.getElementById("filtroData").value="";
  renderizarProdutos();
 }
 
 function fecharModalProdutos(){
- modalProdutosLista.classList.add("hidden");
+ document.getElementById("modalProdutosLista").classList.add("hidden");
  atualizarTotais();
 }
 
 function renderizarProdutos(){
- const termo=busca.value.toLowerCase().trim();
- const setor=filtroSetor.value;
- const statusFiltro=filtroStatus.value;
- const dataFiltro=filtroData.value;
+ const termo=document.getElementById("busca").value.toLowerCase().trim();
+ const setor=document.getElementById("filtroSetor").value;
+ const statusFiltro=document.getElementById("filtroStatus").value;
+ const dataFiltro=document.getElementById("filtroData").value;
 
  const lista=produtos.filter(p=>{
   const texto=[p.codigo,p.nome,p.setor,...(p.conferencias||[]).flatMap(c=>[c.observacao||"",...(c.datas||[])])].join(" ").toLowerCase();
@@ -933,7 +962,7 @@ function renderizarProdutos(){
   return(!termo||texto.includes(termo))&&(!setor||p.setor===setor)&&bateData&&bateStatus;
  });
 
- productGrid.innerHTML=lista.map(p=>{
+ document.getElementById("productGrid").innerHTML=lista.map(p=>{
   const ultima=produtoUltimaConferencia(p),datas=todasDatasProduto(p).slice(0,5);
   
   let todasLancadasNoSistema = true;
@@ -972,12 +1001,12 @@ function renderizarProdutos(){
    <div class="product-footer"><span>${(p.conferencias||[]).length} conf.</span><span>Última: ${ultima?formatarData(ultima.data):"—"}</span></div>
   </article>`
  }).join("");
- vazio.classList.toggle("hidden",lista.length>0);
+ document.getElementById("vazio").classList.toggle("hidden",lista.length>0);
  atualizarTotais();
 }
 
 function atualizarTotais(){
- totalProdutos.textContent=produtos.length;
+ document.getElementById("totalProdutos").textContent=produtos.length;
  
  let countVencidos = 0;
  let countVencendo = 0;
@@ -1003,46 +1032,46 @@ function atualizarTotais(){
 
 function atualizarBackupUI(){
  const ultima=localStorage.getItem(K_BACKUP);
- if(!ultima){backupAlert.classList.remove("hidden");return}
+ if(!ultima){document.getElementById("backupAlert").classList.remove("hidden");return}
  const dias=(Date.now()-new Date(ultima).getTime())/86400000;
- backupAlert.classList.toggle("hidden",dias<=7)
+ document.getElementById("backupAlert").classList.toggle("hidden",dias<=7)
 }
 
 function abrirProdutoForm(id=null,opcoes={}){
  produtoEditandoId=id;
  abrirConferenciaDepoisDeSalvar=!!opcoes.abrirConferenciaDepois;
  fotoProdutoBase64=null;
- produtoFormTitulo.textContent=id?"Editar produto":"Novo produto";
+ document.getElementById("produtoFormTitulo").textContent=id?"Editar produto":"Novo produto";
 
- produtoCodigo.value="";
- produtoNome.value="";
- produtoSetor.value="";
- produtoFoto.value="";
- produtoPreview.classList.add("hidden");
- removerFotoBtn.classList.add("hidden");
- produtoListaDatas.innerHTML="";
- produtoConfData.value=hojeISO();
- produtoConfObservacao.value="";
+ document.getElementById("produtoCodigo").value="";
+ document.getElementById("produtoNome").value="";
+ document.getElementById("produtoSetor").value="";
+ document.getElementById("produtoFoto").value="";
+ document.getElementById("produtoPreview").classList.add("hidden");
+ document.getElementById("removerFotoBtn").classList.add("hidden");
+ document.getElementById("produtoListaDatas").innerHTML="";
+ document.getElementById("produtoConfData").value=hojeISO();
+ document.getElementById("produtoConfObservacao").value="";
 
  if(id){
   const p=produtos.find(x=>x.id===id);
   if(!p)return;
 
-  produtoCodigo.value=p.codigo;
-  produtoNome.value=p.nome;
-  produtoSetor.value=p.setor;
+  document.getElementById("produtoCodigo").value=p.codigo;
+  document.getElementById("produtoNome").value=p.nome;
+  document.getElementById("produtoSetor").value=p.setor;
   fotoProdutoBase64=p.foto||null;
 
   if(p.foto){
-   produtoPreview.src=p.foto;
-   produtoPreview.classList.remove("hidden");
-   removerFotoBtn.classList.remove("hidden");
+   document.getElementById("produtoPreview").src=p.foto;
+   document.getElementById("produtoPreview").classList.remove("hidden");
+   document.getElementById("removerFotoBtn").classList.remove("hidden");
   }
 
   const ultima=produtoUltimaConferencia(p);
   if(ultima){
-   produtoConfData.value=ultima.data||hojeISO();
-   produtoConfObservacao.value=ultima.observacao||"";
+   document.getElementById("produtoConfData").value=ultima.data||hojeISO();
+   document.getElementById("produtoConfObservacao").value=ultima.observacao||"";
    const datasCarregar = (ultima.datas && ultima.datas.length > 0) ? ultima.datas : [""];
    datasCarregar.forEach(d=>adicionarCampoDataProduto(d));
   }else{
@@ -1052,7 +1081,7 @@ function abrirProdutoForm(id=null,opcoes={}){
   adicionarCampoDataProduto();
  }
 
- modalProduto.classList.remove("hidden")
+ document.getElementById("modalProduto").classList.remove("hidden")
 }
 function adicionarCampoDataProduto(valor=""){
  const linha=document.createElement("div");
@@ -1080,22 +1109,35 @@ function adicionarCampoDataProduto(valor=""){
  };
 
  linha.append(input,mais,menos);
- produtoListaDatas.appendChild(linha);
+ document.getElementById("produtoListaDatas").appendChild(linha);
 }
 
-function fecharProdutoForm(){modalProduto.classList.add("hidden")}
+function fecharProdutoForm(){document.getElementById("modalProduto").classList.add("hidden")}
 async function carregarFotoProduto(){
- const arq=produtoFoto.files[0];if(!arq)return;
- try{fotoProdutoBase64=await comprimirImagem(arq,1024,1024,.7);produtoPreview.src=fotoProdutoBase64;produtoPreview.classList.remove("hidden");removerFotoBtn.classList.remove("hidden");mostrarToast("Foto carregada com sucesso!","success");}
- catch{mostrarToast("Não foi possível processar a imagem.","error");}
+ const arq=document.getElementById("produtoFoto").files[0];if(!arq)return;
+ try{
+  fotoProdutoBase64=await comprimirImagem(arq,1024,1024,.7);
+  document.getElementById("produtoPreview").src=fotoProdutoBase64;
+  document.getElementById("produtoPreview").classList.remove("hidden");
+  document.getElementById("removerFotoBtn").classList.remove("hidden");
+  mostrarToast("Foto carregada com sucesso!","success");
+ }catch{
+  mostrarToast("Não foi possível processar a imagem.","error");
+ }
 }
-function removerFotoProduto(){fotoProdutoBase64=null;produtoFoto.value="";produtoPreview.classList.add("hidden");removerFotoBtn.classList.add("hidden");mostrarToast("Foto removida.","warning");}
+function removerFotoProduto(){
+ fotoProdutoBase64=null;
+ document.getElementById("produtoFoto").value="";
+ document.getElementById("produtoPreview").classList.add("hidden");
+ document.getElementById("removerFotoBtn").classList.add("hidden");
+ mostrarToast("Foto removida.","warning");
+}
 function comprimirImagem(arquivo,maxW,maxH,q){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=reject;r.onload=e=>{const img=new Image();img.onerror=reject;img.onload=()=>{let w=img.width,h=img.height,s=Math.min(1,maxW/w,maxH/h);w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(img,0,0,w,h);resolve(c.toDataURL("image/jpeg",q))};img.src=e.target.result};r.readAsDataURL(arquivo)})}
 
 async function salvarProduto(){
- const codigo=produtoCodigo.value.trim();
- const nome=produtoNome.value.trim();
- const setor=produtoSetor.value;
+ const codigo=document.getElementById("produtoCodigo").value.trim();
+ const nome=document.getElementById("produtoNome").value.trim();
+ const setor=document.getElementById("produtoSetor").value;
 
  if(!codigo||!nome||!setor){
   mostrarToast("Preencha código, produto e setor.","warning");
@@ -1142,9 +1184,9 @@ async function salvarProduto(){
   });
 
   if(ultima){
-   ultima.data=produtoConfData.value||hojeISO();
+   ultima.data=document.getElementById("produtoConfData").value||hojeISO();
    ultima.datas=novasDatas;
-   ultima.observacao=produtoConfObservacao.value.trim();
+   ultima.observacao=document.getElementById("produtoConfObservacao").value.trim();
    ultima.mapStatusDatas = novoMapStatus;
 
    if(
@@ -1158,9 +1200,9 @@ async function salvarProduto(){
    produtos[i].conferencias=produtos[i].conferencias||[];
    produtos[i].conferencias.unshift({
     id:String(Date.now()),
-    data:produtoConfData.value||hojeISO(),
+    data:document.getElementById("produtoConfData").value||hojeISO(),
     datas:novasDatas,
-    observacao:produtoConfObservacao.value.trim(),
+    observacao:document.getElementById("produtoConfObservacao").value.trim(),
     mapStatusDatas: novoMapStatus,
     criadoEm:new Date().toISOString()
    });
@@ -1181,9 +1223,9 @@ async function salvarProduto(){
    foto:fotoProdutoBase64,
    conferencias:[{
     id:String(Date.now()),
-    data:produtoConfData.value||hojeISO(),
+    data:document.getElementById("produtoConfData").value||hojeISO(),
     datas:novasDatas,
-    observacao:produtoConfObservacao.value.trim(),
+    observacao:document.getElementById("produtoConfObservacao").value.trim(),
     mapStatusDatas: novoMapStatus,
     criadoEm:new Date().toISOString()
    }],
@@ -1215,7 +1257,7 @@ function abrirDetalhe(id){
  if(!p)return;
  const confs=[...(p.conferencias||[])].sort((a,b)=>b.data.localeCompare(a.data));
  
- detalheConteudo.innerHTML=`
+ document.getElementById("detalheConteudo").innerHTML=`
   <div class="detail-head">
    ${p.foto?`<img class="detail-photo" src="${p.foto}" alt="">`:`<div class="detail-photo"></div>`}
    <div class="detail-info">
@@ -1258,7 +1300,7 @@ function abrirDetalhe(id){
    </div>`;
   }).join(""):`<div class="notice notice-info">Ainda não há validades registradas.</div>`}
   <button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="apagarProduto('${p.id}')">Apagar produto</button>`;
- modalDetalhe.classList.remove("hidden")
+ document.getElementById("modalDetalhe").classList.remove("hidden")
 }
 
 async function alternarStatusSistemaData(produtoId, confId, dataVal, statusCheckbox){
@@ -1276,7 +1318,7 @@ async function alternarStatusSistemaData(produtoId, confId, dataVal, statusCheck
  mostrarToast("Status atualizado!","success");
 }
 
-function fecharDetalhe(){modalDetalhe.classList.add("hidden")}
+function fecharDetalhe(){document.getElementById("modalDetalhe").classList.add("hidden")}
 function editarProdutoAtual(){fecharDetalhe();abrirProdutoForm(produtoAtualId)}
 function abrirNovaConferenciaAtual(){fecharDetalhe();abrirConferencia(produtoAtualId)}
 
@@ -1284,9 +1326,9 @@ function abrirConferencia(id){
  produtoConferenciaId=id;
  const p=produtos.find(x=>x.id===id);
  if(!p)return;
- conferenciaProdutoInfo.textContent=`${p.nome} • código ${p.codigo}`;
- confData.value=hojeISO();
- confObservacao.value="";
+ document.getElementById("conferenciaProdutoInfo").textContent=`${p.nome} • código ${p.codigo}`;
+ document.getElementById("confData").value=hojeISO();
+ document.getElementById("confObservacao").value="";
  
  document.getElementById("confFezContagem").checked=false;
  document.getElementById("blocoCamposContagemConf").classList.add("hidden");
@@ -1296,11 +1338,11 @@ function abrirConferencia(id){
  document.getElementById("confTotalFinal").textContent="0";
  document.getElementById("confNoSistemaEmpresa").checked=false;
 
- listaDatas.innerHTML="";
+ document.getElementById("listaDatas").innerHTML="";
  adicionarCampoData();
- modalConferencia.classList.remove("hidden")
+ document.getElementById("modalConferencia").classList.remove("hidden")
 }
-function fecharConferencia(){modalConferencia.classList.add("hidden")}
+function fecharConferencia(){document.getElementById("modalConferencia").classList.add("hidden")}
 
 function alternarCamposContagemConf(){
  const fez = document.getElementById("confFezContagem").checked;
@@ -1329,7 +1371,7 @@ function adicionarCampoData(valor=""){
  const input=document.createElement("input");input.type="date";input.className="data-validade";input.value=valor;
  const mais=document.createElement("button");mais.type="button";mais.className="add-date";mais.textContent="+";mais.onclick=()=>adicionarCampoData();
  const menos=document.createElement("button");menos.type="button";menos.className="remove-date";menos.textContent="−";menos.onclick=()=>{const t=document.querySelectorAll(".data-validade").length;if(t>1)linha.remove();else input.value=""};
- linha.append(input,mais,menos);listaDatas.appendChild(linha)
+ linha.append(input,mais,menos);document.getElementById("listaDatas").appendChild(linha)
 }
 
 async function salvarConferencia(){
@@ -1343,7 +1385,7 @@ async function salvarConferencia(){
  const qD=parseInt(document.getElementById("confQtdDeposito").value)||0;
  const total=qL+qG+qD;
  const noSistemaEmpresa = document.getElementById("confNoSistemaEmpresa").checked;
- const obsUsuario = confObservacao.value.trim();
+ const obsUsuario = document.getElementById("confObservacao").value.trim();
 
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
  let obsFinal="";
@@ -1358,7 +1400,7 @@ async function salvarConferencia(){
 
  const conf={
   id:String(Date.now()),
-  data:confData.value,
+  data:document.getElementById("confData").value,
   datas,
   observacao:obsFinal,
   noSistemaEmpresa: noSistemaEmpresa,
@@ -1403,10 +1445,10 @@ async function apagarProduto(id){
 }
 
 function abrirHistoricoGeral(){
- listaHistorico.innerHTML=historico.map(h=>`<div class="history-item"><strong>${escapeHtml(h.acao)}</strong> — ${escapeHtml(h.produto)}<br>${h.detalhes?`<span>${escapeHtml(h.detalhes)}</span><br>`:""}<small>${new Date(h.data).toLocaleString("pt-BR")}</small></div>`).join("")||"Nenhum histórico.";
- modalHistorico.classList.remove("hidden")
+ document.getElementById("listaHistorico").innerHTML=historico.map(h=>`<div class="history-item"><strong>${escapeHtml(h.acao)}</strong> — ${escapeHtml(h.produto)}<br>${h.detalhes?`<span>${escapeHtml(h.detalhes)}</span><br>`:""}<small>${new Date(h.data).toLocaleString("pt-BR")}</small></div>`).join("")||"Nenhum histórico.";
+ document.getElementById("modalHistorico").classList.remove("hidden")
 }
-function fecharHistoricoGeral(){modalHistorico.classList.add("hidden")}
+function fecharHistoricoGeral(){document.getElementById("modalHistorico").classList.add("hidden")}
 
 function exportarCSV(){
  const cab=["Código","Produto","Setor","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
@@ -1428,7 +1470,7 @@ function exportarBackup(){
 }
 function baixar(blob,nome){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 
-loginSenha.addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
+document.getElementById("loginSenha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
 
 if(sessionStorage.getItem("alns_logado_v2")==="sim"){
  carregarDadosDaNuvem().then(() => mostrarApp());
