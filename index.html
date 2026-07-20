@@ -116,8 +116,9 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 .conf-card p{margin:6px 0 0;color:#a1a1aa;font-size:13px}
 .history-item{border:1px solid #2f2f35;border-radius:10px;padding:10px;margin-bottom:8px;background:linear-gradient(145deg,#19191d,#121215)}.history-item strong{color:#fff;font-size:13px}.history-item small{color:#a1a1aa;font-size:11px}
 .scan-box{background:#151519;border:1px dashed #44444b;border-radius:12px;padding:12px;text-align:center}
-#reader{background:#151519}#reader video{width:100%!important;border-radius:10px;background:transparent!important}
-#reader__scan_region{background:#151519!important}.small{font-size:11px;color:#a1a1aa}
+#readerGlobal{background:#151519; overflow:hidden; border-radius:10px; min-height: 200px;}
+#readerGlobal video{width:100%!important; border-radius:10px; background:transparent!important; object-fit: cover;}
+.small{font-size:11px;color:#a1a1aa}
 
 .toolbar{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px}
 .toolbar input,.toolbar select{width:100%;min-height:44px;border:1px solid #3a3a40;border-radius:11px;padding:10px 12px;font-size:15px;background:#121214;color:#f5f5f5}
@@ -222,8 +223,8 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
       </div>
       <div class="menu-item" onclick="abrirCalculadora()">
         <div class="menu-item-info">
-          <h4>🧮 Calculadora de Validade por Fabricação</h4>
-          <p>Calcular data de vencimento com base na fabricação e prazo</p>
+          <h4>🧮 Calculadora de Validade e Fabricação</h4>
+          <p>Calcular vencimento ou data de fabricação por prazo (dias, semanas, meses, anos)</p>
         </div>
         <div class="menu-item-action">➔</div>
       </div>
@@ -326,25 +327,35 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
     <h2>Leitor de Código / QR Code</h2>
     <div class="scan-box">
       <div id="readerGlobal"></div>
-      <p id="scannerGlobalStatus" style="font-size:13px; margin:8px 0;">Toque em “Iniciar câmera”.</p>
+      <p id="scannerGlobalStatus" style="font-size:13px; margin:12px 0 8px;">Toque em “Iniciar câmera”.</p>
       <button id="iniciarCameraGlobalBtn" class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="iniciarLeitorGlobal()">📷 Iniciar câmera</button>
     </div>
     <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharScannerGlobal()">Fechar</button></div>
   </div>
 </div>
 
+<!-- Modal Calculadora de Validade / Fabricação -->
 <div id="modalCalculadora" class="modal hidden">
   <div class="modal-card">
-    <h2>🧮 Calculadora de Validade</h2>
+    <h2>🧮 Calculadora de Validade e Fabricação</h2>
     <div class="grid">
-      <div class="field">
-        <label>Data de Fabricação (Ex: 02/24 ou 15/05/2024)</label>
-        <input id="calcFab" placeholder="Ex: 02/24" oninput="calcularValidadeAutomatica()">
+      <div class="field full">
+        <label>O que você deseja calcular?</label>
+        <select id="calcModo" onchange="alternarModoCalculadora()">
+          <option value="vencimento">🗓️ Calcular Data de Vencimento (Tenho a Fabricação)</option>
+          <option value="fabricacao">🏭 Calcular Data de Fabricação (Tenho o Vencimento)</option>
+        </select>
       </div>
+
+      <div class="field">
+        <label id="lblCalcDataInput">Data de Fabricação (Ex: 02/24 ou 15/05/2024)</label>
+        <input id="calcFab" placeholder="Ex: 15/08/2024 ou 08/24" oninput="calcularValidadeAutomatica()">
+      </div>
+
       <div class="field">
         <label>Prazo de Validade</label>
         <div style="display:grid; grid-template-columns: 1fr 110px; gap:6px;">
-          <input id="calcPrazoQtd" type="number" min="1" placeholder="Ex: 30" oninput="calcularValidadeAutomatica()">
+          <input id="calcPrazoQtd" type="number" min="1" placeholder="Ex: 2 ou 30" oninput="calcularValidadeAutomatica()">
           <select id="calcPrazoUnidade" onchange="calcularValidadeAutomatica()">
             <option value="dias">Dias</option>
             <option value="semanas">Semanas</option>
@@ -354,7 +365,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         </div>
       </div>
     </div>
-    <div id="calcResultado" class="notice notice-info hidden" style="margin-top:10px; font-weight:700;"></div>
+    <div id="calcResultado" class="notice notice-info hidden" style="margin-top:12px; font-weight:700; font-size:14px;"></div>
     <div class="modal-actions" style="margin-top:16px">
       <button class="btn btn-secondary" onclick="fecharCalculadora()">Fechar</button>
     </div>
@@ -559,7 +570,7 @@ const K_BACKUP="alns_ultimo_backup";
 let produtos = [];
 let historico = [];
 
-// Variáveis de Controle e Estado
+// Variáveis de Controle e Estado Scanner
 let html5QrCodeGlobal = null;
 let leitorGlobalIniciado = false;
 let destinoEscaneamento = 'check'; // 'check' ou 'produto'
@@ -664,7 +675,7 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
-/* Leitor Scanner Global para QR Code e Código de Barras */
+/* Leitor Scanner Otimizado para Códigos de Barras e QR Code */
 function abrirScannerGlobal(destino = 'check') {
   destinoEscaneamento = destino;
   document.getElementById("modalScannerGlobal").classList.remove("hidden");
@@ -676,8 +687,11 @@ function fecharScannerGlobal() {
       leitorGlobalIniciado = false;
       document.getElementById("modalScannerGlobal").classList.add("hidden");
       document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
+      document.getElementById("scannerGlobalStatus").textContent = "Toque em “Iniciar câmera”.";
     }).catch(() => {
+      leitorGlobalIniciado = false;
       document.getElementById("modalScannerGlobal").classList.add("hidden");
+      document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
     });
   } else {
     document.getElementById("modalScannerGlobal").classList.add("hidden");
@@ -686,12 +700,42 @@ function fecharScannerGlobal() {
 
 function iniciarLeitorGlobal() {
   const statusEl = document.getElementById("scannerGlobalStatus");
+  statusEl.textContent = "Iniciando câmera e leitor de código de barras...";
+  
   if (!html5QrCodeGlobal) {
-    html5QrCodeGlobal = new Html5Qrcode("readerGlobal");
+    const formatosSuportados = window.Html5QrcodeSupportedFormats ? [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.QR_CODE
+    ] : undefined;
+
+    html5QrCodeGlobal = new Html5Qrcode("readerGlobal", {
+      formatsToSupport: formatosSuportados,
+      verbose: false
+    });
   }
+
+  const configLeitura = {
+    fps: 15,
+    qrbox: (w, h) => {
+      // Caixa retangular larga para fácil leitura de código de barras horizontal
+      return {
+        width: Math.floor(Math.min(w * 0.9, 320)),
+        height: Math.floor(Math.min(h * 0.5, 180))
+      };
+    },
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true
+    }
+  };
+
   html5QrCodeGlobal.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 150 } },
+    configLeitura,
     decodedText => {
       fecharScannerGlobal();
       if (destinoEscaneamento === 'check') {
@@ -702,13 +746,16 @@ function iniciarLeitorGlobal() {
       }
       mostrarToast("Código/QR lido com sucesso!", "success");
     },
-    error => {}
+    error => {
+      // Ignora falhas temporárias de foco por frame
+    }
   ).then(() => {
     leitorGlobalIniciado = true;
     statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
     document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
   }).catch(err => {
-    statusEl.textContent = "Erro ao iniciar a câmera: " + err;
+    console.error("Erro câmera:", err);
+    statusEl.textContent = "Erro ao acessar câmera: " + (err.message || err);
   });
 }
 
@@ -857,38 +904,54 @@ async function salvarCheckEstoque(){
  abrirDetalhe(p.id);
 }
 
+/* Calculadora Flexível de Validade e Fabricação */
 function abrirCalculadora(){
+ document.getElementById("calcModo").value="vencimento";
+ alternarModoCalculadora();
  document.getElementById("calcFab").value="";
  document.getElementById("calcPrazoQtd").value="";
  document.getElementById("calcPrazoUnidade").value="meses";
  document.getElementById("calcResultado").classList.add("hidden");
  document.getElementById("modalCalculadora").classList.remove("hidden");
 }
+
 function fecharCalculadora(){
  document.getElementById("modalCalculadora").classList.add("hidden");
 }
 
+function alternarModoCalculadora(){
+ const modo = document.getElementById("calcModo").value;
+ const lblDataInput = document.getElementById("lblCalcDataInput");
+ if (modo === "vencimento") {
+  lblDataInput.textContent = "Data de Fabricação (Ex: 15/05/2024 ou 02/24)";
+ } else {
+  lblDataInput.textContent = "Data de Vencimento (Ex: 30/08/2026 ou 08/26)";
+ }
+ calcularValidadeAutomatica();
+}
+
 function calcularValidadeAutomatica(){
- const fabStr=document.getElementById("calcFab").value.trim();
+ const modo=document.getElementById("calcModo").value;
+ const inputDataStr=document.getElementById("calcFab").value.trim();
  const qtdStr=document.getElementById("calcPrazoQtd").value.trim();
  const unidade=document.getElementById("calcPrazoUnidade").value;
  const resBox=document.getElementById("calcResultado");
 
- if(!fabStr || !qtdStr){
+ if(!inputDataStr || !qtdStr){
   resBox.classList.add("hidden");
   return;
  }
 
  const valorQtd=parseInt(qtdStr,10);
  if(isNaN(valorQtd) || valorQtd<=0){
-  resBox.textContent="Insira um prazo válido.";
+  resBox.textContent="Insira um prazo válido maior que zero.";
   resBox.className="notice notice-warning";
   resBox.classList.remove("hidden");
   return;
  }
 
  let ano, mes, dia=null;
- const partes=fabStr.split(/[\/\-\.]/).map(p=>p.trim());
+ const partes=inputDataStr.split(/[\/\-\.]/).map(p=>p.trim());
 
  if(partes.length===2){
   let m=parseInt(partes[0],10);
@@ -912,43 +975,67 @@ function calcularValidadeAutomatica(){
  }
 
  if(!ano || !mes){
-  resBox.textContent="Formato inválido. Use MM/AA ou DD/MM/AAAA.";
+  resBox.textContent="Formato de data inválido. Use MM/AA ou DD/MM/AAAA.";
   resBox.className="notice notice-warning";
   resBox.classList.remove("hidden");
   return;
  }
 
- let dataVenc = new Date(ano, mes - 1, dia || 1);
+ let dataResultado = new Date(ano, mes - 1, dia || 1);
 
- if(unidade === 'dias'){
-  dataVenc.setDate(dataVenc.getDate() + valorQtd);
- }else if(unidade === 'semanas'){
-  dataVenc.setDate(dataVenc.getDate() + (valorQtd * 7));
- }else if(unidade === 'meses'){
-  dataVenc.setMonth(dataVenc.getMonth() + valorQtd);
- }else if(unidade === 'anos'){
-  dataVenc.setFullYear(dataVenc.getFullYear() + valorQtd);
+ if (modo === "vencimento") {
+  // Somar prazo para obter Data de Vencimento
+  if(unidade === 'dias'){
+   dataResultado.setDate(dataResultado.getDate() + valorQtd);
+  }else if(unidade === 'semanas'){
+   dataResultado.setDate(dataResultado.getDate() + (valorQtd * 7));
+  }else if(unidade === 'meses'){
+   dataResultado.setMonth(dataResultado.getMonth() + valorQtd);
+  }else if(unidade === 'anos'){
+   dataResultado.setFullYear(dataResultado.getFullYear() + valorQtd);
+  }
+
+  const anoV=dataResultado.getFullYear();
+  const mesV=String(dataResultado.getMonth()+1).padStart(2,'0');
+  const diaV=String(dataResultado.getDate()).padStart(2,'0');
+  const dataIso=`${anoV}-${mesV}-${diaV}`;
+
+  const infoVal = verificarStatusValidade(dataIso);
+  let avisoStatus = "";
+  if(infoVal.status === 'vencido'){
+   avisoStatus = " — ❌ PRODUTO JÁ VENCIDO!";
+   resBox.className="notice notice-danger";
+  }else if(infoVal.status === 'vencendo'){
+   avisoStatus = " — ⚠️ VENCENDO EM BREVE!";
+   resBox.className="notice notice-warning";
+  }else{
+   resBox.className="notice notice-info";
+  }
+
+  resBox.innerHTML=`🗓️ Data de Vencimento: <span style="font-size:16px;">${formatarData(dataIso)}</span>${avisoStatus}`;
+  resBox.classList.remove("hidden");
+
+ } else {
+  // Subtrair prazo para obter Data de Fabricação
+  if(unidade === 'dias'){
+   dataResultado.setDate(dataResultado.getDate() - valorQtd);
+  }else if(unidade === 'semanas'){
+   dataResultado.setDate(dataResultado.getDate() - (valorQtd * 7));
+  }else if(unidade === 'meses'){
+   dataResultado.setMonth(dataResultado.getMonth() - valorQtd);
+  }else if(unidade === 'anos'){
+   dataResultado.setFullYear(dataResultado.getFullYear() - valorQtd);
+  }
+
+  const anoF=dataResultado.getFullYear();
+  const mesF=String(dataResultado.getMonth()+1).padStart(2,'0');
+  const diaF=String(dataResultado.getDate()).padStart(2,'0');
+  const dataIso=`${anoF}-${mesF}-${diaF}`;
+
+  resBox.className="notice notice-success";
+  resBox.innerHTML=`🏭 Data de Fabricação calculada: <span style="font-size:16px;">${formatarData(dataIso)}</span>`;
+  resBox.classList.remove("hidden");
  }
-
- const anoV=dataVenc.getFullYear();
- const mesV=String(dataVenc.getMonth()+1).padStart(2,'0');
- const diaV=String(dataVenc.getDate()).padStart(2,'0');
- const dataIso=`${anoV}-${mesV}-${diaV}`;
-
- const infoVal = verificarStatusValidade(dataIso);
- let avisoStatus = "";
- if(infoVal.status === 'vencido'){
-  avisoStatus = " — ❌ ESTÁ VENCIDO!";
-  resBox.className="notice notice-danger";
- }else if(infoVal.status === 'vencendo'){
-  avisoStatus = " — ⚠️ VENCENDO EM BREVE!";
-  resBox.className="notice notice-warning";
- }else{
-  resBox.className="notice notice-info";
- }
-
- resBox.innerHTML=`Validade calculada: ${formatarData(dataIso)} (${dataIso})${avisoStatus}`;
- resBox.classList.remove("hidden");
 }
 
 function abrirModalProdutos(){
@@ -1180,13 +1267,13 @@ async function salvarProduto(){
  if(!codigo||!nome||!setor){
   mostrarToast("Preencha código, produto e setor.","warning");
   return;
-}
+ }
 
  const novasDatas = [...new Set([...document.querySelectorAll(".produto-data-validade")].map(x=>x.value).filter(Boolean))].sort();
  if(!novasDatas.length){
   mostrarToast("É obrigatório informar pelo menos uma data de validade.","warning");
   return;
-}
+ }
 
  const duplicado=produtos.find(p=>p.codigo===codigo&&p.id!==produtoEditandoId);
  if(duplicado){
@@ -1194,7 +1281,7 @@ async function salvarProduto(){
   fecharProdutoForm();
   abrirDetalhe(duplicado.id);
   return;
-}
+ }
 
  let produtoSalvoId;
 
