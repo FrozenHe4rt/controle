@@ -578,12 +578,22 @@ async function carregarDadosDaNuvem() {
 // Função para persistir (salvar) os dados na nuvem do Supabase
 async function persistir() {
   try {
-    const { error } = await supabaseClient.from('app_dados').upsert([
-      { chave: 'produtos', conteudo: produtos, atualizado_em: new Date() },
-      { chave: 'historico', conteudo: historico, atualizado_em: new Date() }
-    ], { onConflict: ['chave'] });
+    const atualizadoEm = new Date().toISOString();
+    
+    // Salva ou atualiza a chave 'produtos'
+    const resProd = await supabaseClient
+      .from('app_dados')
+      .upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
+      
+    if (resProd.error) throw resProd.error;
 
-    if (error) throw error;
+    // Salva ou atualiza a chave 'historico'
+    const resHist = await supabaseClient
+      .from('app_dados')
+      .upsert({ chave: 'historico', conteudo: historico, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
+      
+    if (resHist.error) throw resHist.error;
+
   } catch (err) {
     console.error('Erro ao salvar no Supabase:', err);
     mostrarToast('Erro ao salvar na nuvem.', 'error');
