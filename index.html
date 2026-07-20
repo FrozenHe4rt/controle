@@ -722,7 +722,6 @@ function iniciarLeitorGlobal() {
   const configLeitura = {
     fps: 15,
     qrbox: (w, h) => {
-      // Caixa retangular larga para fácil leitura de código de barras horizontal
       return {
         width: Math.floor(Math.min(w * 0.9, 320)),
         height: Math.floor(Math.min(h * 0.5, 180))
@@ -984,7 +983,6 @@ function calcularValidadeAutomatica(){
  let dataResultado = new Date(ano, mes - 1, dia || 1);
 
  if (modo === "vencimento") {
-  // Somar prazo para obter Data de Vencimento
   if(unidade === 'dias'){
    dataResultado.setDate(dataResultado.getDate() + valorQtd);
   }else if(unidade === 'semanas'){
@@ -1016,7 +1014,6 @@ function calcularValidadeAutomatica(){
   resBox.classList.remove("hidden");
 
  } else {
-  // Subtrair prazo para obter Data de Fabricação
   if(unidade === 'dias'){
    dataResultado.setDate(dataResultado.getDate() - valorQtd);
   }else if(unidade === 'semanas'){
