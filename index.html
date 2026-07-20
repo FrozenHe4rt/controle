@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<title>Ana Luiza • Controle de Vencimentos</title>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<!-- Biblioteca Oficial do Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --azul:#111111;--azul2:#232323;--fundo:#0b0b0d;--linha:#2d2d33;
+  --texto:#f5f5f5;--muted:#a1a1aa;--branco:#17171a;--verde:#22c55e;
+  --vermelho:#ef4444;--amarelo:#f59e0b;--roxo:#8b5cf6
+}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fundo);color:var(--texto);font-family:Inter,Arial,Helvetica,sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit}.hidden{display:none!important}
+.btn{border:0;border-radius:11px;min-height:44px;padding:10px 14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,#080808,#2b2b30);color:#fff;border:1px solid #3d3d43;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.btn-secondary{background:#242428;color:#f4f4f5;border:1px solid #38383e}
+.btn-success{background:#16331f;color:#71e6a5;border:1px solid #285c3b}
+.btn-danger{background:#36191b;color:#ff9696;border:1px solid #61292e}
+.btn-warning{background:#392b12;color:#f8c96b;border:1px solid #604718}
+.btn-ghost{background:transparent;color:var(--texto)}
+.field{margin-bottom:12px}.field label{display:block;font-weight:700;font-size:13px;margin-bottom:5px;color:#d4d4d8}
+.field input,.field select,.field textarea{width:100%;min-height:46px;border:1px solid #3a3a40;border-radius:11px;padding:10px 12px;background:#121214;font-size:16px;color:#f5f5f5}
+.field textarea{min-height:80px;resize:vertical}
+.field input::placeholder,.field textarea::placeholder{color:#71717a}
+.notice{padding:12px 14px;border-radius:12px;margin:10px 0;font-size:13px;line-height:1.4}
+.notice-info{background:#172033;color:#c6d8ff}
+.notice-warning{background:#34280f;color:#f7ca73}
+.notice-success{background:#153222;color:#78e7aa}
+.notice-danger{background:#36191b;color:#ff9696}
+
+/* login */
+.login-page{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at top,#27272d 0,#111114 58%,#09090b 100%)}
+.login-card{width:100%;max-width:380px;background:linear-gradient(145deg,#19191d,#121215);border:1px solid #2f2f35;border-radius:20px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(145deg,#050505,#2a2a30);border:1px solid #45454c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 14px;box-shadow:0 12px 35px rgba(0,0,0,.45)}
+.login-card h1{text-align:center;color:#fff;font-size:22px;margin:0 0 4px}.login-card p{text-align:center;color:#a1a1aa;font-size:13px;margin:0 0 16px}.error{color:var(--vermelho);font-size:13px;text-align:center;margin-top:10px}
+
+/* app */
+.app{max-width:1240px;margin:auto;padding:14px;padding-top:max(14px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.topbar{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;padding:16px;border:1px solid #2c2c31;border-radius:18px;background:linear-gradient(145deg,rgba(24,24,28,.97),rgba(13,13,15,.97));box-shadow:0 15px 40px rgba(0,0,0,.28)}
+.title h1{margin:0;color:#fff;font-size:clamp(22px, 5vw, 32px);line-height:1.2}.title p{margin:4px 0 0;color:#a1a1aa;font-size:13px}
+.userbox{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#17171a;border:1px solid #2d2d33;border-radius:12px;padding:8px 12px;width:100%}
+.userbox strong{color:#fff;font-size:14px}
+.userbox-actions{display:flex;gap:6px}
+.userbox-actions .btn{min-height:36px;padding:6px 10px;font-size:13px}
+
+.panel{background:linear-gradient(145deg,#19191d,#121215);border:1px solid #2f2f35;border-radius:18px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.28);backdrop-filter:blur(16px)}
+
+/* Dashboard Cards Grid */
+.dashboard-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.card{background:linear-gradient(145deg,#1b1b1f,#121214);border:1px solid #33333a;border-radius:14px;padding:12px 10px;text-align:center;overflow:hidden;cursor:pointer;transition:transform .15s ease, border-color .15s ease}
+.card:active{transform:scale(0.98)}
+.card span{display:block;color:#b9bbc3;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card strong{display:block;color:#fff;font-size:clamp(18px, 5vw, 24px);margin-top:4px;word-break:break-all}
+.card-sub{font-size:10px;margin-top:3px;color:var(--muted)}
+
+.toolbar{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px}
+.toolbar input,.toolbar select{width:100%;min-height:44px;border:1px solid #3a3a40;border-radius:11px;padding:10px 12px;font-size:15px;background:#121214;color:#f5f5f5}
+
+.backup-alert{display:flex;flex-direction:column;gap:10px;margin-top:14px;background:#34280f;border:1px solid #604718;padding:12px;border-radius:12px}
+.backup-alert span{color:#f7ca73;font-size:13px}
+
+.product-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.product-card{background:linear-gradient(145deg,#19191d,#121215);border:1px solid #2f2f35;border-radius:16px;padding:12px;box-shadow:0 12px 30px rgba(0,0,0,.22);cursor:pointer;transition:.2s ease}
+.product-card:hover{border-color:#494950}
+.product-head{display:flex;gap:10px;align-items:flex-start}
+.product-photo{width:60px;height:60px;border-radius:12px;object-fit:cover;border:1px solid #38383e;background:#242428;flex:0 0 auto}
+.product-main{min-width:0;flex:1}
+.product-main h3{margin:0 0 3px;color:#fff;font-size:16px;word-break:break-word}
+.product-main p{margin:2px 0;color:#a1a1aa;font-size:12px}
+.setor{display:inline-block;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700}
+.Bebidas{background:#241d3b;color:#a78bfa;border:1px solid #4c3794}
+.Laticínios{background:#112a3d;color:#7dd3fc;border:1px solid #1e40af}
+.Mercearia{background:#38280f;color:#fcd34d;border:1px solid #78350f}
+.Frios{background:#381525;color:#f472b6;border:1px solid #831843}
+.Higiene{background:#112e1f;color:#86efac;border:1px solid #14532d}
+.Outros{background:#27272a;color:#d4d4d8;border:1px solid #3f3f46}
+
+.date-list{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px}
+.badge{display:inline-block;background:#242a35;color:#dbeafe;border-radius:6px;padding:4px 6px;font-size:11px;font-weight:700;border:1px solid #354055}
+.badge-vencendo{background:#392b12!important;color:#f8c96b!important;border:1px solid #604718!important}
+.badge-vencido{background:#36191b!important;color:#ff9696!important;border:1px solid #61292e!important}
+.product-footer{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:10px;font-size:11px;color:#a1a1aa;padding-top:8px;border-top:1px solid #2a2a2f}
+.empty{text-align:center;padding:30px;color:#a1a1aa;font-size:14px}
+
+/* modals */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.74);display:flex;align-items:flex-end;justify-content:center;padding:0;z-index:9999;backdrop-filter:blur(9px)}
+.modal-card{width:100%;max-width:none;max-height:92dvh;background:linear-gradient(145deg,#19191d,#121215);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));overflow:auto;box-shadow:0 28px 90px rgba(0,0,0,.58);border:1px solid #2f2f35}
+.modal-card.large{max-width:none}
+.modal-card h2{margin:0 0 14px;color:#fff;font-size:18px}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}.full{grid-column:auto}
+.date-row{display:grid;grid-template-columns:1fr 40px 40px;gap:6px;margin-bottom:6px}
+.date-row input{width:100%;min-width:0;min-height:42px;border:1px solid #3a3a40;border-radius:10px;padding:8px;font-size:15px;background:#121214;color:#f5f5f5}
+.add-date,.remove-date{width:40px;height:40px;border:0;border-radius:10px;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.add-date{background:#16331f;color:#71e6a5;border:1px solid #285c3b}
+.remove-date{background:#36191b;color:#ff9696;border:1px solid #61292e}
+.modal-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:0;background:#151518;padding-top:10px;z-index:10}
+.modal-actions .btn{flex:1;min-height:46px}
+.preview{width:120px;height:120px;border-radius:12px;border:1px solid #38383e;object-fit:cover;margin-top:6px;background:#242428}
+.detail-head{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.detail-photo{width:90px;height:90px;border-radius:14px;object-fit:cover;border:1px solid #38383e;background:#242428}
+.detail-info h2{margin:0 0 4px;font-size:20px;color:#fff}
+.detail-info p{margin:3px 0;color:#a1a1aa;font-size:13px}
+.section-title{margin:18px 0 8px;color:#fff;font-size:16px}
+.conf-card{border:1px solid #2f2f35;border-radius:12px;padding:12px;margin-bottom:8px;background:linear-gradient(145deg,#19191d,#121215)}
+.conf-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.conf-top strong{color:#fff;font-size:13px}
+.conf-card p{margin:6px 0 0;color:#a1a1aa;font-size:13px}
+.history-item{border:1px solid #2f2f35;border-radius:10px;padding:10px;margin-bottom:8px;background:linear-gradient(145deg,#19191d,#121215)}.history-item strong{color:#fff;font-size:13px}.history-item small{color:#a1a1aa;font-size:11px}
+.scan-box{background:#151519;border:1px dashed #44444b;border-radius:12px;padding:12px;text-align:center}
+#reader{background:#151519}#reader video{width:100%!important;border-radius:10px;background:transparent!important}
+#reader__scan_region{background:#151519!important}.small{font-size:11px;color:#a1a1aa}
+
+.menu-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.menu-item{display:flex;align-items:center;justify-content:space-between;padding:14px 15px;background:rgba(255,255,255,0.02);border:1px solid #2f2f35;border-radius:13px;cursor:pointer;transition:all 0.2s ease}
+.menu-item:active{background:rgba(255,255,255,0.06)}
+.menu-item-info h4{margin:0 0 3px;font-size:14px;color:#fff}
+.menu-item-info p{margin:0;font-size:12px;color:#a1a1aa;line-height:1.3}
+.menu-item-action{font-size:16px;color:#a1a1aa;padding-left:8px}
+
+/* Toast Notification Styles */
+#toast-container{position:fixed;bottom:16px;right:16px;left:16px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;width:100%;max-width:none;background:#18181b;color:#f4f4f5;padding:12px 16px;border-radius:12px;border:1px solid #27272a;box-shadow:0 10px 30px rgba(0,0,0,0.6);font-size:13px;display:flex;align-items:center;gap:10px;animation:toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards}
+.toast.success{border-color:#22c55e;background:#0f2214;color:#71e6a5}
+.toast.error{border-color:#ef4444;background:#2a1215;color:#ff9696}
+.toast.warning{border-color:#f59e0b;background:#2c200c;color:#f8c96b}
+@keyframes toastIn{from{opacity:0;transform:translateY(15px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(15px) scale(0.95)}}
+
+/* Desktop adjustments */
+@media(min-width:768px){
+  .login-page{padding:22px}
+  .app{padding:22px}
+  .topbar{flex-direction:row;justify-content:space-between;align-items:center;padding:18px 20px}
+  .userbox{width:auto;padding:6px 12px}
+  .dashboard-grid{grid-template-columns:repeat(4,1fr);gap:12px}
+  .toolbar{grid-template-columns:minmax(180px,2fr) 1fr 1fr repeat(3,auto)}
+  .product-grid{grid-template-columns:repeat(2,1fr)}
+  .modal{align-items:center;padding:15px}
+  .modal-card{max-width:700px;border-radius:20px;max-height:90dvh;padding:20px}
+  .modal-card.large{max-width:900px}
+  .grid{grid-template-columns:1fr 1fr}
+  .full{grid-column:1/-1}
+  .detail-head{flex-direction:row;align-items:flex-start;text-align:left}
+  .detail-photo{width:110px;height:110px}
+  #toast-container{left:auto;right:24px;bottom:24px;max-width:400px}
+  .toast{width:auto;min-width:280px}
+}
+@media(min-width:1024px){
+  .product-grid{grid-template-columns:repeat(3,1fr)}
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#111114}
+::-webkit-scrollbar-thumb{background:#34343a;border-radius:20px}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<section id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="logo">AL</div>
+    <h1>Ana Luiza</h1>
+    <p>Controle de Vencimentos</p>
+    <div class="field"><label>Login</label><input id="loginUsuario" placeholder="Digite seu login"></div>
+    <div class="field"><label>Senha</label><input id="loginSenha" type="password" placeholder="Digite sua senha"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="entrar()">Entrar</button>
+    <div id="loginErro" class="error"></div>
+  </div>
+</section>
+
+<main id="app" class="app hidden">
+  <div class="topbar">
+    <div class="title"><h1>Controle de Vencimentos</h1><p>Painel principal (Supabase Online)</p></div>
+    <div class="userbox">
+      <strong>Ana Luiza</strong>
+      <div class="userbox-actions">
+        <button class="btn btn-secondary" onclick="abrirHistoricoGeral()">Histórico</button>
+        <button class="btn btn-secondary" onclick="sair()">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <!-- Grid de Cards do Dashboard Otimizada -->
+    <div class="dashboard-grid">
+      <div class="card" onclick="abrirModalProdutos()">
+        <span>Total Produtos</span>
+        <strong id="totalProdutos">0</strong>
+        <span class="card-sub">Gerenciar e filtrar</span>
+      </div>
+      <div class="card" onclick="abrirModalProdutosComFiltroStatus('vencido')" style="border-color:#61292e !important;">
+        <span>Vencidos</span>
+        <strong id="totalVencidos" style="color:#ff9696 !important;">0</strong>
+        <span class="card-sub" style="color:var(--vermelho)">Toque para ver</span>
+      </div>
+      <div class="card" onclick="abrirModalProdutosComFiltroStatus('vencendo')" style="border-color:#604718 !important;">
+        <span>Vencendo (7d)</span>
+        <strong id="totalVencendo" style="color:#f8c96b !important;">0</strong>
+        <span class="card-sub" style="color:var(--amarelo)">Toque para ver</span>
+      </div>
+      <div class="card" onclick="abrirProdutoForm()" style="border-color:#38383e !important; background:linear-gradient(145deg,#1f242d,#12151c)!important;">
+        <span style="color:#93c5fd">Ação rápida</span>
+        <strong style="font-size:clamp(14px, 4vw, 17px); margin-top:8px; color:#93c5fd">+ Novo</strong>
+        <span class="card-sub" style="color:#93c5fd">Cadastrar produto</span>
+      </div>
+    </div>
+
+    <div style="font-size: 13px; font-weight: 700; color: #a1a1aa; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Atividades e Ferramentas</div>
+    <div class="menu-list">
+      <div class="menu-item" onclick="abrirCheckEstoque()">
+        <div class="menu-item-info">
+          <h4>📦 Check de Estoque e Vencimento</h4>
+          <p>Lançar validades, contagem de quantidades e status no sistema</p>
+        </div>
+        <div class="menu-item-action">➔</div>
+      </div>
+      <div class="menu-item" onclick="abrirCalculadora()">
+        <div class="menu-item-info">
+          <h4>🧮 Calculadora de Validade por Fabricação</h4>
+          <p>Calcular data de vencimento com base na fabricação e prazo</p>
+        </div>
+        <div class="menu-item-action">➔</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+      <button class="btn btn-secondary" onclick="exportarCSV()">⬇ Excel</button>
+      <button class="btn btn-secondary" onclick="exportarBackup()">💾 Backup</button>
+    </div>
+
+    <div id="backupAlert" class="backup-alert hidden">
+      <span>⚠️ Seu último backup foi há mais de 7 dias.</span>
+      <button class="btn btn-warning" onclick="exportarBackup()">Fazer backup agora</button>
+    </div>
+  </div>
+</main>
+
+<div id="modalCheckEstoque" class="modal hidden">
+  <div class="modal-card large">
+    <h2>📦 Check de Estoque e Validade</h2>
+    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código do produto. Se ele estiver cadastrado, os dados serão carregados automaticamente; caso contrário, preencha o nome e setor para cadastrá-lo na hora!</div>
+    
+    <div class="grid">
+      <div class="field">
+        <label>Código do Produto</label>
+        <div style="display:flex; gap:6px;">
+          <input id="checkCodigo" inputmode="numeric" placeholder="Digite o código" oninput="buscarProdutoPorCodigoCheck()">
+          <button class="btn btn-secondary" type="button" onclick="abrirScannerCheck()" style="min-width:46px">📷</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Nome do Produto</label>
+        <input id="checkNome" placeholder="Nome do produto">
+      </div>
+      <div class="field">
+        <label>Setor</label>
+        <select id="checkSetor">
+          <option value="">Selecione</option>
+          <option>Bebidas</option>
+          <option>Laticínios</option>
+          <option>Mercearia</option>
+          <option>Frios</option>
+          <option>Higiene</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Data de Validade *Obrigatório*</label>
+        <input id="checkDataValidade" type="date">
+      </div>
+
+      <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
+        <label style="display:flex; align-items:center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+          <input id="checkFezContagem" type="checkbox" style="width: 20px; height: 20px; accent-color: var(--verde); cursor: pointer;" onchange="alternarCamposContagemCheck()">
+          <span style="font-size: 14px; font-weight: 700; color: #fff;">Contar quantidade deste produto?</span>
+        </label>
+        <small style="color: var(--muted); display: block; margin-top: 4px; margin-left: 30px;">Se marcado, informe abaixo as quantidades na loja, geladeira e depósito.</small>
+      </div>
+
+      <div id="blocoCamposContagem" class="field full hidden" style="display:grid; grid-template-columns:1fr; gap:10px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px; border: 1px solid #2f2f35;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Qtd na Loja</label>
+          <input id="checkQtdLoja" type="number" min="0" value="0" oninput="calcularTotalCheck()">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Qtd na Geladeira</label>
+          <input id="checkQtdGeladeira" type="number" min="0" value="0" oninput="calcularTotalCheck()">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Qtd no Depósito</label>
+          <input id="checkQtdDeposito" type="number" min="0" value="0" oninput="calcularTotalCheck()">
+        </div>
+        <div class="field full" style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; margin-bottom:0; padding-top:8px; border-top:1px solid #333;">
+          <span style="font-weight:700; font-size:13px; color:#fff;">Quantidade Final Total:</span>
+          <div id="checkTotalFinal" style="font-size:18px; font-weight:800; color:var(--verde);">0</div>
+        </div>
+      </div>
+      
+      <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
+        <label style="display:flex; align-items:center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+          <input id="checkNoSistemaEmpresa" type="checkbox" style="width: 20px; height: 20px; accent-color: var(--verde); cursor: pointer;">
+          <span style="font-size: 14px; font-weight: 700; color: #fff;">Já lançado no sistema da empresa?</span>
+        </label>
+        <small style="color: var(--muted); display: block; margin-top: 4px; margin-left: 30px;">Se marcado, ficará verde indicando baixa no sistema interno. Caso contrário, ficará amarelo indicando pendência.</small>
+      </div>
+    </div>
+
+    <div id="checkStatusLancamento" class="notice hidden" style="margin-top:8px;"></div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="fecharCheckEstoque()">Fechar</button>
+      <button class="btn btn-primary" onclick="salvarCheckEstoque()">Salvar / Lançar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalScannerCheck" class="modal hidden">
+  <div class="modal-card">
+    <h2>Leitor de código de barras</h2>
+    <div class="scan-box">
+      <div id="readerCheck"></div>
+      <p id="scannerCheckStatus" style="font-size:13px; margin:8px 0;">Toque em “Iniciar câmera”.</p>
+      <button id="iniciarCameraCheckBtn" class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="iniciarLeitorCheck()">📷 Iniciar câmera</button>
+    </div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharScannerCheck()">Fechar</button></div>
+  </div>
+</div>
+
+<div id="modalCalculadora" class="modal hidden">
+  <div class="modal-card">
+    <h2>🧮 Calculadora de Validade</h2>
+    <div class="grid">
+      <div class="field">
+        <label>Data de Fabricação (Ex: 02/24 ou 15/05/2024)</label>
+        <input id="calcFab" placeholder="Ex: 02/24" oninput="calcularValidadeAutomatica()">
+      </div>
+      <div class="field">
+        <label>Prazo de Validade (Meses)</label>
+        <input id="calcMeses" type="number" placeholder="Ex: 24" oninput="calcularValidadeAutomatica()">
+      </div>
+    </div>
+    <div id="calcResultado" class="notice notice-info hidden" style="margin-top:10px; font-weight:700;"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="fecharCalculadora()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalProdutosLista" class="modal hidden">
+  <div class="modal-card large">
+    <h2>Produtos Cadastrados</h2>
+    <div class="toolbar" style="margin-bottom:12px">
+      <input id="busca" placeholder="🔎 Produto, código ou obs..." oninput="renderizarProdutos()">
+      <select id="filtroSetor" onchange="renderizarProdutos()">
+        <option value="">Todos os setores</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option>
+        <option>Frios</option><option>Higiene</option><option>Outros</option>
+      </select>
+      <select id="filtroStatus" onchange="renderizarProdutos()">
+        <option value="">Todos os status</option>
+        <option value="vencido">Apenas Vencidos</option>
+        <option value="vencendo">Apenas Vencendo (7d)</option>
+      </select>
+      <input id="filtroData" type="date" onchange="renderizarProdutos()">
+      <button class="btn btn-primary" onclick="abrirProdutoForm()">+ Produto</button>
+    </div>
+    <div id="productGrid" class="product-grid"></div>
+    <div id="vazio" class="empty hidden">Nenhum produto encontrado.</div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="fecharModalProdutos()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalProduto" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="produtoFormTitulo">Novo produto</h2>
+    <div class="notice notice-warning" style="margin-bottom:10px;">⚠️ É obrigatório informar pelo menos uma data de validade.</div>
+    <div class="grid">
+      <div class="field"><label>Código</label><input id="produtoCodigo" inputmode="numeric"></div>
+      <div class="field"><label>Produto</label><input id="produtoNome"></div>
+      <div class="field"><label>Setor</label><select id="produtoSetor"><option value="">Selecione</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option><option>Frios</option><option>Higiene</option><option>Outros</option></select></div>
+      <div class="field"><label>Foto (opcional)</label><input id="produtoFoto" type="file" accept="image/*" capture="environment" onchange="carregarFotoProduto()"></div>
+      <div class="field full"><img id="produtoPreview" class="preview hidden"><br><button id="removerFotoBtn" class="btn btn-danger hidden" onclick="removerFotoProduto()" style="margin-top:6px">Remover foto</button></div>
+
+      <div id="edicaoConferenciaBox" class="field full">
+        <h3 class="section-title" style="margin-top:4px">Validade(s) do Produto *Obrigatório*</h3>
+        <div class="field">
+          <label>Data da conferência</label>
+          <input id="produtoConfData" type="date">
+        </div>
+        <div class="field">
+          <label>Datas de Validade Encontradas</label>
+          <div id="produtoListaDatas"></div>
+          <small class="small">Use “+” para adicionar outra validade.</small>
+        </div>
+        <div class="field">
+          <label>Observação</label>
+          <textarea id="produtoConfObservacao" placeholder="Ex.: Não havia 29/07."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharProdutoForm()">Cancelar</button><button class="btn btn-primary" onclick="salvarProduto()">Salvar produto</button></div>
+  </div>
+</div>
+
+<div id="modalDetalhe" class="modal hidden">
+  <div class="modal-card large">
+    <div id="detalheConteudo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="fecharDetalhe()">Fechar</button>
+      <button class="btn btn-warning" onclick="editarProdutoAtual()">Editar</button>
+      <button class="btn btn-success" onclick="abrirNovaConferenciaAtual()">+ Conf.</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalConferencia" class="modal hidden">
+  <div class="modal-card">
+    <h2>Nova conferência</h2>
+    <div class="notice notice-info" id="conferenciaProdutoInfo"></div>
+    <div class="field"><label>Data da conferência</label><input id="confData" type="date"></div>
+
+    <div class="field"><label>Datas de Validade Encontradas *Obrigatório*</label><div id="listaDatas"></div><small class="small">Informe ao menos uma data de validade.</small></div>
+
+    <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
+      <label style="display:flex; align-items:center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+        <input id="confFezContagem" type="checkbox" style="width: 20px; height: 20px; accent-color: var(--verde); cursor: pointer;" onchange="alternarCamposContagemConf()">
+        <span style="font-size: 14px; font-weight: 700; color: #fff;">Contar quantidade deste produto?</span>
+      </label>
+      <small style="color: var(--muted); display: block; margin-top: 4px; margin-left: 30px;">Se marcado, informe abaixo as quantidades na loja, geladeira e depósito.</small>
+    </div>
+
+    <div id="blocoCamposContagemConf" class="field full hidden" style="display:grid; grid-template-columns:1fr; gap:10px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px; border: 1px solid #2f2f35;">
+      <div class="field" style="margin-bottom:0;">
+        <label>Qtd na Loja</label>
+        <input id="confQtdLoja" type="number" min="0" value="0" oninput="calcularTotalConf()">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Qtd na Geladeira</label>
+        <input id="confQtdGeladeira" type="number" min="0" value="0" oninput="calcularTotalConf()">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Qtd no Depósito</label>
+        <input id="confQtdDeposito" type="number" min="0" value="0" oninput="calcularTotalConf()">
+      </div>
+      <div class="field full" style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; margin-bottom:0; padding-top:8px; border-top:1px solid #333;">
+        <span style="font-weight:700; font-size:13px; color:#fff;">Quantidade Final Total:</span>
+        <div id="confTotalFinal" style="font-size:18px; font-weight:800; color:var(--verde);">0</div>
+      </div>
+    </div>
+    
+    <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
+      <label style="display:flex; align-items:center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+        <input id="confNoSistemaEmpresa" type="checkbox" style="width: 20px; height: 20px; accent-color: var(--verde); cursor: pointer;">
+        <span style="font-size: 14px; font-weight: 700; color: #fff;">Já lançado no sistema da empresa?</span>
+      </label>
+      <small style="color: var(--muted); display: block; margin-top: 4px; margin-left: 30px;">Se marcado, ficará verde indicando baixa no sistema interno.</small>
+    </div>
+
+    <div class="field" style="margin-top:10px;"><label>Observação</label><textarea id="confObservacao" placeholder="Ex.: Não havia 29/07."></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharConferencia()">Cancelar</button><button class="btn btn-primary" onclick="salvarConferencia()">Salvar</button></div>
+  </div>
+</div>
+
+<div id="modalHistorico" class="modal hidden">
+  <div class="modal-card large">
+    <h2>Histórico de alterações</h2>
+    <div id="listaHistorico"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharHistoricoGeral()">Fechar</button></div>
+  </div>
+</div>
+
+<script>
+// --- CONFIGURAÇÃO DO SUPABASE ---
+const SUPABASE_URL = 'https://ybdgdyypqtdwttxmyefb.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_aoop3ZKaeb-_wx1POxGKNQ_TELGZLNF';
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --- Service Worker Registration for PWA ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const swCode = `
+      const CACHE_NAME = 'alns-vencimentos-v1';
+      self.addEventListener('install', e => { self.skipWaiting(); });
+      self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+      self.addEventListener('fetch', e => {
+        e.respondWith(
+          caches.match(e.request).then(response => response || fetch(e.request).catch(() => caches.match('./')))
+        );
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'text/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+  });
+}
+
+// --- Toast Notifications System ---
+function mostrarToast(mensagem, tipo = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${tipo}`;
+  let icone = '✅';
+  if (tipo === 'error') icone = '❌';
+  if (tipo === 'warning') icone = '⚠️';
+  toast.innerHTML = `<span>${icone}</span><span>${escapeHtml(mensagem)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'toastOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+const LOGIN="ALNS",SENHA="ALNS";
+const K_BACKUP="alns_ultimo_backup";
+
+let produtos = [];
+let historico = [];
+
+// Função para carregar os dados diretamente do Supabase na nuvem
+async function carregarDadosDaNuvem() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('app_dados')
+      .select('*');
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      data.forEach(row => {
+        if (row.chave === 'produtos') produtos = row.conteudo || [];
+        if (row.chave === 'historico') historico = row.conteudo || [];
+      });
+    }
+  } catch (err) {
+    console.error('Erro ao carregar do Supabase:', err);
+    mostrarToast('Erro ao sincronizar com a nuvem.', 'error');
+  }
+  atualizarTotais();
+}
+
+// Função para persistir (salvar) os dados na nuvem do Supabase
+async function persistir() {
+  try {
+    const { error } = await supabaseClient.from('app_dados').upsert([
+      { chave: 'produtos', conteudo: produtos, atualizado_em: new Date() },
+      { chave: 'historico', conteudo: historico, atualizado_em: new Date() }
+    ], { onConflict: ['chave'] });
+
+    if (error) throw error;
+  } catch (err) {
+    console.error('Erro ao salvar no Supabase:', err);
+    mostrarToast('Erro ao salvar na nuvem.', 'error');
+  }
+}
+
+function registrarAcao(acao,produto,detalhes=""){
+ historico.unshift({id:Date.now()+Math.random(),acao,produto,detalhes,data:new Date().toISOString()});
+ persistir();
+}
+
+async function entrar(){
+ const u=loginUsuario.value.trim(),s=loginSenha.value;
+ if(u===LOGIN&&s===SENHA){
+  sessionStorage.setItem("alns_logado_v2","sim");
+  await carregarDadosDaNuvem();
+  mostrarApp();
+  mostrarToast("Login realizado com sucesso!","success");
+ }else{
+  loginErro.textContent="Login ou senha incorretos.";
+  mostrarToast("Login ou senha incorretos.","error");
+ }
+}
+
+function mostrarApp(){
+ loginPage.classList.add("hidden");
+ app.classList.remove("hidden");
+ atualizarTotais();
+}
+
+function sair(){
+ sessionStorage.removeItem("alns_logado_v2");
+ location.reload();
+}
+
+function produtoUltimaConferencia(p){return [...(p.conferencias||[])].sort((a,b)=>b.data.localeCompare(a.data))[0]||null}
+function todasDatasProduto(p){return [...new Set((p.conferencias||[]).flatMap(c=>c.datas||[]))].sort()}
+
+function verificarStatusValidade(dataIso){
+ if(!dataIso) return { status: 'normal', texto: '' };
+ const hoje=new Date();
+ hoje.setHours(0,0,0,0);
+ const venc=new Date(dataIso+"T00:00:00");
+ const diffTime=venc-hoje;
+ const diffDays=Math.ceil(diffTime/(1000*60*60*24));
+
+ if(diffDays < 0){
+  return { status: 'vencido', texto: ' ❌ VENCIDO' };
+ }else if(diffDays <= 7){
+  return { status: 'vencendo', texto: ' ⚠️ VENCENDO' };
+ }
+ return { status: 'normal', texto: '' };
+}
+
+/* Check de Estoque */
+function abrirCheckEstoque(){
+ document.getElementById("checkCodigo").value="";
+ document.getElementById("checkNome").value="";
+ document.getElementById("checkSetor").value="";
+ document.getElementById("checkDataValidade").value=hojeISO();
+ document.getElementById("checkFezContagem").checked=false;
+ document.getElementById("blocoCamposContagem").classList.add("hidden");
+ document.getElementById("checkQtdLoja").value="0";
+ document.getElementById("checkQtdGeladeira").value="0";
+ document.getElementById("checkQtdDeposito").value="0";
+ document.getElementById("checkTotalFinal").textContent="0";
+ document.getElementById("checkNoSistemaEmpresa").checked=false;
+ document.getElementById("checkStatusLancamento").className="notice hidden";
+ document.getElementById("modalCheckEstoque").classList.remove("hidden");
+}
+function fecharCheckEstoque(){
+ document.getElementById("modalCheckEstoque").classList.add("hidden");
+ fecharScannerCheck();
+}
+function alternarCamposContagemCheck(){
+ const fez = document.getElementById("checkFezContagem").checked;
+ const bloco = document.getElementById("blocoCamposContagem");
+ if(fez){
+  bloco.classList.remove("hidden");
+ }else{
+  bloco.classList.add("hidden");
+  document.getElementById("checkQtdLoja").value="0";
+  document.getElementById("checkQtdGeladeira").value="0";
+  document.getElementById("checkQtdDeposito").value="0";
+  document.getElementById("checkTotalFinal").textContent="0";
+ }
+}
+function calcularTotalCheck(){
+ const qL=parseInt(document.getElementById("checkQtdLoja").value)||0;
+ const qG=parseInt(document.getElementById("checkQtdGeladeira").value)||0;
+ const qD=parseInt(document.getElementById("checkQtdDeposito").value)||0;
+ const total=qL+qG+qD;
+ document.getElementById("checkTotalFinal").textContent=total;
+}
+function buscarProdutoPorCodigoCheck(){
+ const codigo=document.getElementById("checkCodigo").value.trim();
+ const statusDiv=document.getElementById("checkStatusLancamento");
+ if(!codigo){
+  document.getElementById("checkNome").value="";
+  document.getElementById("checkSetor").value="";
+  statusDiv.className="notice hidden";
+  return;
+ }
+ const p=produtos.find(x=>x.codigo===codigo);
+ if(p){
+  document.getElementById("checkNome").value=p.nome;
+  document.getElementById("checkSetor").value=p.setor;
+  
+  const ultima=produtoUltimaConferencia(p);
+  if(ultima){
+   statusDiv.textContent=`✅ Produto já cadastrado! Última conferência em ${formatarData(ultima.data)}.`;
+   statusDiv.className="notice notice-success";
+   if(ultima.noSistemaEmpresa !== undefined){
+    document.getElementById("checkNoSistemaEmpresa").checked = ultima.noSistemaEmpresa;
+   }
+  }else{
+   statusDiv.textContent=`✅ Produto encontrado, mas sem conferências anteriores.`;
+   statusDiv.className="notice notice-info";
+  }
+ }else{
+  document.getElementById("checkNome").value="";
+  document.getElementById("checkSetor").value="";
+  statusDiv.textContent=`ℹ️ Código não cadastrado. Preencha os campos abaixo para cadastrar automaticamente.`;
+  statusDiv.className="notice notice-warning";
+ }
+}
+
+function abrirScannerCheck(){
+ document.getElementById("modalScannerCheck").classList.remove("hidden");
+}
+function fecharScannerCheck(){
+ if(html5QrCodeCheck && leitorCheckIniciado){
+  html5QrCodeCheck.stop().then(()=>{
+   leitorCheckIniciado=false;
+   document.getElementById("modalScannerCheck").classList.add("hidden");
+  }).catch(()=>{
+   document.getElementById("modalScannerCheck").classList.add("hidden");
+  });
+ }else{
+  document.getElementById("modalScannerCheck").classList.add("hidden");
+ }
+}
+function iniciarLeitorCheck(){
+ const statusEl=document.getElementById("scannerCheckStatus");
+ if(!html5QrCodeCheck){
+  html5QrCodeCheck=new Html5Qrcode("readerCheck");
+ }
+ html5QrCodeCheck.start(
+  {facingMode:"environment"},
+  {fps:10,qrbox:{width:240,height:140}},
+  decodedText=>{
+   document.getElementById("checkCodigo").value=decodedText;
+   fecharScannerCheck();
+   buscarProdutoPorCodigoCheck();
+   mostrarToast("Código lido com sucesso!","success");
+  },
+  error=>{}
+ ).then(()=>{
+  leitorCheckIniciado=true;
+  statusEl.textContent="Câmera ativa. Aponte para o código de barras.";
+  document.getElementById("iniciarCameraCheckBtn").classList.add("hidden");
+ }).catch(err=>{
+  statusEl.textContent="Erro ao iniciar a câmera: "+err;
+ });
+}
+
+async function salvarCheckEstoque(){
+ const codigo=document.getElementById("checkCodigo").value.trim();
+ const nome=document.getElementById("checkNome").value.trim();
+ const setor=document.getElementById("checkSetor").value;
+ const dataVal=document.getElementById("checkDataValidade").value;
+ const fezContagem=document.getElementById("checkFezContagem").checked;
+ const qL=parseInt(document.getElementById("checkQtdLoja").value)||0;
+ const qG=parseInt(document.getElementById("checkQtdGeladeira").value)||0;
+ const qD=parseInt(document.getElementById("checkQtdDeposito").value)||0;
+ const total=qL+qG+qD;
+ const noSistemaEmpresa = document.getElementById("checkNoSistemaEmpresa").checked;
+
+ if(!codigo){mostrarToast("Informe o código do produto.","warning");return;}
+ if(!nome||!setor){mostrarToast("Informe o nome e o setor do produto.","warning");return;}
+ if(!dataVal){mostrarToast("É obrigatório informar a data de validade.","warning");return;}
+
+ let p=produtos.find(x=>x.codigo===codigo);
+ const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
+ let obs="";
+ if(fezContagem){
+  obs=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} | Total: ${total} | ${statusTextoSistema}`;
+ }else{
+  obs=`${statusTextoSistema}`;
+ }
+
+ let mapStatusDatas = {};
+ mapStatusDatas[dataVal] = noSistemaEmpresa;
+
+ if(p){
+  p.nome=nome;
+  p.setor=setor;
+  p.conferencias=p.conferencias||[];
+  p.conferencias.unshift({
+   id:String(Date.now()),
+   data:hojeISO(),
+   datas:[dataVal],
+   observacao:obs,
+   noSistemaEmpresa: noSistemaEmpresa,
+   mapStatusDatas: mapStatusDatas,
+   criadoEm:new Date().toISOString()
+  });
+  registrarAcao("Check de Estoque",p.nome,`Validade: ${formatarData(dataVal)} • ${obs}`);
+  mostrarToast("Check de estoque salvo com sucesso!","success");
+ }else{
+  p={
+   id:String(Date.now()),
+   codigo,
+   nome,
+   setor,
+   foto:null,
+   conferencias:[{
+    id:String(Date.now()),
+    data:hojeISO(),
+    datas:[dataVal],
+    observacao:obs,
+    noSistemaEmpresa: noSistemaEmpresa,
+    mapStatusDatas: mapStatusDatas,
+    criadoEm:new Date().toISOString()
+   }],
+   criadoEm:new Date().toISOString()
+  };
+  produtos.unshift(p);
+  registrarAcao("Cadastrou e Checou Estoque",nome,`Código ${codigo} • ${obs}`);
+  mostrarToast("Produto cadastrado e check salvo com sucesso!","success");
+ }
+
+ await persistir();
+ atualizarTotais();
+ fecharCheckEstoque();
+ abrirDetalhe(p.id);
+}
+
+function abrirCalculadora(){
+ document.getElementById("calcFab").value="";
+ document.getElementById("calcMeses").value="";
+ document.getElementById("calcResultado").classList.add("hidden");
+ document.getElementById("modalCalculadora").classList.remove("hidden");
+}
+function fecharCalculadora(){
+ document.getElementById("modalCalculadora").classList.add("hidden");
+}
+
+function calcularValidadeAutomatica(){
+ const fabStr=document.getElementById("calcFab").value.trim();
+ const mesesStr=document.getElementById("calcMeses").value.trim();
+ const resBox=document.getElementById("calcResultado");
+
+ if(!fabStr || !mesesStr){
+  resBox.classList.add("hidden");
+  return;
+ }
+
+ const meses=parseInt(mesesStr,10);
+ if(isNaN(meses) || meses<=0){
+  resBox.textContent="Insira um número de meses válido.";
+  resBox.className="notice notice-warning";
+  resBox.classList.remove("hidden");
+  return;
+ }
+
+ let ano, mes, dia=null;
+ const partes=fabStr.split(/[\/\-\.]/).map(p=>p.trim());
+
+ if(partes.length===2){
+  let m=parseInt(partes[0],10);
+  let a=parseInt(partes[1],10);
+  if(a<100) a+=2000;
+  if(m>=1 && m<=12){
+   mes=m;
+   ano=a;
+   dia=0; 
+  }
+ }else if(partes.length===3){
+  let d=parseInt(partes[0],10);
+  let m=parseInt(partes[1],10);
+  let a=parseInt(partes[2],10);
+  if(a<100) a+=2000;
+  if(d>=1 && d<=31 && m>=1 && m<=12){
+   dia=d;
+   mes=m;
+   ano=a;
+  }
+ }
+
+ if(!ano || !mes){
+  resBox.textContent="Formato inválido. Use MM/AA ou DD/MM/AAAA.";
+  resBox.className="notice notice-warning";
+  resBox.classList.remove("hidden");
+  return;
+ }
+
+ let dataVenc;
+ if(dia===0){
+  const targetYear = ano + Math.floor((mes - 1 + meses) / 12);
+  const targetMonth = (mes - 1 + meses) % 12;
+  dataVenc = new Date(targetYear, targetMonth + 1, 0);
+ }else{
+  const targetYear = ano + Math.floor((mes - 1 + meses) / 12);
+  const targetMonth = (mes - 1 + meses) % 12;
+  dataVenc = new Date(targetYear, targetMonth, dia);
+  if (dataVenc.getMonth() !== targetMonth) {
+    dataVenc = new Date(targetYear, targetMonth + 1, 0);
+  }
+ }
+
+ const anoV=dataVenc.getFullYear();
+ const mesV=String(dataVenc.getMonth()+1).padStart(2,'0');
+ const diaV=String(dataVenc.getDate()).padStart(2,'0');
+ const dataIso=`${anoV}-${mesV}-${diaV}`;
+
+ const infoVal = verificarStatusValidade(dataIso);
+ let avisoStatus = "";
+ if(infoVal.status === 'vencido'){
+  avisoStatus = " — ❌ ESTÁ VENCIDO!";
+  resBox.className="notice notice-danger";
+ }else if(infoVal.status === 'vencendo'){
+  avisoStatus = " — ⚠️ VENCENDO EM BREVE!";
+  resBox.className="notice notice-warning";
+ }else{
+  resBox.className="notice notice-info";
+ }
+
+ resBox.innerHTML=`Validade calculada: ${formatarData(dataIso)} (${dataIso})${avisoStatus}`;
+ resBox.classList.remove("hidden");
+}
+
+function abrirModalProdutos(){
+ modalProdutosLista.classList.remove("hidden");
+ busca.value="";
+ filtroSetor.value="";
+ filtroStatus.value="";
+ filtroData.value="";
+ renderizarProdutos();
+}
+
+function abrirModalProdutosComFiltroStatus(statusFiltro){
+ modalProdutosLista.classList.remove("hidden");
+ busca.value="";
+ filtroSetor.value="";
+ filtroStatus.value = statusFiltro;
+ filtroData.value="";
+ renderizarProdutos();
+}
+
+function fecharModalProdutos(){
+ modalProdutosLista.classList.add("hidden");
+ atualizarTotais();
+}
+
+function renderizarProdutos(){
+ const termo=busca.value.toLowerCase().trim();
+ const setor=filtroSetor.value;
+ const statusFiltro=filtroStatus.value;
+ const dataFiltro=filtroData.value;
+
+ const lista=produtos.filter(p=>{
+  const texto=[p.codigo,p.nome,p.setor,...(p.conferencias||[]).flatMap(c=>[c.observacao||"",...(c.datas||[])])].join(" ").toLowerCase();
+  const bateData=!dataFiltro||(p.conferencias||[]).some(c=>c.data===dataFiltro||(c.datas||[]).includes(dataFiltro));
+  
+  let bateStatus = true;
+  if(statusFiltro) {
+    const todasAsDatas = todasDatasProduto(p);
+    bateStatus = todasAsDatas.some(d => {
+      const info = verificarStatusValidade(d);
+      return info.status === statusFiltro;
+    });
+  }
+
+  return(!termo||texto.includes(termo))&&(!setor||p.setor===setor)&&bateData&&bateStatus;
+ });
+
+ productGrid.innerHTML=lista.map(p=>{
+  const ultima=produtoUltimaConferencia(p),datas=todasDatasProduto(p).slice(0,5);
+  
+  let todasLancadasNoSistema = true;
+  if(ultima && ultima.mapStatusDatas && (ultima.datas||[]).length > 0){
+   todasLancadasNoSistema = (ultima.datas||[]).every(d => ultima.mapStatusDatas[d] === true);
+  }else if(ultima && ultima.noSistemaEmpresa === false){
+   todasLancadasNoSistema = false;
+  }
+
+  let indicadorSistema = '';
+  if (todasLancadasNoSistema) {
+   indicadorSistema = '<span class="badge" style="background:#16331f!important;color:#71e6a5!important;border:1px solid #285c3b!important;">🟢 No Sistema</span>';
+  } else {
+   indicadorSistema = '<span class="badge" style="background:#34280f!important;color:#f7ca73!important;border:1px solid #604718!important;">🟡 Pendente</span>';
+  }
+
+  return `<article class="product-card" onclick="abrirDetalhe('${p.id}')">
+   <div class="product-head">
+    ${p.foto?`<img class="product-photo" src="${p.foto}" alt="">`:`<div class="product-photo"></div>`}
+    <div class="product-main">
+     <h3>${escapeHtml(p.nome)}</h3>
+     <p>Cód: ${escapeHtml(p.codigo)}</p>
+     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+      <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
+      ${indicadorSistema}
+     </div>
+    </div>
+   </div>
+   <div class="date-list">${datas.length?datas.map(d=>{
+    const info=verificarStatusValidade(d);
+    let classeBadge = "";
+    if(info.status==='vencido') classeBadge = "badge-vencido";
+    else if(info.status==='vencendo') classeBadge = "badge-vencendo";
+    return `<span class="badge ${classeBadge}">${formatarData(d)}${info.texto}</span>`;
+   }).join(""):`<span class="small">Nenhuma validade</span>`}</div>
+   <div class="product-footer"><span>${(p.conferencias||[]).length} conf.</span><span>Última: ${ultima?formatarData(ultima.data):"—"}</span></div>
+  </article>`
+ }).join("");
+ vazio.classList.toggle("hidden",lista.length>0);
+ atualizarTotais();
+}
+
+function atualizarTotais(){
+ totalProdutos.textContent=produtos.length;
+ 
+ let countVencidos = 0;
+ let countVencendo = 0;
+
+ produtos.forEach(p => {
+  const datas = todasDatasProduto(p);
+  let temVencido = false;
+  let temVencendo = false;
+  datas.forEach(d => {
+   const info = verificarStatusValidade(d);
+   if(info.status === 'vencido') temVencido = true;
+   if(info.status === 'vencendo') temVencendo = true;
+  });
+  if(temVencido) countVencidos++;
+  if(temVencendo) countVencendo++;
+ });
+
+ document.getElementById("totalVencidos").textContent = countVencidos;
+ document.getElementById("totalVencendo").textContent = countVencendo;
+
+ atualizarBackupUI();
+}
+
+function atualizarBackupUI(){
+ const ultima=localStorage.getItem(K_BACKUP);
+ if(!ultima){backupAlert.classList.remove("hidden");return}
+ const dias=(Date.now()-new Date(ultima).getTime())/86400000;
+ backupAlert.classList.toggle("hidden",dias<=7)
+}
+
+function abrirProdutoForm(id=null,opcoes={}){
+ produtoEditandoId=id;
+ abrirConferenciaDepoisDeSalvar=!!opcoes.abrirConferenciaDepois;
+ fotoProdutoBase64=null;
+ produtoFormTitulo.textContent=id?"Editar produto":"Novo produto";
+
+ produtoCodigo.value="";
+ produtoNome.value="";
+ produtoSetor.value="";
+ produtoFoto.value="";
+ produtoPreview.classList.add("hidden");
+ removerFotoBtn.classList.add("hidden");
+ produtoListaDatas.innerHTML="";
+ produtoConfData.value=hojeISO();
+ produtoConfObservacao.value="";
+
+ if(id){
+  const p=produtos.find(x=>x.id===id);
+  if(!p)return;
+
+  produtoCodigo.value=p.codigo;
+  produtoNome.value=p.nome;
+  produtoSetor.value=p.setor;
+  fotoProdutoBase64=p.foto||null;
+
+  if(p.foto){
+   produtoPreview.src=p.foto;
+   produtoPreview.classList.remove("hidden");
+   removerFotoBtn.classList.remove("hidden");
+  }
+
+  const ultima=produtoUltimaConferencia(p);
+  if(ultima){
+   produtoConfData.value=ultima.data||hojeISO();
+   produtoConfObservacao.value=ultima.observacao||"";
+   const datasCarregar = (ultima.datas && ultima.datas.length > 0) ? ultima.datas : [""];
+   datasCarregar.forEach(d=>adicionarCampoDataProduto(d));
+  }else{
+   adicionarCampoDataProduto();
+  }
+ }else{
+  adicionarCampoDataProduto();
+ }
+
+ modalProduto.classList.remove("hidden")
+}
+function adicionarCampoDataProduto(valor=""){
+ const linha=document.createElement("div");
+ linha.className="date-row";
+
+ const input=document.createElement("input");
+ input.type="date";
+ input.className="produto-data-validade";
+ input.value=valor;
+
+ const mais=document.createElement("button");
+ mais.type="button";
+ mais.className="add-date";
+ mais.textContent="+";
+ mais.onclick=()=>adicionarCampoDataProduto();
+
+ const menos=document.createElement("button");
+ menos.type="button";
+ menos.className="remove-date";
+ menos.textContent="−";
+ menos.onclick=()=>{
+  const total=document.querySelectorAll(".produto-data-validade").length;
+  if(total>1)linha.remove();
+  else input.value="";
+ };
+
+ linha.append(input,mais,menos);
+ produtoListaDatas.appendChild(linha);
+}
+
+function fecharProdutoForm(){modalProduto.classList.add("hidden")}
+async function carregarFotoProduto(){
+ const arq=produtoFoto.files[0];if(!arq)return;
+ try{fotoProdutoBase64=await comprimirImagem(arq,1024,1024,.7);produtoPreview.src=fotoProdutoBase64;produtoPreview.classList.remove("hidden");removerFotoBtn.classList.remove("hidden");mostrarToast("Foto carregada com sucesso!","success");}
+ catch{mostrarToast("Não foi possível processar a imagem.","error");}
+}
+function removerFotoProduto(){fotoProdutoBase64=null;produtoFoto.value="";produtoPreview.classList.add("hidden");removerFotoBtn.classList.add("hidden");mostrarToast("Foto removida.","warning");}
+function comprimirImagem(arquivo,maxW,maxH,q){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=reject;r.onload=e=>{const img=new Image();img.onerror=reject;img.onload=()=>{let w=img.width,h=img.height,s=Math.min(1,maxW/w,maxH/h);w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(img,0,0,w,h);resolve(c.toDataURL("image/jpeg",q))};img.src=e.target.result};r.readAsDataURL(arquivo)})}
+
+async function salvarProduto(){
+ const codigo=produtoCodigo.value.trim();
+ const nome=produtoNome.value.trim();
+ const setor=produtoSetor.value;
+
+ if(!codigo||!nome||!setor){
+  mostrarToast("Preencha código, produto e setor.","warning");
+  return;
+}
+
+ const novasDatas = [...new Set([...document.querySelectorAll(".produto-data-validade")].map(x=>x.value).filter(Boolean))].sort();
+ if(!novasDatas.length){
+  mostrarToast("É obrigatório informar pelo menos uma data de validade.","warning");
+  return;
+}
+
+ const duplicado=produtos.find(p=>p.codigo===codigo&&p.id!==produtoEditandoId);
+ if(duplicado){
+  mostrarToast("Já existe produto com este código. Abrindo...","warning");
+  fecharProdutoForm();
+  abrirDetalhe(duplicado.id);
+  return;
+}
+
+ let produtoSalvoId;
+
+ if(produtoEditandoId){
+  const i=produtos.findIndex(p=>p.id===produtoEditandoId);
+  const antigo=produtos[i];
+  const mudancas=[];
+
+  if(antigo.codigo!==codigo)mudancas.push(`código: ${antigo.codigo} → ${codigo}`);
+  if(antigo.nome!==nome)mudancas.push(`nome: ${antigo.nome} → ${nome}`);
+  if(antigo.setor!==setor)mudancas.push(`setor: ${antigo.setor} → ${setor}`);
+
+  produtos[i]={...antigo,codigo,nome,setor,foto:fotoProdutoBase64,atualizadoEm:new Date().toISOString()};
+  produtoSalvoId=produtos[i].id;
+
+  const ultima=produtoUltimaConferencia(produtos[i]);
+  const antigaData=ultima?ultima.data:"";
+  const antigasDatas=ultima?[...(ultima.datas||[])]:[];
+  const antigaObs=ultima?ultima.observacao||"":"";
+  
+  let mapStatusDatasAntigo = (ultima && ultima.mapStatusDatas) ? {...ultima.mapStatusDatas} : {};
+  let novoMapStatus = {};
+  novasDatas.forEach(d => {
+   novoMapStatus[d] = mapStatusDatasAntigo[d] !== undefined ? mapStatusDatasAntigo[d] : false;
+  });
+
+  if(ultima){
+   ultima.data=produtoConfData.value||hojeISO();
+   ultima.datas=novasDatas;
+   ultima.observacao=produtoConfObservacao.value.trim();
+   ultima.mapStatusDatas = novoMapStatus;
+
+   if(
+    antigaData!==ultima.data ||
+    JSON.stringify(antigasDatas)!==JSON.stringify(novasDatas) ||
+    antigaObs!==ultima.observacao
+   ){
+    mudancas.push(`validade(s) atualizada(s)`);
+   }
+  }else{
+   produtos[i].conferencias=produtos[i].conferencias||[];
+   produtos[i].conferencias.unshift({
+    id:String(Date.now()),
+    data:produtoConfData.value||hojeISO(),
+    datas:novasDatas,
+    observacao:produtoConfObservacao.value.trim(),
+    mapStatusDatas: novoMapStatus,
+    criadoEm:new Date().toISOString()
+   });
+   mudancas.push("validades adicionadas");
+  }
+
+  registrarAcao("Editou produto",nome,mudancas.join(" • ")||"Atualizou o cadastro");
+  mostrarToast("Produto atualizado com sucesso!","success");
+ }else{
+  let novoMapStatus = {};
+  novasDatas.forEach(d => { novoMapStatus[d] = false; });
+
+  const novo={
+   id:String(Date.now()),
+   codigo,
+   nome,
+   setor,
+   foto:fotoProdutoBase64,
+   conferencias:[{
+    id:String(Date.now()),
+    data:produtoConfData.value||hojeISO(),
+    datas:novasDatas,
+    observacao:produtoConfObservacao.value.trim(),
+    mapStatusDatas: novoMapStatus,
+    criadoEm:new Date().toISOString()
+   }],
+   criadoEm:new Date().toISOString()
+  };
+
+  produtos.unshift(novo);
+  produtoSalvoId=novo.id;
+  registrarAcao("Criou produto",nome,`Código ${codigo}`);
+  mostrarToast("Produto cadastrado com sucesso!","success");
+ }
+
+ await persistir();
+ fecharProdutoForm();
+ atualizarTotais();
+
+ if(abrirConferenciaDepoisDeSalvar){
+  abrirConferenciaDepoisDeSalvar=false;
+  abrirConferencia(produtoSalvoId);
+ }else{
+  abrirDetalhe(produtoSalvoId);
+ }
+}
+
+function abrirDetalhe(id){
+ fecharModalProdutos();
+ produtoAtualId=id;
+ const p=produtos.find(x=>x.id===id);
+ if(!p)return;
+ const confs=[...(p.conferencias||[])].sort((a,b)=>b.data.localeCompare(a.data));
+ 
+ detalheConteudo.innerHTML=`
+  <div class="detail-head">
+   ${p.foto?`<img class="detail-photo" src="${p.foto}" alt="">`:`<div class="detail-photo"></div>`}
+   <div class="detail-info">
+    <h2>${escapeHtml(p.nome)}</h2>
+    <p>Código: ${escapeHtml(p.codigo)}</p>
+    <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
+   </div>
+  </div>
+  <h3 class="section-title">Histórico de validades e Status</h3>
+  <div style="font-size:11px; color:#a1a1aa; margin-bottom:10px;">💡 Marque se cada data já foi lançada no sistema da empresa.</div>
+  ${confs.length?confs.map(c=>{
+   if(!c.mapStatusDatas){
+    c.mapStatusDatas = {};
+    (c.datas||[]).forEach(d => { c.mapStatusDatas[d] = c.noSistemaEmpresa !== undefined ? c.noSistemaEmpresa : false; });
+   }
+
+   return `<div class="conf-card">
+    <div class="conf-top"><strong>Registro em: ${formatarData(c.data)}</strong><button class="btn btn-danger" style="min-height:32px;padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();apagarConferencia('${p.id}','${c.id}')">Apagar</button></div>
+    <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+     ${(c.datas||[]).map(d=>{
+      const info=verificarStatusValidade(d);
+      let classeBadge = "";
+      if(info.status==='vencido') classeBadge = "badge-vencido";
+      else if(info.status==='vencendo') classeBadge = "badge-vencendo";
+      
+      const jaLancado = c.mapStatusDatas[d] === true;
+      
+      return `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(255,255,255,0.02); padding:6px 10px; border:1px solid #33333a; border-radius:8px;">
+       <div>
+        <span class="badge ${classeBadge}" style="margin-right:6px;">${formatarData(d)}${info.texto}</span>
+       </div>
+       <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700;">
+        <input type="checkbox" ${jaLancado ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--verde); cursor:pointer;" onchange="alternarStatusSistemaData('${p.id}','${c.id}','${d}',this.checked)">
+        <span style="color:${jaLancado ? '#71e6a5' : '#f7ca73'}">${jaLancado ? '🟢 No Sistema' : '🟡 Pendente'}</span>
+       </label>
+      </div>`;
+     }).join("")}
+    </div>
+    <p style="margin-top:8px;">${escapeHtml(c.observacao||"Sem observação")}</p>
+   </div>`;
+  }).join(""):`<div class="notice notice-info">Ainda não há validades registradas.</div>`}
+  <button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="apagarProduto('${p.id}')">Apagar produto</button>`;
+ modalDetalhe.classList.remove("hidden")
+}
+
+async function alternarStatusSistemaData(produtoId, confId, dataVal, statusCheckbox){
+ const p = produtos.find(x => x.id === produtoId);
+ if(!p) return;
+ const c = p.conferencias.find(x => x.id === confId);
+ if(!c) return;
+
+ if(!c.mapStatusDatas) c.mapStatusDatas = {};
+ c.mapStatusDatas[dataVal] = statusCheckbox;
+
+ await persistir();
+ atualizarTotais();
+ abrirDetalhe(produtoId);
+ mostrarToast("Status atualizado!","success");
+}
+
+function fecharDetalhe(){modalDetalhe.classList.add("hidden")}
+function editarProdutoAtual(){fecharDetalhe();abrirProdutoForm(produtoAtualId)}
+function abrirNovaConferenciaAtual(){fecharDetalhe();abrirConferencia(produtoAtualId)}
+
+function abrirConferencia(id){
+ produtoConferenciaId=id;
+ const p=produtos.find(x=>x.id===id);
+ if(!p)return;
+ conferenciaProdutoInfo.textContent=`${p.nome} • código ${p.codigo}`;
+ confData.value=hojeISO();
+ confObservacao.value="";
+ 
+ document.getElementById("confFezContagem").checked=false;
+ document.getElementById("blocoCamposContagemConf").classList.add("hidden");
+ document.getElementById("confQtdLoja").value="0";
+ document.getElementById("confQtdGeladeira").value="0";
+ document.getElementById("confQtdDeposito").value="0";
+ document.getElementById("confTotalFinal").textContent="0";
+ document.getElementById("confNoSistemaEmpresa").checked=false;
+
+ listaDatas.innerHTML="";
+ adicionarCampoData();
+ modalConferencia.classList.remove("hidden")
+}
+function fecharConferencia(){modalConferencia.classList.add("hidden")}
+
+function alternarCamposContagemConf(){
+ const fez = document.getElementById("confFezContagem").checked;
+ const bloco = document.getElementById("blocoCamposContagemConf");
+ if(fez){
+  bloco.classList.remove("hidden");
+ }else{
+  bloco.classList.add("hidden");
+  document.getElementById("confQtdLoja").value="0";
+  document.getElementById("confQtdGeladeira").value="0";
+  document.getElementById("confQtdDeposito").value="0";
+  document.getElementById("confTotalFinal").textContent="0";
+ }
+}
+
+function calcularTotalConf(){
+ const qL=parseInt(document.getElementById("confQtdLoja").value)||0;
+ const qG=parseInt(document.getElementById("confQtdGeladeira").value)||0;
+ const qD=parseInt(document.getElementById("confQtdDeposito").value)||0;
+ const total=qL+qG+qD;
+ document.getElementById("confTotalFinal").textContent=total;
+}
+
+function adicionarCampoData(valor=""){
+ const linha=document.createElement("div");linha.className="date-row";
+ const input=document.createElement("input");input.type="date";input.className="data-validade";input.value=valor;
+ const mais=document.createElement("button");mais.type="button";mais.className="add-date";mais.textContent="+";mais.onclick=()=>adicionarCampoData();
+ const menos=document.createElement("button");menos.type="button";menos.className="remove-date";menos.textContent="−";menos.onclick=()=>{const t=document.querySelectorAll(".data-validade").length;if(t>1)linha.remove();else input.value=""};
+ linha.append(input,mais,menos);listaDatas.appendChild(linha)
+}
+
+async function salvarConferencia(){
+ const p=produtos.find(x=>x.id===produtoConferenciaId);if(!p)return;
+ const datas=[...new Set([...document.querySelectorAll(".data-validade")].map(i=>i.value).filter(Boolean))].sort();
+ if(!datas.length){mostrarToast("É obrigatório informar pelo menos uma data de validade.","warning");return}
+ 
+ const fezContagem=document.getElementById("confFezContagem").checked;
+ const qL=parseInt(document.getElementById("confQtdLoja").value)||0;
+ const qG=parseInt(document.getElementById("confQtdGeladeira").value)||0;
+ const qD=parseInt(document.getElementById("confQtdDeposito").value)||0;
+ const total=qL+qG+qD;
+ const noSistemaEmpresa = document.getElementById("confNoSistemaEmpresa").checked;
+ const obsUsuario = confObservacao.value.trim();
+
+ const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
+ let obsFinal="";
+ if(fezContagem){
+  obsFinal=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} | Total: ${total} | ${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
+ }else{
+  obsFinal=`${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
+ }
+
+ let mapStatusDatas = {};
+ datas.forEach(d => { mapStatusDatas[d] = noSistemaEmpresa; });
+
+ const conf={
+  id:String(Date.now()),
+  data:confData.value,
+  datas,
+  observacao:obsFinal,
+  noSistemaEmpresa: noSistemaEmpresa,
+  mapStatusDatas: mapStatusDatas,
+  criadoEm:new Date().toISOString()
+ };
+
+ p.conferencias=p.conferencias||[];
+ p.conferencias.unshift(conf);
+ 
+ registrarAcao("Nova conferência",p.nome,`Validades: ${datas.map(formatarData).join(", ")} • ${obsFinal}`);
+ await persistir();
+ fecharConferencia();
+ atualizarTotais();
+ abrirDetalhe(p.id);
+ mostrarToast("Conferência salva com sucesso!","success");
+}
+
+async function apagarConferencia(produtoId,confId){
+ const p=produtos.find(x=>x.id===produtoId),c=p?.conferencias?.find(x=>x.id===confId);if(!p||!c)return;
+ if(p.conferencias.length<=1){
+  mostrarToast("Não é permitido apagar o único registro.","error");
+  return;
+ }
+ if(!confirm(`Apagar o registro de validade de ${formatarData(c.data)}?`))return;
+ p.conferencias=p.conferencias.filter(x=>x.id!==confId);
+ registrarAcao("Apagou conferência",p.nome,`Validade de ${formatarData(c.data)}`);
+ await persistir();
+ atualizarTotais();
+ abrirDetalhe(produtoId);
+ mostrarToast("Registro apagado.","warning");
+}
+
+async function apagarProduto(id){
+ const p=produtos.find(x=>x.id===id);if(!p||!confirm(`Apagar "${p.nome}" e todo o histórico?`))return;
+ produtos=produtos.filter(x=>x.id!==id);
+ registrarAcao("Apagou produto",p.nome,`Código ${p.codigo}`);
+ await persistir();
+ fecharDetalhe();
+ atualizarTotais();
+ mostrarToast("Produto apagado com sucesso.","warning");
+}
+
+function abrirHistoricoGeral(){
+ listaHistorico.innerHTML=historico.map(h=>`<div class="history-item"><strong>${escapeHtml(h.acao)}</strong> — ${escapeHtml(h.produto)}<br>${h.detalhes?`<span>${escapeHtml(h.detalhes)}</span><br>`:""}<small>${new Date(h.data).toLocaleString("pt-BR")}</small></div>`).join("")||"Nenhum histórico.";
+ modalHistorico.classList.remove("hidden")
+}
+function fecharHistoricoGeral(){modalHistorico.classList.add("hidden")}
+
+function exportarCSV(){
+ const cab=["Código","Produto","Setor","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
+ const linhas=[];
+ produtos.forEach(p=>(p.conferencias||[]).forEach(c=>{
+  let statusStr = (c.datas||[]).map(d => `${formatarData(d)}: ${c.mapStatusDatas && c.mapStatusDatas[d] ? 'Sim' : 'Não'}`).join(" | ");
+  linhas.push([p.codigo,p.nome,p.setor,formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
+ }));
+ const esc=v=>`"${String(v??"").replaceAll('"','""')}"`,csv="\ufeff"+[cab,...linhas].map(l=>l.map(esc).join(";")).join("\n");
+ baixar(new Blob([csv],{type:"text/csv;charset=utf-8"}),`vencimentos_${hojeISO()}.csv`);
+ mostrarToast("Relatório CSV exportado com sucesso!","success");
+}
+
+function exportarBackup(){
+ const conteudo=JSON.stringify({versao:2,exportadoEm:new Date().toISOString(),produtos,historico},null,2);
+ baixar(new Blob([conteudo],{type:"application/json"}),`backup_alns_${hojeISO()}.json`);
+ localStorage.setItem(K_BACKUP,new Date().toISOString());atualizarBackupUI();
+ mostrarToast("Backup gerado com sucesso!","success");
+}
+function baixar(blob,nome){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+
+loginSenha.addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
+
+if(sessionStorage.getItem("alns_logado_v2")==="sim"){
+ carregarDadosDaNuvem().then(() => mostrarApp());
+}
+</script>
+</body>
+</html>
