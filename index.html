@@ -244,14 +244,14 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div id="modalCheckEstoque" class="modal hidden">
   <div class="modal-card large">
     <h2>📦 Check de Estoque e Validade</h2>
-    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código do produto. Se ele estiver cadastrado, os dados serão carregados automaticamente; caso contrário, preencha o nome e setor para cadastrá-lo na hora!</div>
+    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código do produto ou escaneie o código de barras/QR Code. Se estiver cadastrado, os dados serão carregados automaticamente; caso contrário, preencha o nome e setor!</div>
     
     <div class="grid">
       <div class="field">
         <label>Código do Produto</label>
         <div style="display:flex; gap:6px;">
           <input id="checkCodigo" inputmode="numeric" placeholder="Digite o código" oninput="buscarProdutoPorCodigoCheck()">
-          <button class="btn btn-secondary" type="button" onclick="abrirScannerCheck()" style="min-width:46px">📷</button>
+          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('check')" style="min-width:46px" title="Escanear Código/QR">📷</button>
         </div>
       </div>
       <div class="field">
@@ -320,15 +320,16 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
   </div>
 </div>
 
-<div id="modalScannerCheck" class="modal hidden">
+<!-- Modal Scanner Global (QR Code e Código de Barras) -->
+<div id="modalScannerGlobal" class="modal hidden">
   <div class="modal-card">
-    <h2>Leitor de código de barras</h2>
+    <h2>Leitor de Código / QR Code</h2>
     <div class="scan-box">
-      <div id="readerCheck"></div>
-      <p id="scannerCheckStatus" style="font-size:13px; margin:8px 0;">Toque em “Iniciar câmera”.</p>
-      <button id="iniciarCameraCheckBtn" class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="iniciarLeitorCheck()">📷 Iniciar câmera</button>
+      <div id="readerGlobal"></div>
+      <p id="scannerGlobalStatus" style="font-size:13px; margin:8px 0;">Toque em “Iniciar câmera”.</p>
+      <button id="iniciarCameraGlobalBtn" class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="iniciarLeitorGlobal()">📷 Iniciar câmera</button>
     </div>
-    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharScannerCheck()">Fechar</button></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharScannerGlobal()">Fechar</button></div>
   </div>
 </div>
 
@@ -341,8 +342,16 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         <input id="calcFab" placeholder="Ex: 02/24" oninput="calcularValidadeAutomatica()">
       </div>
       <div class="field">
-        <label>Prazo de Validade (Meses)</label>
-        <input id="calcMeses" type="number" placeholder="Ex: 24" oninput="calcularValidadeAutomatica()">
+        <label>Prazo de Validade</label>
+        <div style="display:grid; grid-template-columns: 1fr 110px; gap:6px;">
+          <input id="calcPrazoQtd" type="number" min="1" placeholder="Ex: 30" oninput="calcularValidadeAutomatica()">
+          <select id="calcPrazoUnidade" onchange="calcularValidadeAutomatica()">
+            <option value="dias">Dias</option>
+            <option value="semanas">Semanas</option>
+            <option value="meses" selected>Meses</option>
+            <option value="anos">Anos</option>
+          </select>
+        </div>
       </div>
     </div>
     <div id="calcResultado" class="notice notice-info hidden" style="margin-top:10px; font-weight:700;"></div>
@@ -382,7 +391,13 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
     <h2 id="produtoFormTitulo">Novo produto</h2>
     <div class="notice notice-warning" style="margin-bottom:10px;">⚠️ É obrigatório informar pelo menos uma data de validade.</div>
     <div class="grid">
-      <div class="field"><label>Código</label><input id="produtoCodigo" inputmode="numeric"></div>
+      <div class="field">
+        <label>Código</label>
+        <div style="display:flex; gap:6px;">
+          <input id="produtoCodigo" inputmode="numeric" placeholder="Código ou QR">
+          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('produto')" style="min-width:46px" title="Escanear Código/QR">📷</button>
+        </div>
+      </div>
       <div class="field"><label>Produto</label><input id="produtoNome"></div>
       <div class="field"><label>Setor</label><select id="produtoSetor"><option value="">Selecione</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option><option>Frios</option><option>Higiene</option><option>Outros</option></select></div>
       <div class="field"><label>Foto (opcional)</label><input id="produtoFoto" type="file" accept="image/*" capture="environment" onchange="carregarFotoProduto()"></div>
@@ -545,8 +560,10 @@ let produtos = [];
 let historico = [];
 
 // Variáveis de Controle e Estado
-let html5QrCodeCheck = null;
-let leitorCheckIniciado = false;
+let html5QrCodeGlobal = null;
+let leitorGlobalIniciado = false;
+let destinoEscaneamento = 'check'; // 'check' ou 'produto'
+
 let produtoEditandoId = null;
 let produtoConferenciaId = null;
 let produtoAtualId = null;
@@ -580,14 +597,12 @@ async function persistir() {
   try {
     const atualizadoEm = new Date().toISOString();
     
-    // Salva ou atualiza a chave 'produtos'
     const resProd = await supabaseClient
       .from('app_dados')
       .upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
       
     if (resProd.error) throw resProd.error;
 
-    // Salva ou atualiza a chave 'historico'
     const resHist = await supabaseClient
       .from('app_dados')
       .upsert({ chave: 'historico', conteudo: historico, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
@@ -649,6 +664,54 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
+/* Leitor Scanner Global para QR Code e Código de Barras */
+function abrirScannerGlobal(destino = 'check') {
+  destinoEscaneamento = destino;
+  document.getElementById("modalScannerGlobal").classList.remove("hidden");
+}
+
+function fecharScannerGlobal() {
+  if (html5QrCodeGlobal && leitorGlobalIniciado) {
+    html5QrCodeGlobal.stop().then(() => {
+      leitorGlobalIniciado = false;
+      document.getElementById("modalScannerGlobal").classList.add("hidden");
+      document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
+    }).catch(() => {
+      document.getElementById("modalScannerGlobal").classList.add("hidden");
+    });
+  } else {
+    document.getElementById("modalScannerGlobal").classList.add("hidden");
+  }
+}
+
+function iniciarLeitorGlobal() {
+  const statusEl = document.getElementById("scannerGlobalStatus");
+  if (!html5QrCodeGlobal) {
+    html5QrCodeGlobal = new Html5Qrcode("readerGlobal");
+  }
+  html5QrCodeGlobal.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
+    decodedText => {
+      fecharScannerGlobal();
+      if (destinoEscaneamento === 'check') {
+        document.getElementById("checkCodigo").value = decodedText;
+        buscarProdutoPorCodigoCheck();
+      } else if (destinoEscaneamento === 'produto') {
+        document.getElementById("produtoCodigo").value = decodedText;
+      }
+      mostrarToast("Código/QR lido com sucesso!", "success");
+    },
+    error => {}
+  ).then(() => {
+    leitorGlobalIniciado = true;
+    statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
+    document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
+  }).catch(err => {
+    statusEl.textContent = "Erro ao iniciar a câmera: " + err;
+  });
+}
+
 /* Check de Estoque */
 function abrirCheckEstoque(){
  document.getElementById("checkCodigo").value="";
@@ -667,7 +730,7 @@ function abrirCheckEstoque(){
 }
 function fecharCheckEstoque(){
  document.getElementById("modalCheckEstoque").classList.add("hidden");
- fecharScannerCheck();
+ fecharScannerGlobal();
 }
 function alternarCamposContagemCheck(){
  const fez = document.getElementById("checkFezContagem").checked;
@@ -720,45 +783,6 @@ function buscarProdutoPorCodigoCheck(){
   statusDiv.textContent=`ℹ️ Código não cadastrado. Preencha os campos abaixo para cadastrar automaticamente.`;
   statusDiv.className="notice notice-warning";
  }
-}
-
-function abrirScannerCheck(){
- document.getElementById("modalScannerCheck").classList.remove("hidden");
-}
-function fecharScannerCheck(){
- if(html5QrCodeCheck && leitorCheckIniciado){
-  html5QrCodeCheck.stop().then(()=>{
-   leitorCheckIniciado=false;
-   document.getElementById("modalScannerCheck").classList.add("hidden");
-  }).catch(()=>{
-   document.getElementById("modalScannerCheck").classList.add("hidden");
-  });
- }else{
-  document.getElementById("modalScannerCheck").classList.add("hidden");
- }
-}
-function iniciarLeitorCheck(){
- const statusEl=document.getElementById("scannerCheckStatus");
- if(!html5QrCodeCheck){
-  html5QrCodeCheck=new Html5Qrcode("readerCheck");
- }
- html5QrCodeCheck.start(
-  {facingMode:"environment"},
-  {fps:10,qrbox:{width:240,height:140}},
-  decodedText=>{
-   document.getElementById("checkCodigo").value=decodedText;
-   fecharScannerCheck();
-   buscarProdutoPorCodigoCheck();
-   mostrarToast("Código lido com sucesso!","success");
-  },
-  error=>{}
- ).then(()=>{
-  leitorCheckIniciado=true;
-  statusEl.textContent="Câmera ativa. Aponte para o código de barras.";
-  document.getElementById("iniciarCameraCheckBtn").classList.add("hidden");
- }).catch(err=>{
-  statusEl.textContent="Erro ao iniciar a câmera: "+err;
- });
 }
 
 async function salvarCheckEstoque(){
@@ -835,7 +859,8 @@ async function salvarCheckEstoque(){
 
 function abrirCalculadora(){
  document.getElementById("calcFab").value="";
- document.getElementById("calcMeses").value="";
+ document.getElementById("calcPrazoQtd").value="";
+ document.getElementById("calcPrazoUnidade").value="meses";
  document.getElementById("calcResultado").classList.add("hidden");
  document.getElementById("modalCalculadora").classList.remove("hidden");
 }
@@ -845,17 +870,18 @@ function fecharCalculadora(){
 
 function calcularValidadeAutomatica(){
  const fabStr=document.getElementById("calcFab").value.trim();
- const mesesStr=document.getElementById("calcMeses").value.trim();
+ const qtdStr=document.getElementById("calcPrazoQtd").value.trim();
+ const unidade=document.getElementById("calcPrazoUnidade").value;
  const resBox=document.getElementById("calcResultado");
 
- if(!fabStr || !mesesStr){
+ if(!fabStr || !qtdStr){
   resBox.classList.add("hidden");
   return;
  }
 
- const meses=parseInt(mesesStr,10);
- if(isNaN(meses) || meses<=0){
-  resBox.textContent="Insira um número de meses válido.";
+ const valorQtd=parseInt(qtdStr,10);
+ if(isNaN(valorQtd) || valorQtd<=0){
+  resBox.textContent="Insira um prazo válido.";
   resBox.className="notice notice-warning";
   resBox.classList.remove("hidden");
   return;
@@ -871,7 +897,7 @@ function calcularValidadeAutomatica(){
   if(m>=1 && m<=12){
    mes=m;
    ano=a;
-   dia=0; 
+   dia=1; 
   }
  }else if(partes.length===3){
   let d=parseInt(partes[0],10);
@@ -892,18 +918,16 @@ function calcularValidadeAutomatica(){
   return;
  }
 
- let dataVenc;
- if(dia===0){
-  const targetYear = ano + Math.floor((mes - 1 + meses) / 12);
-  const targetMonth = (mes - 1 + meses) % 12;
-  dataVenc = new Date(targetYear, targetMonth + 1, 0);
- }else{
-  const targetYear = ano + Math.floor((mes - 1 + meses) / 12);
-  const targetMonth = (mes - 1 + meses) % 12;
-  dataVenc = new Date(targetYear, targetMonth, dia);
-  if (dataVenc.getMonth() !== targetMonth) {
-    dataVenc = new Date(targetYear, targetMonth + 1, 0);
-  }
+ let dataVenc = new Date(ano, mes - 1, dia || 1);
+
+ if(unidade === 'dias'){
+  dataVenc.setDate(dataVenc.getDate() + valorQtd);
+ }else if(unidade === 'semanas'){
+  dataVenc.setDate(dataVenc.getDate() + (valorQtd * 7));
+ }else if(unidade === 'meses'){
+  dataVenc.setMonth(dataVenc.getMonth() + valorQtd);
+ }else if(unidade === 'anos'){
+  dataVenc.setFullYear(dataVenc.getFullYear() + valorQtd);
  }
 
  const anoV=dataVenc.getFullYear();
@@ -1122,7 +1146,11 @@ function adicionarCampoDataProduto(valor=""){
  document.getElementById("produtoListaDatas").appendChild(linha);
 }
 
-function fecharProdutoForm(){document.getElementById("modalProduto").classList.add("hidden")}
+function fecharProdutoForm(){
+ document.getElementById("modalProduto").classList.add("hidden");
+ fecharScannerGlobal();
+}
+
 async function carregarFotoProduto(){
  const arq=document.getElementById("produtoFoto").files[0];if(!arq)return;
  try{
