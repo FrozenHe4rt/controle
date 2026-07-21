@@ -7,7 +7,7 @@
 <title>Ana Luiza • Controle de Vencimentos</title>
 <!-- Biblioteca Oficial do Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Biblioteca ZXing para Leitura de Código de Baras via Câmera -->
+<!-- Biblioteca ZXing para Leitura de Código de Barras via Câmera -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1"></script>
 <style>
 :root{
@@ -518,7 +518,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let codeReader = null;
 let scannerContextoAtivo = null; // 'check' ou 'produto'
 
-function iniciarScanner(contexto) {
+async function iniciarScanner(contexto) {
   scannerContextoAtivo = contexto;
   document.getElementById("modalScanner").classList.remove("hidden");
   
@@ -526,27 +526,43 @@ function iniciarScanner(contexto) {
     codeReader = new ZXing.BrowserBarcodeReader();
   }
   
-  codeReader.decodeFromVideoDevice(null, 'videoScanner', (result, err) => {
-    if (result) {
-      const codigoLido = result.text;
-      pararScanner();
-      
-      if (scannerContextoAtivo === 'check') {
-        document.getElementById("checkCodigo").value = codigoLido;
-        buscarProdutoPorCodigoCheck();
-      } else if (scannerContextoAtivo === 'produto') {
-        document.getElementById("produtoCodigo").value = codigoLido;
+  try {
+    const videoInputDevices = await codeReader.listVideoInputDevices();
+    let selectedDeviceId = null;
+    
+    if (videoInputDevices && videoInputDevices.length > 0) {
+      // Tenta encontrar a câmera traseira (environment) ou pega a última da lista
+      const trasera = videoInputDevices.find(device => 
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('traseira') ||
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('environment')
+      );
+      selectedDeviceId = trasera ? trasera.deviceId : videoInputDevices[videoInputDevices.length - 1].deviceId;
+    }
+
+    codeReader.decodeFromVideoDevice(selectedDeviceId, 'videoScanner', (result, err) => {
+      if (result) {
+        const codigoLido = result.text;
+        pararScanner();
+        
+        if (scannerContextoAtivo === 'check') {
+          document.getElementById("checkCodigo").value = codigoLido;
+          buscarProdutoPorCodigoCheck();
+        } else if (scannerContextoAtivo === 'produto') {
+          document.getElementById("produtoCodigo").value = codigoLido;
+        }
+        mostrarToast(`Código lido: ${codigoLido}`, "success");
       }
-      mostrarToast(`Código lido: ${codigoLido}`, "success");
-    }
-    if (err && !(err instanceof ZXing.NotFoundException)) {
-      console.warn("Erro no scanner:", err);
-    }
-  }).catch(err => {
+      if (err && !(err instanceof ZXing.NotFoundException)) {
+        console.warn("Erro no scanner:", err);
+      }
+    });
+  } catch (err) {
     console.error("Erro ao iniciar câmera:", err);
-    mostrarToast("Não foi possível acessar a câmera para leitura.", "error");
+    mostrarToast("Não foi possível acessar a câmera para leitura. Verifique as permissões.", "error");
     pararScanner();
-  });
+  }
 }
 
 function pararScanner() {
