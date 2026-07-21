@@ -526,7 +526,7 @@ function iniciarScanner(contexto) {
     codeReader = new ZXing.BrowserBarcodeReader();
   }
   
-  codeReader.decodeFromVideoDevice(null, 'videoVideoScanner' in window ? 'videoVideoScanner' : 'videoScanner', (result, err) => {
+  codeReader.decodeFromVideoDevice(null, 'videoScanner', (result, err) => {
     if (result) {
       const codigoLido = result.text;
       pararScanner();
