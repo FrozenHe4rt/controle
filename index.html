@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0b0d">
 <title>Ana Luiza • Controle de Vencimentos</title>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <!-- Biblioteca Oficial do Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -115,11 +114,6 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 .conf-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.conf-top strong{color:#fff;font-size:13px}
 .conf-card p{margin:6px 0 0;color:#a1a1aa;font-size:13px}
 .history-item{border:1px solid #2f2f35;border-radius:10px;padding:10px;margin-bottom:8px;background:linear-gradient(145deg,#19191d,#121215)}.history-item strong{color:#fff;font-size:13px}.history-item small{color:#a1a1aa;font-size:11px}
-.scan-box{background:#151519;border:1px dashed #44444b;border-radius:12px;padding:12px;text-align:center}
-
-/* Correção robusta para o container e vídeo do leitor de código de barras */
-#readerGlobal{width:100%; max-width: 400px; margin: 0 auto; background:#151519; overflow:hidden; border-radius:10px; min-height: 250px;}
-#readerGlobal video{width:100%!important; height: auto !important; border-radius:10px; background:transparent!important; object-fit: cover;}
 
 .small{font-size:11px;color:#a1a1aa}
 
@@ -248,15 +242,12 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div id="modalCheckEstoque" class="modal hidden">
   <div class="modal-card large">
     <h2>📦 Check de Estoque e Validade</h2>
-    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código do produto ou escaneie o código de barras/QR Code. Se estiver cadastrado, os dados serão carregados automaticamente; caso contrário, preencha o nome e setor!</div>
+    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código do produto. Se estiver cadastrado, os dados serão carregados automaticamente; caso contrário, preencha o nome e setor!</div>
     
     <div class="grid">
       <div class="field">
         <label>Código do Produto</label>
-        <div style="display:flex; gap:6px;">
-          <input id="checkCodigo" inputmode="numeric" placeholder="Digite o código" oninput="buscarProdutoPorCodigoCheck()">
-          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('checkCodigo')" style="min-width:46px" title="Escanear Código/QR">📷</button>
-        </div>
+        <input id="checkCodigo" inputmode="numeric" placeholder="Digite o código" oninput="buscarProdutoPorCodigoCheck()">
       </div>
       <div class="field">
         <label>Nome do Produto</label>
@@ -321,19 +312,6 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
       <button class="btn btn-secondary" onclick="fecharCheckEstoque()">Fechar</button>
       <button class="btn btn-primary" onclick="salvarCheckEstoque()">Salvar / Lançar</button>
     </div>
-  </div>
-</div>
-
-<!-- Modal Scanner Global (QR Code e Código de Barras) -->
-<div id="modalScannerGlobal" class="modal hidden">
-  <div class="modal-card">
-    <h2>Leitor de Código / QR Code</h2>
-    <div class="scan-box">
-      <div id="readerGlobal"></div>
-      <p id="scannerGlobalStatus" style="font-size:13px; margin:12px 0 8px;">Toque em “Iniciar câmera”.</p>
-      <button id="iniciarCameraGlobalBtn" class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="iniciarLeitorGlobal()">📷 Iniciar câmera</button>
-    </div>
-    <div class="modal-actions"><button class="btn btn-secondary" onclick="fecharScannerGlobal()">Fechar</button></div>
   </div>
 </div>
 
@@ -407,10 +385,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
     <div class="grid">
       <div class="field">
         <label>Código</label>
-        <div style="display:flex; gap:6px;">
-          <input id="produtoCodigo" inputmode="numeric" placeholder="Código ou QR">
-          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('produtoCodigo')" style="min-width:46px" title="Escanear Código/QR">📷</button>
-        </div>
+        <input id="produtoCodigo" inputmode="numeric" placeholder="Código do produto">
       </div>
       <div class="field"><label>Produto</label><input id="produtoNome"></div>
       <div class="field"><label>Setor</label><select id="produtoSetor"><option value="">Selecione</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option><option>Frios</option><option>Higiene</option><option>Outros</option></select></div>
@@ -573,11 +548,6 @@ const K_BACKUP="alns_ultimo_backup";
 let produtos = [];
 let historico = [];
 
-// Variáveis de Controle e Estado Scanner Global Reutilizável
-let html5QrCodeGlobal = null;
-let leitorGlobalIniciado = false;
-let destinoCampoIdGlobal = null;
-
 let produtoEditandoId = null;
 let produtoConferenciaId = null;
 let produtoAtualId = null;
@@ -678,105 +648,6 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
-/* Leitor Scanner Global Reutilizável com Tratamento Robusto de Câmera */
-function abrirScannerGlobal(campoIdDestino) {
-  destinoCampoIdGlobal = campoIdDestino;
-  document.getElementById("modalScannerGlobal").classList.remove("hidden");
-}
-
-async function fecharScannerGlobal() {
-  const statusEl = document.getElementById("scannerGlobalStatus");
-  if (html5QrCodeGlobal) {
-    try {
-      if (leitorGlobalIniciado) {
-        await html5QrCodeGlobal.stop();
-      }
-      await html5QrCodeGlobal.clear();
-    } catch (e) {
-      console.warn("Erro ao parar/limpar scanner:", e);
-    }
-  }
-  html5QrCodeGlobal = null;
-  leitorGlobalIniciado = false;
-  
-  document.getElementById("modalScannerGlobal").classList.add("hidden");
-  document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
-  if(statusEl) statusEl.textContent = "Toque em “Iniciar câmera”.";
-}
-
-async function iniciarLeitorGlobal() {
-  const statusEl = document.getElementById("scannerGlobalStatus");
-  statusEl.textContent = "Iniciando câmera e leitor de código de barras...";
-  
-  if (!html5QrCodeGlobal) {
-    try {
-      html5QrCodeGlobal = new Html5Qrcode("readerGlobal");
-    } catch (e) {
-      statusEl.textContent = "Erro ao instanciar leitor: " + e.message;
-      mostrarToast("Erro ao iniciar leitor de câmera", "error");
-      return;
-    }
-  }
-
-  const configLeitura = {
-    fps: 15,
-    qrbox: { width: 250, height: 150 },
-    aspectRatio: 1.0
-  };
-
-  const callbackSucesso = decodedText => {
-    const campoDestinoId = destinoCampoIdGlobal;
-    fecharScannerGlobal().then(() => {
-      if (campoDestinoId) {
-        const inputEl = document.getElementById(campoDestinoId);
-        if (inputEl) {
-          inputEl.value = decodedText;
-          if (campoDestinoId === 'checkCodigo') {
-            buscarProdutoPorCodigoCheck();
-          }
-        }
-      }
-      mostrarToast("Código/QR lido com sucesso!", "success");
-    });
-  };
-
-  const callbackErro = error => {
-    // Erros frame a frame são normais enquanto busca o código, não exibir alerta
-  };
-
-  try {
-    // Tenta primeiro com a câmera traseira (environment)
-    await html5QrCodeGlobal.start(
-      { facingMode: "environment" },
-      configLeitura,
-      callbackSucesso,
-      callbackErro
-    );
-    leitorGlobalIniciado = true;
-    statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
-    document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
-  } catch (errTraseira) {
-    console.warn("Falha ao abrir câmera traseira, tentando fallback genérico:", errTraseira);
-    try {
-      // Fallback para qualquer câmera disponível (caso environment falhe em alguns dispositivos)
-      await html5QrCodeGlobal.start(
-        { facingMode: "user" },
-        configLeitura,
-        callbackSucesso,
-        callbackErro
-      );
-      leitorGlobalIniciado = true;
-      statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
-      document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
-    } catch (errGeral) {
-      console.error("Erro total ao acessar câmera:", errGeral);
-      statusEl.textContent = "❌ Erro ao acessar a câmera. Verifique se permitiu o uso da câmera nas configurações do navegador ou se está usando HTTPS.";
-      mostrarToast("Não foi possível acessar a câmera", "error");
-      document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
-    }
-  }
-}
-
 /* Check de Estoque */
 function abrirCheckEstoque(){
  document.getElementById("checkCodigo").value="";
@@ -795,7 +666,6 @@ function abrirCheckEstoque(){
 }
 function fecharCheckEstoque(){
  document.getElementById("modalCheckEstoque").classList.add("hidden");
- fecharScannerGlobal();
 }
 function alternarCamposContagemCheck(){
  const fez = document.getElementById("checkFezContagem").checked;
@@ -1251,7 +1121,6 @@ function adicionarCampoDataProduto(valor=""){
 
 function fecharProdutoForm(){
  document.getElementById("modalProduto").classList.add("hidden");
- fecharScannerGlobal();
 }
 
 async function carregarFotoProduto(){
