@@ -678,7 +678,7 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
-/* Leitor Scanner Global Reutilizável em Qualquer Tela/Modal */
+/* Leitor Scanner Global Reutilizável com Tratamento Robusto de Câmera */
 function abrirScannerGlobal(campoIdDestino) {
   destinoCampoIdGlobal = campoIdDestino;
   document.getElementById("modalScannerGlobal").classList.remove("hidden");
@@ -713,6 +713,7 @@ async function iniciarLeitorGlobal() {
       html5QrCodeGlobal = new Html5Qrcode("readerGlobal");
     } catch (e) {
       statusEl.textContent = "Erro ao instanciar leitor: " + e.message;
+      mostrarToast("Erro ao iniciar leitor de câmera", "error");
       return;
     }
   }
@@ -723,36 +724,56 @@ async function iniciarLeitorGlobal() {
     aspectRatio: 1.0
   };
 
+  const callbackSucesso = decodedText => {
+    const campoDestinoId = destinoCampoIdGlobal;
+    fecharScannerGlobal().then(() => {
+      if (campoDestinoId) {
+        const inputEl = document.getElementById(campoDestinoId);
+        if (inputEl) {
+          inputEl.value = decodedText;
+          if (campoDestinoId === 'checkCodigo') {
+            buscarProdutoPorCodigoCheck();
+          }
+        }
+      }
+      mostrarToast("Código/QR lido com sucesso!", "success");
+    });
+  };
+
+  const callbackErro = error => {
+    // Erros frame a frame são normais enquanto busca o código, não exibir alerta
+  };
+
   try {
+    // Tenta primeiro com a câmera traseira (environment)
     await html5QrCodeGlobal.start(
       { facingMode: "environment" },
       configLeitura,
-      decodedText => {
-        const campoDestinoId = destinoCampoIdGlobal;
-        fecharScannerGlobal().then(() => {
-          if (campoDestinoId) {
-            const inputEl = document.getElementById(campoDestinoId);
-            if (inputEl) {
-              inputEl.value = decodedText;
-              // Se o campo destino for o checkCodigo, executa automaticamente a busca
-              if (campoDestinoId === 'checkCodigo') {
-                buscarProdutoPorCodigoCheck();
-              }
-            }
-          }
-          mostrarToast("Código/QR lido com sucesso!", "success");
-        });
-      },
-      error => {
-        // Ignora erros frame a frame
-      }
+      callbackSucesso,
+      callbackErro
     );
     leitorGlobalIniciado = true;
     statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
     document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
-  } catch (err) {
-    console.error("Erro câmera:", err);
-    statusEl.textContent = "Erro ao acessar câmera. Verifique as permissões do navegador.";
+  } catch (errTraseira) {
+    console.warn("Falha ao abrir câmera traseira, tentando fallback genérico:", errTraseira);
+    try {
+      // Fallback para qualquer câmera disponível (caso environment falhe em alguns dispositivos)
+      await html5QrCodeGlobal.start(
+        { facingMode: "user" },
+        configLeitura,
+        callbackSucesso,
+        callbackErro
+      );
+      leitorGlobalIniciado = true;
+      statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
+      document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
+    } catch (errGeral) {
+      console.error("Erro total ao acessar câmera:", errGeral);
+      statusEl.textContent = "❌ Erro ao acessar a câmera. Verifique se permitiu o uso da câmera nas configurações do navegador ou se está usando HTTPS.";
+      mostrarToast("Não foi possível acessar a câmera", "error");
+      document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
+    }
   }
 }
 
