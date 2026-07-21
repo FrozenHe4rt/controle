@@ -369,7 +369,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
       </div>
 
       <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
-        <label style="display:block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom:8px;">Você realizou a contagem deste produto?</label>
+        <label style="display:block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom:8px;">Você realizou a contagem detalhada por setor deste produto?</label>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <button type="button" id="btnCheckSim" class="btn btn-secondary" onclick="definirRespostaContagemCheck(true)">Sim</button>
           <button type="button" id="btnCheckNao" class="btn btn-secondary" onclick="definirRespostaContagemCheck(false)">Não</button>
@@ -548,7 +548,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
     </div>
 
     <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
-      <label style="display:block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom:8px;">Você realizou a contagem deste produto?</label>
+      <label style="display:block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom:8px;">Você realizou a contagem detalhada por setor deste produto?</label>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <button type="button" id="btnConfSim" class="btn btn-secondary" onclick="definirRespostaContagemConf(true)">Sim</button>
         <button type="button" id="btnConfNao" class="btn btn-secondary" onclick="definirRespostaContagemConf(false)">Não</button>
@@ -965,7 +965,7 @@ function sugerirProdutoPorNome(termoInput, contexto){
   document.getElementById("checkCodigo").value = p.codigo;
   document.getElementById("checkSetor").value = p.setor;
   if(document.getElementById("checkMarca")) document.getElementById("checkMarca").value = p.marca || "";
-  atualizarBlocoEmbalagemCheck(p);
+  verificarETratarEmbalagemProduto(p, 'check');
  }
 }
 
@@ -1019,7 +1019,7 @@ function definirRespostaContagemCheck(fez){
   document.getElementById("checkQtdLoja").value="0";
   document.getElementById("checkQtdGeladeira").value="0";
   document.getElementById("checkQtdDeposito").value="0";
-  document.getElementById("checkTotalFinal").textContent="0";
+  calcularTotalCheck();
  }
 }
 
@@ -1031,27 +1031,70 @@ function calcularTotalCheckPorPacks(){
  const qtdPacks = parseInt(document.getElementById("checkQtdPacks").value, 10) || 0;
  const totalUnidades = qtdPacks * p.embalagemQtd;
  document.getElementById("checkTotalCalculadoPacks").textContent = totalUnidades;
-
- // Distribuir automaticamente na Loja se desejado ou apenas refletir no total final de contagem se ativado
+ calcularTotalCheck();
 }
 
-function atualizarBlocoEmbalagemCheck(p){
- const bloco = document.getElementById("blocoEmbalagemCheck");
- if(p && p.embalagemQtd && p.embalagemQtd > 0){
-  bloco.classList.remove("hidden");
-  document.getElementById("lblTipoEmbCheck").textContent = p.embalagemTipo || "Pack";
-  document.getElementById("lblTipoEmbPluralCheck").textContent = (p.embalagemTipo || "Pack") + "s";
-  document.getElementById("lblQtdEmbCheck").textContent = p.embalagemQtd;
- }else{
-  bloco.classList.add("hidden");
- }
+function verificarETratarEmbalagemProduto(p, contexto = 'check') {
+  if (contexto === 'check') {
+    const bloco = document.getElementById("blocoEmbalagemCheck");
+    if (p && p.embalagemQtd && p.embalagemQtd > 0) {
+      bloco.classList.remove("hidden");
+      document.getElementById("lblTipoEmbCheck").textContent = p.embalagemTipo || "Pack";
+      document.getElementById("lblTipoEmbPluralCheck").textContent = (p.embalagemTipo || "Pack") + "s";
+      document.getElementById("lblQtdEmbCheck").textContent = p.embalagemQtd;
+    } else {
+      bloco.classList.add("hidden");
+      // Se não tiver embalagem cadastrada, pergunta direto se deseja configurar!
+      perguntarEConfigurarEmbalagem(p);
+    }
+  } else if (contexto === 'conf') {
+    const bloco = document.getElementById("blocoEmbalagemConf");
+    if (p && p.embalagemQtd && p.embalagemQtd > 0) {
+      bloco.classList.remove("hidden");
+      document.getElementById("lblTipoEmbConf").textContent = p.embalagemTipo || "Pack";
+      document.getElementById("lblTipoEmbPluralConf").textContent = (p.embalagemTipo || "Pack") + "s";
+      document.getElementById("lblQtdEmbConf").textContent = p.embalagemQtd;
+    } else {
+      bloco.classList.add("hidden");
+      perguntarEConfigurarEmbalagem(p);
+    }
+  }
+}
+
+function perguntarEConfigurarEmbalagem(p) {
+  const tipoEscolhido = prompt(`O produto "${p.nome}" não tem quantidade por embalagem configurada.\nDigite o tipo de embalagem (Ex: Pack, Fardo, Caixa):`, "Pack");
+  if (!tipoEscolhido) return;
+  const qtdInformada = parseInt(prompt(`Quantas unidades tem cada ${tipoEscolhido} de ${p.nome}?`, "12"), 10);
+  if (!isNaN(qtdInformada) && qtdInformada > 0) {
+    p.embalagemTipo = tipoEscolhido.trim();
+    p.embalagemQtd = qtdInformada;
+    p.atualizadoEm = new Date().toISOString();
+    persistir();
+    mostrarToast(`Embalagem salva: ${tipoEscolhido} com ${qtdInformada} unidades!`, "success");
+    
+    // Atualiza a tela correspondente
+    if(!document.getElementById("modalCheckEstoque").classList.contains("hidden")) {
+      verificarETratarEmbalagemProduto(p, 'check');
+    }
+    if(!document.getElementById("modalConferencia").classList.contains("hidden")) {
+      verificarETratarEmbalagemProduto(p, 'conf');
+    }
+  }
 }
 
 function calcularTotalCheck(){
  const qL=parseInt(document.getElementById("checkQtdLoja").value)||0;
  const qG=parseInt(document.getElementById("checkQtdGeladeira").value)||0;
  const qD=parseInt(document.getElementById("checkQtdDeposito").value)||0;
- const total=qL+qG+qD;
+ const qtdPacksInput=parseInt(document.getElementById("checkQtdPacks").value)||0;
+
+ let total = qL + qG + qD;
+ const codigo = document.getElementById("checkCodigo").value.trim();
+ const p = produtos.find(x => x.codigo === codigo);
+ if(p && p.embalagemQtd && qtdPacksInput > 0) {
+  total += (qtdPacksInput * p.embalagemQtd);
+ }
+
  document.getElementById("checkTotalFinal").textContent=total;
 }
 
@@ -1071,7 +1114,7 @@ function buscarProdutoPorCodigoCheck(){
   document.getElementById("checkNome").value=p.nome;
   document.getElementById("checkMarca").value=p.marca || "";
   document.getElementById("checkSetor").value=p.setor;
-  atualizarBlocoEmbalagemCheck(p);
+  verificarETratarEmbalagemProduto(p, 'check');
   
   const ultima=produtoUltimaConferencia(p);
   if(ultima){
@@ -1108,11 +1151,9 @@ async function salvarCheckEstoque(){
  const qtdPacksInput = parseInt(document.getElementById("checkQtdPacks").value, 10) || 0;
  
  let total=qL+qG+qD;
- if(qtdPacksInput > 0){
-  const pTemp = produtos.find(x => x.codigo === codigo);
-  if(pTemp && pTemp.embalagemQtd){
-   total += (qtdPacksInput * pTemp.embalagemQtd);
-  }
+ const pTemp = produtos.find(x => x.codigo === codigo);
+ if(pTemp && pTemp.embalagemQtd && qtdPacksInput > 0){
+  total += (qtdPacksInput * pTemp.embalagemQtd);
  }
 
  const noSistemaEmpresa = document.getElementById("checkNoSistemaEmpresa").checked;
@@ -1125,7 +1166,7 @@ async function salvarCheckEstoque(){
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
  let obs="";
  if(btnSimAtivo || qtdPacksInput > 0){
-  obs=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} ${qtdPacksInput > 0 ? '| Packs: ' + qtdPacksInput : ''} | Total: ${total} | ${statusTextoSistema}`;
+  obs=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} ${qtdPacksInput > 0 ? '| ' + (p?.embalagemTipo || 'Pack') + 's: ' + qtdPacksInput : ''} | Total: ${total} | ${statusTextoSistema}`;
  }else{
   obs=`${statusTextoSistema}`;
  }
@@ -1749,17 +1790,8 @@ function abrirConferencia(id){
  document.getElementById("confData").value=hojeISO();
  document.getElementById("confObservacao").value="";
  
- // Atualizar Bloco Embalagem na Conferência se houver
- const blocoEmbConf = document.getElementById("blocoEmbalagemConf");
- if(p.embalagemQtd && p.embalagemQtd > 0){
-  blocoEmbConf.classList.remove("hidden");
-  document.getElementById("lblTipoEmbConf").textContent = p.embalagemTipo || "Pack";
-  document.getElementById("lblTipoEmbPluralConf").textContent = (p.embalagemTipo || "Pack") + "s";
-  document.getElementById("lblQtdEmbConf").textContent = p.embalagemQtd;
-  document.getElementById("confQtdPacks").value = "";
- }else{
-  blocoEmbConf.classList.add("hidden");
- }
+ // Verificar ou perguntar embalagem se não configurada
+ verificarETratarEmbalagemProduto(p, 'conf');
 
  definirRespostaContagemConf(false);
  document.getElementById("confNoSistemaEmpresa").checked=false;
@@ -1794,7 +1826,7 @@ function definirRespostaContagemConf(fez){
   document.getElementById("confQtdLoja").value="0";
   document.getElementById("confQtdGeladeira").value="0";
   document.getElementById("confQtdDeposito").value="0";
-  document.getElementById("confTotalFinal").textContent="0";
+  calcularTotalConf();
  }
 }
 
@@ -1805,13 +1837,21 @@ function calcularTotalConfPorPacks(){
  const qtdPacks = parseInt(document.getElementById("confQtdPacks").value, 10) || 0;
  const totalUnidades = qtdPacks * p.embalagemQtd;
  document.getElementById("confTotalCalculadoPacks").textContent = totalUnidades;
+ calcularTotalConf();
 }
 
 function calcularTotalConf(){
  const qL=parseInt(document.getElementById("confQtdLoja").value)||0;
  const qG=parseInt(document.getElementById("confQtdGeladeira").value)||0;
  const qD=parseInt(document.getElementById("confQtdDeposito").value)||0;
- const total=qL+qG+qD;
+ const qtdPacksInput=parseInt(document.getElementById("confQtdPacks").value)||0;
+
+ let total = qL + qG + qD;
+ const p = produtos.find(x => x.id === produtoConferenciaId);
+ if(p && p.embalagemQtd && qtdPacksInput > 0) {
+  total += (qtdPacksInput * p.embalagemQtd);
+ }
+
  document.getElementById("confTotalFinal").textContent=total;
 }
 
@@ -1845,7 +1885,7 @@ async function salvarConferencia(){
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
  let obsFinal="";
  if(btnSimAtivo || qtdPacksInput > 0){
-  obsFinal=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} ${qtdPacksInput > 0 ? '| Packs: ' + qtdPacksInput : ''} | Total: ${total} | ${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
+  obsFinal=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} ${qtdPacksInput > 0 ? '| ' + (p.embalagemTipo || 'Pack') + 's: ' + qtdPacksInput : ''} | Total: ${total} | ${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
  }else{
   obsFinal=`${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
  }
