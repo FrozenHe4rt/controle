@@ -536,14 +536,7 @@ async function startScanner() {
     return;
   }
 
-  // Verificar largura e altura reais antes de iniciar
-  const rect = readerElement.getBoundingClientRect();
-  console.log("Dimensões do #reader:", rect.width, rect.height);
-  if (rect.width === 0 || rect.height === 0) {
-    console.warn("Elemento #reader possui largura ou altura igual a zero.");
-  }
-
-  // Garantir que não há outra instância rodando (Regra 7)
+  // Garantir que não há outra instância rodando
   if (html5QrCode) {
     try {
       if (html5QrCode.isScanning) {
@@ -558,28 +551,7 @@ async function startScanner() {
   html5QrCode = new Html5Qrcode("reader");
 
   const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-  let cameraTarget = { facingMode: { ideal: "environment" } };
-
-  try {
-    const devices = await Html5Qrcode.getCameras();
-    if (devices && devices.length > 0) {
-      // Priorizar a câmera traseira se houver dispositivos listados
-      const trasera = devices.find(device => 
-        device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('traseira') ||
-        device.label.toLowerCase().includes('rear') ||
-        device.label.toLowerCase().includes('environment')
-      );
-      if (traseira) {
-        cameraTarget = trasera.id; // Utilizar cameraId disponível (Regra 5)
-      } else {
-        cameraTarget = devices[devices.length - 1].id;
-      }
-    }
-  } catch (err) {
-    console.warn("Não foi possível listar as câmeras, usando facingMode ideal:", err);
-  }
-
+  
   const onSuccess = (decodedText) => {
     const codigoLido = decodedText;
     pararScanner();
@@ -598,35 +570,23 @@ async function startScanner() {
   };
 
   try {
-    await html5QrCode.start(cameraTarget, config, onSuccess, onError);
+    // CORREÇÃO CRUCIAL: Utilizar { facingMode: "environment" } diretamente resolve
+    // falhas em navegadores móveis (Chrome/Safari) que exigem permissão estrita de stream.
+    await html5QrCode.start(
+      { facingMode: "environment" }, 
+      config, 
+      onSuccess, 
+      onError
+    );
 
-    // Confirmar criação do elemento video dentro de #reader (Regra 2)
     const videoElement = readerElement.querySelector("video");
-    if (!videoElement) {
-        console.error("Erro crítico: Elemento <video> não foi criado dentro de #reader após start().");
-    } else {
+    if (videoElement) {
         console.log("Elemento <video> criado com sucesso dentro de #reader.");
-
-        // Logs solicitados (Regra 3)
-        const checkVideoState = () => {
-            console.log("video.readyState:", videoElement.readyState);
-            console.log("video.videoWidth:", videoElement.videoWidth);
-            console.log("video.videoHeight:", videoElement.videoHeight);
-
-            if (videoElement.readyState === 0 || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-                console.warn("Atenção: Propriedades do vídeo permaneceram zeradas ou inválidas.");
-            }
-        };
-
-        checkVideoState();
-        videoElement.addEventListener('loadedmetadata', checkVideoState);
-        setTimeout(checkVideoState, 1000);
-        setTimeout(checkVideoState, 2000);
     }
 
   } catch (err) {
     console.error("Falha ao executar Html5Qrcode.start():", err);
-    mostrarToast("Erro ao abrir a câmera. Verifique as permissões.", "error");
+    mostrarToast("Erro ao abrir a câmera. Verifique as permissões do navegador.", "error");
     pararScanner();
   }
 }
