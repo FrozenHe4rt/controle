@@ -207,6 +207,11 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
   </div>
 
   <div class="panel">
+    <!-- Botão Grande de Leitor na Tela Inicial -->
+    <button class="btn btn-primary" style="width:100%; min-height:56px; font-size:16px; margin-bottom:16px; background:linear-gradient(135deg,#1e3a8a,#2563eb); border-color:#3b82f6;" onclick="iniciarScanner('geral')">
+      📷 Ler Código de Barras
+    </button>
+
     <!-- Grid de Cards do Dashboard Otimizada -->
     <div class="dashboard-grid">
       <div class="card" onclick="abrirModalProdutos()">
@@ -240,17 +245,17 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         </div>
         <div class="menu-item-action">➔</div>
       </div>
+      <div class="menu-item" onclick="abrirGerenciarEmbalagens()">
+        <div class="menu-item-info">
+          <h4>📐 Quantidade por Embalagem</h4>
+          <p>Configurar packs, fardos, caixas e unidades por produto</p>
+        </div>
+        <div class="menu-item-action">➔</div>
+      </div>
       <div class="menu-item" onclick="abrirCalculadora()">
         <div class="menu-item-info">
           <h4>🧮 Calculadora de Validade e Fabricação</h4>
           <p>Calcular vencimento ou data de fabricação por prazo (dias, semanas, meses, anos)</p>
-        </div>
-        <div class="menu-item-action">➔</div>
-      </div>
-      <div class="menu-item" onclick="abrirConsultaPacks()">
-        <div class="menu-item-info">
-          <h4>📦 Consulta de Unidades por Pack / Caixa</h4>
-          <p>Consulte produtos, veja unidades por fardo/caixa e calcule a soma total por packs</p>
         </div>
         <div class="menu-item-action">➔</div>
       </div>
@@ -268,42 +273,46 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
   </div>
 </main>
 
-<!-- Modal Consulta de Packs / Caixas -->
-<div id="modalConsultaPacks" class="modal hidden">
+<!-- Modal Quantidade por Embalagem (Menu Principal) -->
+<div id="modalGerenciarEmbalagens" class="modal hidden">
   <div class="modal-card large">
-    <h2>📦 Consulta e Calculadora de Packs / Caixas</h2>
-    <div class="notice notice-info" style="margin-bottom:12px;">Busque o produto pelo nome ou código. Defina o fator de unidades por pack/caixa e calcule o total de unidades instantaneamente!</div>
-
-    <div class="toolbar" style="grid-template-columns: 1fr; margin-bottom:12px;">
-      <input id="buscaPackInput" placeholder="🔎 Digite o nome ou código do produto..." oninput="renderizarListaPacks()">
+    <h2>📐 Quantidade por Embalagem</h2>
+    <div class="notice notice-info" style="margin-bottom:12px;">Selecione ou busque um produto para configurar ou editar quantas unidades existem em seu pack, caixa ou fardo.</div>
+    <div class="toolbar" style="margin-bottom:12px">
+      <input id="buscaEmbalagemModal" placeholder="🔎 Buscar por nome, código ou marca..." oninput="renderizarListaEmbalagensModal()">
     </div>
-
-    <div id="listaPacksContainer" style="display:flex; flex-direction:column; gap:8px; max-height:350px; overflow-y:auto; margin-bottom:16px;"></div>
-
-    <!-- Bloco de Cálculo de Packs para o Produto Selecionado -->
-    <div id="blocoCalculoPackAtivo" class="hidden" style="background: rgba(255,255,255,0.02); border: 1px solid #3d3d43; border-radius: 14px; padding: 14px;">
-      <h3 id="packTituloSelecionado" style="margin:0 0 10px; color:#fff; font-size:15px;">Produto Selecionado</h3>
-      
-      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-        <div class="field" style="margin-bottom:0;">
-          <label>Unidades por Pack/Caixa</label>
-          <input id="packFatorUnidades" type="number" min="1" placeholder="Ex: 12" oninput="calcularTotalPacks()">
-        </div>
-        <div class="field" style="margin-bottom:0;">
-          <label>Quantos Packs / Caixas?</label>
-          <input id="packQtdCaixas" type="number" min="0" placeholder="Ex: 5" oninput="calcularTotalPacks()">
-        </div>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:10px; border:1px solid #2f2f35;">
-        <span style="font-weight:700; font-size:14px; color:#fff;">Total Geral de Unidades:</span>
-        <div id="packResultadoTotal" style="font-size:20px; font-weight:800; color:var(--verde);">0 unidades</div>
-      </div>
-    </div>
-
+    <div id="listaProdutosEmbalagemModal" style="display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto;"></div>
     <div class="modal-actions" style="margin-top:16px">
-      <button class="btn btn-secondary" onclick="fecharConsultaPacks()">Fechar</button>
-      <button class="btn btn-primary" onclick="salvarFatorPackAtual()">Salvar Fator no Produto</button>
+      <button class="btn btn-secondary" onclick="fecharGerenciarEmbalagens()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Configurar Embalagem de um Produto Específico -->
+<div id="modalConfigEmbalagem" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="configEmbTitulo">Configurar Embalagem</h2>
+    <div id="configEmbProdutoInfo" class="notice notice-info" style="margin-bottom:12px;"></div>
+    <div class="grid">
+      <div class="field">
+        <label>Tipo de Embalagem</label>
+        <select id="embTipo">
+          <option value="Pack">Pack</option>
+          <option value="Fardo">Fardo</option>
+          <option value="Caixa">Caixa</option>
+          <option value="Bandeja">Bandeja</option>
+          <option value="Pacote">Pacote</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Quantidade de Unidades na Embalagem</label>
+        <input id="embQtd" type="number" min="1" placeholder="Ex: 12 ou 24">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="fecharConfigEmbalagem()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarConfigEmbalagem()">Salvar Embalagem</button>
     </div>
   </div>
 </div>
@@ -311,7 +320,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 <div id="modalCheckEstoque" class="modal hidden">
   <div class="modal-card large">
     <h2>📦 Check de Estoque e Validade</h2>
-    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código do produto ou leia o código de barras com a câmera. Se estiver cadastrado, os dados serão carregados automaticamente!</div>
+    <div class="notice notice-info" style="margin-bottom:12px;">Digite o código, nome ou marca, ou leia o código de barras com a câmera. Se estiver cadastrado, os dados serão carregados automaticamente!</div>
     
     <div class="grid">
       <div class="field">
@@ -323,7 +332,11 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
       </div>
       <div class="field">
         <label>Nome do Produto</label>
-        <input id="checkNome" placeholder="Nome do produto">
+        <input id="checkNome" placeholder="Nome do produto" oninput="sugerirProdutoPorNome(this.value, 'check')">
+      </div>
+      <div class="field">
+        <label>Marca (Opcional)</label>
+        <input id="checkMarca" placeholder="Ex: Coca-Cola, Nestlé...">
       </div>
       <div class="field">
         <label>Setor</label>
@@ -337,17 +350,30 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
           <option>Outros</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field full">
         <label>Data de Validade *Obrigatório*</label>
         <input id="checkDataValidade" type="date">
       </div>
 
+      <!-- Bloco de Embalagens / Packs Dinâmico -->
+      <div id="blocoEmbalagemCheck" class="field full hidden" style="background: rgba(139,92,246,0.07); padding: 12px; border: 1px solid #4c3794; border-radius: 12px; margin-top: 4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-weight:700; font-size:14px; color:#c4b5fd;">📐 Cálculo por <span id="lblTipoEmbCheck">Pack</span> (<span id="lblQtdEmbCheck">12</span> un)</span>
+          <button type="button" class="btn btn-secondary" style="min-height:30px; font-size:11px; padding:2px 8px;" onclick="abrirConfigEmbalagemAtualDoCheck()">Alterar Embalagem</button>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Quantidade de <span id="lblTipoEmbPluralCheck">Packs</span></label>
+          <input id="checkQtdPacks" type="number" min="0" placeholder="Ex: 5" oninput="calcularTotalCheckPorPacks()">
+        </div>
+        <div style="font-size:12px; color:#a78bfa; margin-top:6px;">Calculado automaticamente: <strong id="checkTotalCalculadoPacks" style="font-size:15px; color:#fff;">0</strong> unidades</div>
+      </div>
+
       <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
-        <label style="display:flex; align-items:center; gap: 10px; cursor: pointer; margin-bottom: 0;">
-          <input id="checkFezContagem" type="checkbox" style="width: 20px; height: 20px; accent-color: var(--verde); cursor: pointer;" onchange="alternarCamposContagemCheck()">
-          <span style="font-size: 14px; font-weight: 700; color: #fff;">Contar quantidade deste produto?</span>
-        </label>
-        <small style="color: var(--muted); display: block; margin-top: 4px; margin-left: 30px;">Se marcado, informe abaixo as quantidades na loja, geladeira e depósito.</small>
+        <label style="display:block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom:8px;">Você realizou a contagem deste produto?</label>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button type="button" id="btnCheckSim" class="btn btn-secondary" onclick="definirRespostaContagemCheck(true)">Sim</button>
+          <button type="button" id="btnCheckNao" class="btn btn-secondary" onclick="definirRespostaContagemCheck(false)">Não</button>
+        </div>
       </div>
 
       <div id="blocoCamposContagem" class="field full hidden" style="display:grid; grid-template-columns:1fr; gap:10px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px; border: 1px solid #2f2f35;">
@@ -429,7 +455,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
   <div class="modal-card large">
     <h2>Produtos Cadastrados</h2>
     <div class="toolbar" style="margin-bottom:12px">
-      <input id="busca" placeholder="🔎 Produto, código ou obs..." oninput="renderizarProdutos()">
+      <input id="busca" placeholder="🔎 Produto, código, marca ou obs..." oninput="renderizarProdutos()">
       <select id="filtroSetor" onchange="renderizarProdutos()">
         <option value="">Todos os setores</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option>
         <option>Frios</option><option>Higiene</option><option>Outros</option>
@@ -463,8 +489,8 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         </div>
       </div>
       <div class="field"><label>Produto</label><input id="produtoNome"></div>
+      <div class="field"><label>Marca (Opcional)</label><input id="produtoMarca" placeholder="Ex: Coca-Cola, Nestlé..."></div>
       <div class="field"><label>Setor</label><select id="produtoSetor"><option value="">Selecione</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option><option>Frios</option><option>Higiene</option><option>Outros</option></select></div>
-      <div class="field"><label>Unidades por Pack / Caixa (Opcional)</label><input id="produtoFatorPack" type="number" min="1" placeholder="Ex: 12"></div>
       <div class="field"><label>Foto (opcional)</label><input id="produtoFoto" type="file" accept="image/*" capture="environment" onchange="carregarFotoProduto()"></div>
       <div class="field full"><img id="produtoPreview" class="preview hidden"><br><button id="removerFotoBtn" class="btn btn-danger hidden" onclick="removerFotoProduto()" style="margin-top:6px">Remover foto</button></div>
 
@@ -508,12 +534,25 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 
     <div class="field"><label>Datas de Validade Encontradas *Obrigatório*</label><div id="listaDatas"></div><small class="small">Informe ao menos uma data de validade.</small></div>
 
+    <!-- Bloco Embalagem na Conferência -->
+    <div id="blocoEmbalagemConf" class="field full hidden" style="background: rgba(139,92,246,0.07); padding: 12px; border: 1px solid #4c3794; border-radius: 12px; margin-top: 4px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-weight:700; font-size:14px; color:#c4b5fd;">📐 Cálculo por <span id="lblTipoEmbConf">Pack</span> (<span id="lblQtdEmbConf">12</span> un)</span>
+        <button type="button" class="btn btn-secondary" style="min-height:30px; font-size:11px; padding:2px 8px;" onclick="abrirConfigEmbalagemAtualDaConf()">Alterar Embalagem</button>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Quantidade de <span id="lblTipoEmbPluralConf">Packs</span></label>
+        <input id="confQtdPacks" type="number" min="0" placeholder="Ex: 5" oninput="calcularTotalConfPorPacks()">
+      </div>
+      <div style="font-size:12px; color:#a78bfa; margin-top:6px;">Calculado automaticamente: <strong id="confTotalCalculadoPacks" style="font-size:15px; color:#fff;">0</strong> unidades</div>
+    </div>
+
     <div class="field full" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #33333a; border-radius: 12px; margin-top: 4px;">
-      <label style="display:flex; align-items:center; gap: 10px; cursor: pointer; margin-bottom: 0;">
-        <input id="confFezContagem" type="checkbox" style="width: 20px; height: 20px; accent-color: var(--verde); cursor: pointer;" onchange="alternarCamposContagemConf()">
-        <span style="font-size: 14px; font-weight: 700; color: #fff;">Contar quantidade deste produto?</span>
-      </label>
-      <small style="color: var(--muted); display: block; margin-top: 4px; margin-left: 30px;">Se marcado, informe abaixo as quantidades na loja, geladeira e depósito.</small>
+      <label style="display:block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom:8px;">Você realizou a contagem deste produto?</label>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button type="button" id="btnConfSim" class="btn btn-secondary" onclick="definirRespostaContagemConf(true)">Sim</button>
+        <button type="button" id="btnConfNao" class="btn btn-secondary" onclick="definirRespostaContagemConf(false)">Não</button>
+      </div>
     </div>
 
     <div id="blocoCamposContagemConf" class="field full hidden" style="display:grid; grid-template-columns:1fr; gap:10px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px; border: 1px solid #2f2f35;">
@@ -565,7 +604,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Html5Qrcode Scanner Variables ---
 let html5QrCode = null;
-let scannerContextoAtivo = null; // 'check' ou 'produto'
+let scannerContextoAtivo = null; // 'check' ou 'produto' ou 'geral'
 
 async function iniciarScanner(contexto) {
   scannerContextoAtivo = contexto;
@@ -584,6 +623,7 @@ async function startScanner() {
     return;
   }
 
+  // Garantir que não há outra instância rodando
   if (html5QrCode) {
     try {
       if (html5QrCode.isScanning) {
@@ -602,17 +642,12 @@ async function startScanner() {
   const onSuccess = (decodedText) => {
     const codigoLido = decodedText;
     pararScanner();
-    
-    if (scannerContextoAtivo === 'check') {
-      document.getElementById("checkCodigo").value = codigoLido;
-      buscarProdutoPorCodigoCheck();
-    } else if (scannerContextoAtivo === 'produto') {
-      document.getElementById("produtoCodigo").value = codigoLido;
-    }
-    mostrarToast(`Código lido: ${codigoLido}`, "success");
+    processarCodigoLidoOuDigitado(codigoLido);
   };
 
-  const onError = (errorMessage) => {};
+  const onError = (errorMessage) => {
+    // Erros de leitura contínua (frame a frame) podem ser ignorados
+  };
 
   try {
     await html5QrCode.start(
@@ -641,6 +676,25 @@ async function pararScanner() {
   }
   document.getElementById("modalScanner").classList.add("hidden");
   scannerContextoAtivo = null;
+}
+
+// --- FLUXO INTELIGENTE DE CÓDIGO DE BARRAS / BUSCA ---
+function processarCodigoLidoOuDigitado(codigoLido) {
+  if (!codigoLido) return;
+  const codigoLimpo = codigoLido.trim();
+
+  // Se o usuário acionou o scanner pela tela inicial ('geral') ou por qualquer lugar:
+  const produtoExistente = produtos.find(x => x.codigo === codigoLimpo);
+
+  if (produtoExistente) {
+    mostrarToast(`Produto encontrado: ${produtoExistente.nome}`, "success");
+    abrirConferencia(produtoExistente.id);
+  } else {
+    // Se não existir, abrir o cadastro pré-preenchendo o código
+    mostrarToast("Produto não cadastrado. Cadastre os dados abaixo.", "warning");
+    abrirProdutoForm(null);
+    document.getElementById("produtoCodigo").value = codigoLimpo;
+  }
 }
 
 // --- Service Worker Registration for PWA ---
@@ -709,7 +763,6 @@ let produtoConferenciaId = null;
 let produtoAtualId = null;
 let fotoProdutoBase64 = null;
 let abrirConferenciaDepoisDeSalvar = false;
-let produtoPackSelecionadoId = null;
 
 // Função para carregar os dados diretamente do Supabase na nuvem
 async function carregarDadosDaNuvem() {
@@ -757,7 +810,8 @@ async function persistir() {
 }
 
 function registrarAcao(acao,produto,detalhes=""){
- historico.unshift({id:Date.now()+Math.random(),acao,produto,detalhes,data:new Date().toISOString()});
+ const usuarioAtual = "Ana Luiza";
+ historico.unshift({id:Date.now()+Math.random(),acao,produto,detalhes,usuario:usuarioAtual,data:new Date().toISOString()});
  persistir();
 }
 
@@ -805,100 +859,125 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
-/* --- Funcionalidade: Consulta de Packs / Caixas --- */
-function abrirConsultaPacks(){
- produtoPackSelecionadoId = null;
- document.getElementById("buscaPackInput").value = "";
- document.getElementById("blocoCalculoPackAtivo").classList.add("hidden");
- document.getElementById("modalConsultaPacks").classList.remove("hidden");
- renderizarListaPacks();
+/* --- MÓDULO DE QUANTIDADE POR EMBALAGEM --- */
+function abrirGerenciarEmbalagens(){
+ document.getElementById("buscaEmbalagemModal").value="";
+ renderizarListaEmbalagensModal();
+ document.getElementById("modalGerenciarEmbalagens").classList.remove("hidden");
+}
+function fecharGerenciarEmbalagens(){
+ document.getElementById("modalGerenciarEmbalagens").classList.add("hidden");
 }
 
-function fecharConsultaPacks(){
- document.getElementById("modalConsultaPacks").classList.add("hidden");
-}
-
-function renderizarListaPacks(){
- const termo = document.getElementById("buscaPackInput").value.toLowerCase().trim();
- const container = document.getElementById("listaPacksContainer");
-
- const filtrados = produtos.filter(p => {
-  const texto = [p.codigo, p.nome, p.setor].join(" ").toLowerCase();
-  return !termo || texto.includes(termo);
+function renderizarListaEmbalagensModal(){
+ const termo = document.getElementById("buscaEmbalagemModal").value.toLowerCase().trim();
+ const lista = produtos.filter(p => {
+  const txt = [p.codigo, p.nome, p.marca||"", p.setor].join(" ").toLowerCase();
+  return !termo || txt.includes(termo);
  });
 
- if(filtrados.length === 0){
-  container.innerHTML = `<div class="empty" style="padding:15px;">Nenhum produto encontrado.</div>`;
-  return;
-}
+ const container = document.getElementById("listaProdutosEmbalagemModal");
+ container.innerHTML = lista.map(p => {
+  const tipoEmb = p.embalagemTipo || "Pack";
+  const qtdEmb = p.embalagemQtd || 0;
+  const badgeEmb = qtdEmb > 0 ? `<span class="badge" style="background:#241d3b;color:#a78bfa;border:1px solid #4c3794;">${tipoEmb}: ${qtdEmb} un</span>` : `<span class="badge" style="background:#27272a;color:#a1a1aa;">Sem embalagem configurada</span>`;
 
- container.innerHTML = filtrados.map(p => {
-  const fator = p.fatorPack || 0;
-  const isSelected = produtoPackSelecionadoId === p.id;
-  return `
-   <div onclick="selecionarProdutoPack('${p.id}')" style="background:${isSelected ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isSelected ? 'var(--verde)' : '#2f2f35'}; border-radius:12px; padding:12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:0.15s ease;">
-    <div>
-     <h4 style="margin:0 0 2px; color:#fff; font-size:14px;">${escapeHtml(p.nome)}</h4>
-     <p style="margin:0; font-size:12px; color:#a1a1aa;">Cód: ${escapeHtml(p.codigo)} • <span style="color:#7dd3fc;">${escapeHtml(p.setor)}</span></p>
-    </div>
-    <div style="text-align:right;">
-     <span class="badge" style="background:${fator > '0' ? '#16331f' : '#34280f'}; color:${fator > 0 ? '#71e6a5' : '#f7ca73'}; border:1px solid ${fator > 0 ? '#285c3b' : '#604718'};">
-      📦 ${fator > 0 ? `${fator} un/pack` : 'Definir pack'}
-     </span>
+  return `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid #2f2f35; border-radius:12px; padding:10px 14px;">
+   <div>
+    <h4 style="margin:0 0 2px; font-size:14px; color:#fff;">${escapeHtml(p.nome)} ${p.marca ? `<span style="color:var(--muted); font-size:12px;">(${escapeHtml(p.marca)})</span>` : ''}</h4>
+    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+     <span style="font-size:11px; color:var(--muted);">Cód: ${escapeHtml(p.codigo)}</span>
+     ${badgeEmb}
     </div>
    </div>
-  `;
- }).join("");
+   <button class="btn btn-secondary" style="min-height:36px; padding:6px 12px; font-size:12px;" onclick="abrirConfigEmbalagem('${p.id}')">Configurar</button>
+  </div>`;
+ }).join("") || `<div class="empty">Nenhum produto encontrado.</div>`;
 }
 
-function selecionarProdutoPack(id){
- produtoPackSelecionadoId = id;
- const p = produtos.find(x => x.id === id);
+let produtoConfigurandoEmbalagemId = null;
+
+function abrirConfigEmbalagem(produtoId){
+ produtoConfigurandoEmbalagemId = produtoId;
+ const p = produtos.find(x => x.id === produtoId);
  if(!p) return;
 
- document.getElementById("packTituloSelecionado</sup>").textContent = `📦 Produto: ${p.nome} (Cód: ${p.codigo})`;
- document.getElementById("packFatorUnidades").value = p.fatorPack || "";
- document.getElementById("packQtdCaixas").value = "";
- document.getElementById("packResultadoTotal").textContent = "0 unidades";
- document.getElementById("blocoCalculoPackAtivo").classList.remove("hidden");
+ document.getElementById("configEmbTitulo").textContent = `Embalagem: ${p.nome}`;
+ document.getElementById("configEmbProdutoInfo").textContent = `Código: ${p.codigo} ${p.marca ? '• Marca: ' + p.marca : ''}`;
+ document.getElementById("embTipo").value = p.embalagemTipo || "Pack";
+ document.getElementById("embQtd").value = p.embalagemQtd || "";
 
- renderizarListaPacks();
+ document.getElementById("modalConfigEmbalagem").classList.remove("hidden");
 }
 
-function calcularTotalPacks(){
- const fator = parseInt(document.getElementById("packFatorUnidades").value) || 0;
- const caixas = parseInt(document.getElementById("packQtdCaixas").value) || 0;
- const total = fator * caixas;
- document.getElementById("packResultadoTotal").textContent = `${total} unidades`;
+function fecharConfigEmbalagem(){
+ document.getElementById("modalConfigEmbalagem").classList.add("hidden");
 }
 
-async function salvarFatorPackAtual(){
- if(!produtoPackSelecionadoId){
-  mostrarToast("Selecione um produto primeiro.","warning");
-  return;
- }
- const p = produtos.find(x => x.id === produtoPackSelecionadoId);
+async function salvarConfigEmbalagem(){
+ const p = produtos.find(x => x.id === produtoConfigurandoEmbalagemId);
  if(!p) return;
 
- const fator = parseInt(document.getElementById("packFatorUnidades").value) || 0;
- if(fator <= 0){
-  mostrarToast("Informe um fator de unidades por pack válido.","warning");
+ const tipo = document.getElementById("embTipo").value;
+ const qtd = parseInt(document.getElementById("embQtd").value, 10);
+
+ if(isNaN(qtd) || qtd <= 0){
+  mostrarToast("Informe uma quantidade válida maior que zero para a embalagem.","warning");
   return;
  }
 
- p.fatorPack = fator;
+ p.embalagemTipo = tipo;
+ p.embalagemQtd = qtd;
+ p.atualizadoEm = new Date().toISOString();
+
+ registrarAcao("Configurou Embalagem", p.nome, `${tipo}: ${qtd} unidades`);
  await persistir();
- mostrarToast("Fator de pack salvo no produto com sucesso!","success");
- renderizarListaPacks();
+ fecharConfigEmbalagem();
+ renderizarListaEmbalagensModal();
+ mostrarToast("Embalagem configurada com sucesso!","success");
+
+ // Se estiver com o modal de Check ou Conferência aberto, atualizar os blocos de cálculo
+ if(!document.getElementById("modalCheckEstoque").classList.contains("hidden")){
+  atualizarBlocoEmbalagemCheck(p);
+ }
+ if(!document.getElementById("modalConferencia").classList.contains("hidden")){
+  atualizarBlocoEmbalagemConf(p);
+ }
+}
+
+function abrirConfigEmbalagemAtualDoCheck(){
+ const codigo = document.getElementById("checkCodigo").value.trim();
+ const p = produtos.find(x => x.codigo === codigo);
+ if(p) abrirConfigEmbalagem(p.id);
+ else mostrarToast("Selecione um produto válido primeiro.","warning");
+}
+
+function abrirConfigEmbalagemAtualDaConf(){
+ if(produtoConferenciaId) abrirConfigEmbalagem(produtoConferenciaId);
+}
+
+/* Sugestão / Busca Rápida por Nome ou Marca em Inputs */
+function sugerirProdutoPorNome(termoInput, contexto){
+ if(!termoInput || termoInput.length < 2) return;
+ const termo = termoInput.toLowerCase().trim();
+ const p = produtos.find(x => x.nome.toLowerCase().includes(termo) || (x.marca && x.marca.toLowerCase().includes(termo)));
+ if(p && contexto === 'check'){
+  document.getElementById("checkCodigo").value = p.codigo;
+  document.getElementById("checkSetor").value = p.setor;
+  if(document.getElementById("checkMarca")) document.getElementById("checkMarca").value = p.marca || "";
+  atualizarBlocoEmbalagemCheck(p);
+ }
 }
 
 /* Check de Estoque */
 function abrirCheckEstoque(){
  document.getElementById("checkCodigo").value="";
  document.getElementById("checkNome").value="";
+ document.getElementById("checkMarca").value="";
  document.getElementById("checkSetor").value="";
  document.getElementById("checkDataValidade").value=hojeISO();
- document.getElementById("checkFezContagem").checked=false;
+ document.getElementById("blocoEmbalagemCheck").classList.add("hidden");
+ document.getElementById("checkQtdPacks").value="";
  document.getElementById("blocoCamposContagem").classList.add("hidden");
  document.getElementById("checkQtdLoja").value="0";
  document.getElementById("checkQtdGeladeira").value="0";
@@ -906,24 +985,68 @@ function abrirCheckEstoque(){
  document.getElementById("checkTotalFinal").textContent="0";
  document.getElementById("checkNoSistemaEmpresa").checked=false;
  document.getElementById("checkStatusLancamento").className="notice hidden";
+ 
+ // Resetar botões de resposta de contagem
+ definirRespostaContagemCheck(false);
+
  document.getElementById("modalCheckEstoque").classList.remove("hidden");
 }
 function fecharCheckEstoque(){
  document.getElementById("modalCheckEstoque").classList.add("hidden");
 }
-function alternarCamposContagemCheck(){
- const fez = document.getElementById("checkFezContagem").checked;
- const bloco = document.getElementById("blocoCamposContagem");
+
+function definirRespostaContagemCheck(fez){
+ const btnSim = document.getElementById("btnCheckSim");
+ const btnNao = document.getElementById("btnCheckNao");
+ const blocoCampos = document.getElementById("blocoCamposContagem");
+
  if(fez){
-  bloco.classList.remove("hidden");
+  btnSim.style.background = "#16331f";
+  btnSim.style.color = "#71e6a5";
+  btnSim.style.borderColor = "#285c3b";
+  btnNao.style.background = "#242428";
+  btnNao.style.color = "#f4f4f5";
+  btnNao.style.borderColor = "#38383e";
+  blocoCampos.classList.remove("hidden");
  }else{
-  bloco.classList.add("hidden");
+  btnNao.style.background = "#36191b";
+  btnNao.style.color = "#ff9696";
+  btnNao.style.borderColor = "#61292e";
+  btnSim.style.background = "#242428";
+  btnSim.style.color = "#f4f4f5";
+  btnSim.style.borderColor = "#38383e";
+  blocoCampos.classList.add("hidden");
   document.getElementById("checkQtdLoja").value="0";
   document.getElementById("checkQtdGeladeira").value="0";
   document.getElementById("checkQtdDeposito").value="0";
   document.getElementById("checkTotalFinal").textContent="0";
  }
 }
+
+function calcularTotalCheckPorPacks(){
+ const codigo = document.getElementById("checkCodigo").value.trim();
+ const p = produtos.find(x => x.codigo === codigo);
+ if(!p || !p.embalagemQtd) return;
+
+ const qtdPacks = parseInt(document.getElementById("checkQtdPacks").value, 10) || 0;
+ const totalUnidades = qtdPacks * p.embalagemQtd;
+ document.getElementById("checkTotalCalculadoPacks").textContent = totalUnidades;
+
+ // Distribuir automaticamente na Loja se desejado ou apenas refletir no total final de contagem se ativado
+}
+
+function atualizarBlocoEmbalagemCheck(p){
+ const bloco = document.getElementById("blocoEmbalagemCheck");
+ if(p && p.embalagemQtd && p.embalagemQtd > 0){
+  bloco.classList.remove("hidden");
+  document.getElementById("lblTipoEmbCheck").textContent = p.embalagemTipo || "Pack";
+  document.getElementById("lblTipoEmbPluralCheck").textContent = (p.embalagemTipo || "Pack") + "s";
+  document.getElementById("lblQtdEmbCheck").textContent = p.embalagemQtd;
+ }else{
+  bloco.classList.add("hidden");
+ }
+}
+
 function calcularTotalCheck(){
  const qL=parseInt(document.getElementById("checkQtdLoja").value)||0;
  const qG=parseInt(document.getElementById("checkQtdGeladeira").value)||0;
@@ -931,19 +1054,24 @@ function calcularTotalCheck(){
  const total=qL+qG+qD;
  document.getElementById("checkTotalFinal").textContent=total;
 }
+
 function buscarProdutoPorCodigoCheck(){
  const codigo=document.getElementById("checkCodigo").value.trim();
  const statusDiv=document.getElementById("checkStatusLancamento");
  if(!codigo){
   document.getElementById("checkNome").value="";
+  document.getElementById("checkMarca").value="";
   document.getElementById("checkSetor").value="";
+  document.getElementById("blocoEmbalagemCheck").classList.add("hidden");
   statusDiv.className="notice hidden";
   return;
  }
  const p=produtos.find(x=>x.codigo===codigo);
  if(p){
   document.getElementById("checkNome").value=p.nome;
+  document.getElementById("checkMarca").value=p.marca || "";
   document.getElementById("checkSetor").value=p.setor;
+  atualizarBlocoEmbalagemCheck(p);
   
   const ultima=produtoUltimaConferencia(p);
   if(ultima){
@@ -958,7 +1086,9 @@ function buscarProdutoPorCodigoCheck(){
   }
  }else{
   document.getElementById("checkNome").value="";
+  document.getElementById("checkMarca").value="";
   document.getElementById("checkSetor").value="";
+  document.getElementById("blocoEmbalagemCheck").classList.add("hidden");
   statusDiv.textContent=`ℹ️ Código não cadastrado. Preencha os campos abaixo para cadastrar automaticamente.`;
   statusDiv.className="notice notice-warning";
  }
@@ -967,13 +1097,24 @@ function buscarProdutoPorCodigoCheck(){
 async function salvarCheckEstoque(){
  const codigo=document.getElementById("checkCodigo").value.trim();
  const nome=document.getElementById("checkNome").value.trim();
+ const marca=document.getElementById("checkMarca").value.trim();
  const setor=document.getElementById("checkSetor").value;
  const dataVal=document.getElementById("checkDataValidade").value;
- const fezContagem=document.getElementById("checkFezContagem").checked;
+ 
+ const btnSimAtivo = document.getElementById("btnCheckSim").style.background.includes("rgb(22, 51, 31)") || document.getElementById("btnCheckSim").style.background.includes("#16331f");
  const qL=parseInt(document.getElementById("checkQtdLoja").value)||0;
  const qG=parseInt(document.getElementById("checkQtdGeladeira").value)||0;
  const qD=parseInt(document.getElementById("checkQtdDeposito").value)||0;
- const total=qL+qG+qD;
+ const qtdPacksInput = parseInt(document.getElementById("checkQtdPacks").value, 10) || 0;
+ 
+ let total=qL+qG+qD;
+ if(qtdPacksInput > 0){
+  const pTemp = produtos.find(x => x.codigo === codigo);
+  if(pTemp && pTemp.embalagemQtd){
+   total += (qtdPacksInput * pTemp.embalagemQtd);
+  }
+ }
+
  const noSistemaEmpresa = document.getElementById("checkNoSistemaEmpresa").checked;
 
  if(!codigo){mostrarToast("Informe o código do produto.","warning");return;}
@@ -983,8 +1124,8 @@ async function salvarCheckEstoque(){
  let p=produtos.find(x=>x.codigo===codigo);
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
  let obs="";
- if(fezContagem){
-  obs=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} | Total: ${total} | ${statusTextoSistema}`;
+ if(btnSimAtivo || qtdPacksInput > 0){
+  obs=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} ${qtdPacksInput > 0 ? '| Packs: ' + qtdPacksInput : ''} | Total: ${total} | ${statusTextoSistema}`;
  }else{
   obs=`${statusTextoSistema}`;
  }
@@ -994,6 +1135,7 @@ async function salvarCheckEstoque(){
 
  if(p){
   p.nome=nome;
+  p.marca=marca;
   p.setor=setor;
   p.conferencias=p.conferencias||[];
   p.conferencias.unshift({
@@ -1001,6 +1143,11 @@ async function salvarCheckEstoque(){
    data:hojeISO(),
    datas:[dataVal],
    observacao:obs,
+   loja: qL,
+   geladeira: qG,
+   deposito: qD,
+   packs: qtdPacksInput,
+   total: total,
    noSistemaEmpresa: noSistemaEmpresa,
    mapStatusDatas: mapStatusDatas,
    criadoEm:new Date().toISOString()
@@ -1012,14 +1159,21 @@ async function salvarCheckEstoque(){
    id:String(Date.now()),
    codigo,
    nome,
+   marca,
    setor,
    foto:null,
-   fatorPack:null,
+   embalagemTipo: "Pack",
+   embalagemQtd: 0,
    conferencias:[{
     id:String(Date.now()),
     data:hojeISO(),
     datas:[dataVal],
     observacao:obs,
+    loja: qL,
+    geladeira: qG,
+    deposito: qD,
+    packs: qtdPacksInput,
+    total: total,
     noSistemaEmpresa: noSistemaEmpresa,
     mapStatusDatas: mapStatusDatas,
     criadoEm:new Date().toISOString()
@@ -1199,7 +1353,7 @@ function renderizarProdutos(){
  const dataFiltro=document.getElementById("filtroData").value;
 
  const lista=produtos.filter(p=>{
-  const texto=[p.codigo,p.nome,p.setor,...(p.conferencias||[]).flatMap(c=>[c.observacao||"",...(c.datas||[])])].join(" ").toLowerCase();
+  const texto=[p.codigo,p.nome,p.marca||"",p.setor,...(p.conferencias||[]).flatMap(c=>[c.observacao||"",...(c.datas||[])])].join(" ").toLowerCase();
   const bateData=!dataFiltro||(p.conferencias||[]).some(c=>c.data===dataFiltro||(c.datas||[]).includes(dataFiltro));
   
   let bateStatus = true;
@@ -1235,12 +1389,11 @@ function renderizarProdutos(){
    <div class="product-head">
     ${p.foto?`<img class="product-photo" src="${p.foto}" alt="">`:`<div class="product-photo"></div>`}
     <div class="product-main">
-     <h3>${escapeHtml(p.nome)}</h3>
+     <h3>${escapeHtml(p.nome)} ${p.marca ? `<span style="color:var(--muted); font-size:12px;">(${escapeHtml(p.marca)})</span>` : ''}</h3>
      <p>Cód: ${escapeHtml(p.codigo)}</p>
      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
       <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
       ${indicadorSistema}
-      ${p.fatorPack ? `<span class="badge" style="background:#1b2a4a; color:#93c5fd; border:1px solid #3b82f6;">📦 ${p.fatorPack} un/pack</span>` : ''}
      </div>
     </div>
    </div>
@@ -1298,8 +1451,8 @@ function abrirProdutoForm(id=null,opcoes={}){
 
  document.getElementById("produtoCodigo").value="";
  document.getElementById("produtoNome").value="";
+ document.getElementById("produtoMarca").value="";
  document.getElementById("produtoSetor").value="";
- document.getElementById("produtoFatorPack").value="";
  document.getElementById("produtoFoto").value="";
  document.getElementById("produtoPreview").classList.add("hidden");
  document.getElementById("removerFotoBtn").classList.add("hidden");
@@ -1313,8 +1466,8 @@ function abrirProdutoForm(id=null,opcoes={}){
 
   document.getElementById("produtoCodigo").value=p.codigo;
   document.getElementById("produtoNome").value=p.nome;
+  document.getElementById("produtoMarca").value=p.marca||"";
   document.getElementById("produtoSetor").value=p.setor;
-  document.getElementById("produtoFatorPack").value=p.fatorPack || "";
   fotoProdutoBase64=p.foto||null;
 
   if(p.foto){
@@ -1395,9 +1548,8 @@ function comprimirImagem(arquivo,maxW,maxH,q){return new Promise((resolve,reject
 async function salvarProduto(){
  const codigo=document.getElementById("produtoCodigo").value.trim();
  const nome=document.getElementById("produtoNome").value.trim();
+ const marca=document.getElementById("produtoMarca").value.trim();
  const setor=document.getElementById("produtoSetor").value;
- const fatorPackInput=document.getElementById("produtoFatorPack").value.trim();
- const fatorPack = fatorPackInput ? parseInt(fatorPackInput) || null : null;
 
  if(!codigo||!nome||!setor){
   mostrarToast("Preencha código, produto e setor.","warning");
@@ -1427,10 +1579,10 @@ async function salvarProduto(){
 
   if(antigo.codigo!==codigo)mudancas.push(`código: ${antigo.codigo} → ${codigo}`);
   if(antigo.nome!==nome)mudancas.push(`nome: ${antigo.nome} → ${nome}`);
+  if((antigo.marca||"")!==marca)mudancas.push(`marca: ${antigo.marca||"—"} → ${marca}`);
   if(antigo.setor!==setor)mudancas.push(`setor: ${antigo.setor} → ${setor}`);
-  if(antigo.fatorPack!==fatorPack)mudancas.push(`pack: ${antigo.fatorPack||'N/D'} → ${fatorPack||'N/D'}`);
 
-  produtos[i]={...antigo,codigo,nome,setor,fatorPack,foto:fotoProdutoBase64,atualizadoEm:new Date().toISOString()};
+  produtos[i]={...antigo,codigo,nome,marca,setor,foto:fotoProdutoBase64,atualizadoEm:new Date().toISOString()};
   produtoSalvoId=produtos[i].id;
 
   const ultima=produtoUltimaConferencia(produtos[i]);
@@ -1480,9 +1632,11 @@ async function salvarProduto(){
    id:String(Date.now()),
    codigo,
    nome,
+   marca,
    setor,
-   fatorPack,
    foto:fotoProdutoBase64,
+   embalagemTipo: "Pack",
+   embalagemQtd: 0,
    conferencias:[{
     id:String(Date.now()),
     data:document.getElementById("produtoConfData").value||hojeISO(),
@@ -1523,11 +1677,11 @@ function abrirDetalhe(id){
   <div class="detail-head">
    ${p.foto?`<img class="detail-photo" src="${p.foto}" alt="">`:`<div class="detail-photo"></div>`}
    <div class="detail-info">
-    <h2>${escapeHtml(p.nome)}</h2>
+    <h2>${escapeHtml(p.nome)} ${p.marca ? `<span style="color:var(--muted); font-size:14px;">(${escapeHtml(p.marca)})</span>` : ''}</h2>
     <p>Código: ${escapeHtml(p.codigo)}</p>
-    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; justify-content:center;">
+    <div style="display:flex; gap:6px; margin-top:4px;">
      <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
-     ${p.fatorPack ? `<span class="badge" style="background:#1b2a4a; color:#93c5fd; border:1px solid #3b82f6;">📦 ${p.fatorPack} un/pack</span>` : ''}
+     ${p.embalagemQtd > 0 ? `<span class="badge" style="background:#241d3b;color:#a78bfa;border:1px solid #4c3794;">${p.embalagemTipo || 'Pack'}: ${p.embalagemQtd} un</span>` : ''}
     </div>
    </div>
   </div>
@@ -1591,16 +1745,23 @@ function abrirConferencia(id){
  produtoConferenciaId=id;
  const p=produtos.find(x=>x.id===id);
  if(!p)return;
- document.getElementById("conferenciaProdutoInfo").textContent=`${p.nome} • código ${p.codigo}`;
+ document.getElementById("conferenciaProdutoInfo").textContent=`${p.nome} ${p.marca ? '(' + p.marca + ')' : ''} • código ${p.codigo}`;
  document.getElementById("confData").value=hojeISO();
  document.getElementById("confObservacao").value="";
  
- document.getElementById("confFezContagem").checked=false;
- document.getElementById("blocoCamposContagemConf").classList.add("hidden");
- document.getElementById("confQtdLoja").value="0";
- document.getElementById("confQtdGeladeira").value="0";
- document.getElementById("confQtdDeposito").value="0";
- document.getElementById("confTotalFinal").textContent="0";
+ // Atualizar Bloco Embalagem na Conferência se houver
+ const blocoEmbConf = document.getElementById("blocoEmbalagemConf");
+ if(p.embalagemQtd && p.embalagemQtd > 0){
+  blocoEmbConf.classList.remove("hidden");
+  document.getElementById("lblTipoEmbConf").textContent = p.embalagemTipo || "Pack";
+  document.getElementById("lblTipoEmbPluralConf").textContent = (p.embalagemTipo || "Pack") + "s";
+  document.getElementById("lblQtdEmbConf").textContent = p.embalagemQtd;
+  document.getElementById("confQtdPacks").value = "";
+ }else{
+  blocoEmbConf.classList.add("hidden");
+ }
+
+ definirRespostaContagemConf(false);
  document.getElementById("confNoSistemaEmpresa").checked=false;
 
  document.getElementById("listaDatas").innerHTML="";
@@ -1609,18 +1770,41 @@ function abrirConferencia(id){
 }
 function fecharConferencia(){document.getElementById("modalConferencia").classList.add("hidden")}
 
-function alternarCamposContagemConf(){
- const fez = document.getElementById("confFezContagem").checked;
- const bloco = document.getElementById("blocoCamposContagemConf");
+function definirRespostaContagemConf(fez){
+ const btnSim = document.getElementById("btnConfSim");
+ const btnNao = document.getElementById("btnConfNao");
+ const blocoCampos = document.getElementById("blocoCamposContagemConf");
+
  if(fez){
-  bloco.classList.remove("hidden");
+  btnSim.style.background = "#16331f";
+  btnSim.style.color = "#71e6a5";
+  btnSim.style.borderColor = "#285c3b";
+  btnNao.style.background = "#242428";
+  btnNao.style.color = "#f4f4f5";
+  btnNao.style.borderColor = "#38383e";
+  blocoCampos.classList.remove("hidden");
  }else{
-  bloco.classList.add("hidden");
+  btnNao.style.background = "#36191b";
+  btnNao.style.color = "#ff9696";
+  btnNao.style.borderColor = "#61292e";
+  btnSim.style.background = "#242428";
+  btnSim.style.color = "#f4f4f5";
+  btnSim.style.borderColor = "#38383e";
+  blocoCampos.classList.add("hidden");
   document.getElementById("confQtdLoja").value="0";
   document.getElementById("confQtdGeladeira").value="0";
   document.getElementById("confQtdDeposito").value="0";
   document.getElementById("confTotalFinal").textContent="0";
  }
+}
+
+function calcularTotalConfPorPacks(){
+ const p = produtos.find(x => x.id === produtoConferenciaId);
+ if(!p || !p.embalagemQtd) return;
+
+ const qtdPacks = parseInt(document.getElementById("confQtdPacks").value, 10) || 0;
+ const totalUnidades = qtdPacks * p.embalagemQtd;
+ document.getElementById("confTotalCalculadoPacks").textContent = totalUnidades;
 }
 
 function calcularTotalConf(){
@@ -1644,18 +1828,24 @@ async function salvarConferencia(){
  const datas=[...new Set([...document.querySelectorAll(".data-validade")].map(i=>i.value).filter(Boolean))].sort();
  if(!datas.length){mostrarToast("É obrigatório informar pelo menos uma data de validade.","warning");return}
  
- const fezContagem=document.getElementById("confFezContagem").checked;
+ const btnSimAtivo = document.getElementById("btnConfSim").style.background.includes("rgb(22, 51, 31)") || document.getElementById("btnConfSim").style.background.includes("#16331f");
  const qL=parseInt(document.getElementById("confQtdLoja").value)||0;
  const qG=parseInt(document.getElementById("confQtdGeladeira").value)||0;
  const qD=parseInt(document.getElementById("confQtdDeposito").value)||0;
- const total=qL+qG+qD;
+ const qtdPacksInput = parseInt(document.getElementById("confQtdPacks").value, 10) || 0;
+ 
+ let total=qL+qG+qD;
+ if(qtdPacksInput > 0 && p.embalagemQtd){
+  total += (qtdPacksInput * p.embalagemQtd);
+ }
+
  const noSistemaEmpresa = document.getElementById("confNoSistemaEmpresa").checked;
  const obsUsuario = document.getElementById("confObservacao").value.trim();
 
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
  let obsFinal="";
- if(fezContagem){
-  obsFinal=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} | Total: ${total} | ${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
+ if(btnSimAtivo || qtdPacksInput > 0){
+  obsFinal=`Contagem - Loja: ${qL} | Geladeira: ${qG} | Depósito: ${qD} ${qtdPacksInput > 0 ? '| Packs: ' + qtdPacksInput : ''} | Total: ${total} | ${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
  }else{
   obsFinal=`${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
  }
@@ -1668,6 +1858,11 @@ async function salvarConferencia(){
   data:document.getElementById("confData").value,
   datas,
   observacao:obsFinal,
+  loja: qL,
+  geladeira: qG,
+  deposito: qD,
+  packs: qtdPacksInput,
+  total: total,
   noSistemaEmpresa: noSistemaEmpresa,
   mapStatusDatas: mapStatusDatas,
   criadoEm:new Date().toISOString()
@@ -1710,17 +1905,17 @@ async function apagarProduto(id){
 }
 
 function abrirHistoricoGeral(){
- document.getElementById("listaHistorico").innerHTML=historico.map(h=>`<div class="history-item"><strong>${escapeHtml(h.acao)}</strong> — ${escapeHtml(h.produto)}<br>${h.detalhes?`<span>${escapeHtml(h.detalhes)}</span><br>`:""}<small>${new Date(h.data).toLocaleString("pt-BR")}</small></div>`).join("")||"Nenhum histórico.";
+ document.getElementById("listaHistorico").innerHTML=historico.map(h=>`<div class="history-item"><strong>${escapeHtml(h.acao)}</strong> — ${escapeHtml(h.produto)}<br>${h.detalhes?`<span>${escapeHtml(h.detalhes)}</span><br>`:""}<small>Usuário: <strong>${escapeHtml(h.usuario || 'Ana Luiza')}</strong> em ${new Date(h.data).toLocaleString("pt-BR")}</small></div>`).join("")||"Nenhum histórico.";
  document.getElementById("modalHistorico").classList.remove("hidden")
 }
 function fecharHistoricoGeral(){document.getElementById("modalHistorico").classList.add("hidden")}
 
 function exportarCSV(){
- const cab=["Código","Produto","Setor","Unid/Pack","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
+ const cab=["Código","Produto","Marca","Setor","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
  const linhas=[];
  produtos.forEach(p=>(p.conferencias||[]).forEach(c=>{
   let statusStr = (c.datas||[]).map(d => `${formatarData(d)}: ${c.mapStatusDatas && c.mapStatusDatas[d] ? 'Sim' : 'Não'}`).join(" | ");
-  linhas.push([p.codigo,p.nome,p.setor,p.fatorPack||"",formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
+  linhas.push([p.codigo,p.nome,p.marca||"",p.setor,formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
  }));
  const esc = v => `"${String(v || '').replace(/"/g, '""')}"`;
  const csv = "\ufeff" + [cab, ...linhas].map(l => l.map(esc).join(";")).join("\n");
