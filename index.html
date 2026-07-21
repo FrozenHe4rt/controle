@@ -255,7 +255,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         <label>Código do Produto</label>
         <div style="display:flex; gap:6px;">
           <input id="checkCodigo" inputmode="numeric" placeholder="Digite o código" oninput="buscarProdutoPorCodigoCheck()">
-          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('check')" style="min-width:46px" title="Escanear Código/QR">📷</button>
+          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('checkCodigo')" style="min-width:46px" title="Escanear Código/QR">📷</button>
         </div>
       </div>
       <div class="field">
@@ -409,7 +409,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         <label>Código</label>
         <div style="display:flex; gap:6px;">
           <input id="produtoCodigo" inputmode="numeric" placeholder="Código ou QR">
-          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('produto')" style="min-width:46px" title="Escanear Código/QR">📷</button>
+          <button class="btn btn-secondary" type="button" onclick="abrirScannerGlobal('produtoCodigo')" style="min-width:46px" title="Escanear Código/QR">📷</button>
         </div>
       </div>
       <div class="field"><label>Produto</label><input id="produtoNome"></div>
@@ -573,10 +573,10 @@ const K_BACKUP="alns_ultimo_backup";
 let produtos = [];
 let historico = [];
 
-// Variáveis de Controle e Estado Scanner
+// Variáveis de Controle e Estado Scanner Global Reutilizável
 let html5QrCodeGlobal = null;
 let leitorGlobalIniciado = false;
-let destinoEscaneamento = 'check'; // 'check' ou 'produto'
+let destinoCampoIdGlobal = null;
 
 let produtoEditandoId = null;
 let produtoConferenciaId = null;
@@ -678,30 +678,30 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
-/* Leitor Scanner Corrigido e Otimizado para Códigos de Barras e QR Code */
-function abrirScannerGlobal(destino = 'check') {
-  destinoEscaneamento = destino;
+/* Leitor Scanner Global Reutilizável em Qualquer Tela/Modal */
+function abrirScannerGlobal(campoIdDestino) {
+  destinoCampoIdGlobal = campoIdDestino;
   document.getElementById("modalScannerGlobal").classList.remove("hidden");
 }
 
-function fecharScannerGlobal() {
+async function fecharScannerGlobal() {
   const statusEl = document.getElementById("scannerGlobalStatus");
-  if (html5QrCodeGlobal && leitorGlobalIniciado) {
-    html5QrCodeGlobal.stop().then(() => {
-      leitorGlobalIniciado = false;
-      document.getElementById("modalScannerGlobal").classList.add("hidden");
-      document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
-      if(statusEl) statusEl.textContent = "Toque em “Iniciar câmera”.";
-    }).catch(() => {
-      leitorGlobalIniciado = false;
-      document.getElementById("modalScannerGlobal").classList.add("hidden");
-      document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
-    });
-  } else {
-    document.getElementById("modalScannerGlobal").classList.add("hidden");
-    if(statusEl) statusEl.textContent = "Toque em “Iniciar câmera”.";
-    document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
+  if (html5QrCodeGlobal) {
+    try {
+      if (leitorGlobalIniciado) {
+        await html5QrCodeGlobal.stop();
+      }
+      await html5QrCodeGlobal.clear();
+    } catch (e) {
+      console.warn("Erro ao parar/limpar scanner:", e);
+    }
   }
+  html5QrCodeGlobal = null;
+  leitorGlobalIniciado = false;
+  
+  document.getElementById("modalScannerGlobal").classList.add("hidden");
+  document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
+  if(statusEl) statusEl.textContent = "Toque em “Iniciar câmera”.";
 }
 
 async function iniciarLeitorGlobal() {
@@ -728,15 +728,20 @@ async function iniciarLeitorGlobal() {
       { facingMode: "environment" },
       configLeitura,
       decodedText => {
-        const destinoAtual = destinoEscaneamento;
-        fecharScannerGlobal();
-        if (destinoAtual === 'check') {
-          document.getElementById("checkCodigo").value = decodedText;
-          buscarProdutoPorCodigoCheck();
-        } else if (destinoAtual === 'produto') {
-          document.getElementById("produtoCodigo").value = decodedText;
-        }
-        mostrarToast("Código/QR lido com sucesso!", "success");
+        const campoDestinoId = destinoCampoIdGlobal;
+        fecharScannerGlobal().then(() => {
+          if (campoDestinoId) {
+            const inputEl = document.getElementById(campoDestinoId);
+            if (inputEl) {
+              inputEl.value = decodedText;
+              // Se o campo destino for o checkCodigo, executa automaticamente a busca
+              if (campoDestinoId === 'checkCodigo') {
+                buscarProdutoPorCodigoCheck();
+              }
+            }
+          }
+          mostrarToast("Código/QR lido com sucesso!", "success");
+        });
       },
       error => {
         // Ignora erros frame a frame
@@ -1572,7 +1577,8 @@ function exportarCSV(){
   let statusStr = (c.datas||[]).map(d => `${formatarData(d)}: ${c.mapStatusDatas && c.mapStatusDatas[d] ? 'Sim' : 'Não'}`).join(" | ");
   linhas.push([p.codigo,p.nome,p.setor,formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
  }));
- const esc=v=>`"${String(v?y="":"").replaceAll('"','""')}"`,csv="\ufeff"+[cab,...linhas].map(l=>l.map(esc).join(";")).join("\n");
+ const esc = v => `"${String(v || '').replace(/"/g, '""')}"`;
+ const csv = "\ufeff" + [cab, ...linhas].map(l => l.map(esc).join(";")).join("\n");
  baixar(new Blob([csv],{type:"text/csv;charset=utf-8"}),`vencimentos_${hojeISO()}.csv`);
  mostrarToast("Relatório CSV exportado com sucesso!","success");
 }
