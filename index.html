@@ -736,11 +736,12 @@ function iniciarLeitorGlobal() {
     { facingMode: "environment" },
     configLeitura,
     decodedText => {
+      const destinoAtual = destinoEscaneamento;
       fecharScannerGlobal();
-      if (destinoEscaneamento === 'check') {
+      if (destinoAtual === 'check') {
         document.getElementById("checkCodigo").value = decodedText;
         buscarProdutoPorCodigoCheck();
-      } else if (destinoEscaneamento === 'produto') {
+      } else if (destinoAtual === 'produto') {
         document.getElementById("produtoCodigo").value = decodedText;
       }
       mostrarToast("Código/QR lido com sucesso!", "success");
