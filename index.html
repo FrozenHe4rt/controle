@@ -116,8 +116,11 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 .conf-card p{margin:6px 0 0;color:#a1a1aa;font-size:13px}
 .history-item{border:1px solid #2f2f35;border-radius:10px;padding:10px;margin-bottom:8px;background:linear-gradient(145deg,#19191d,#121215)}.history-item strong{color:#fff;font-size:13px}.history-item small{color:#a1a1aa;font-size:11px}
 .scan-box{background:#151519;border:1px dashed #44444b;border-radius:12px;padding:12px;text-align:center}
-#readerGlobal{background:#151519; overflow:hidden; border-radius:10px; min-height: 200px;}
-#readerGlobal video{width:100%!important; border-radius:10px; background:transparent!important; object-fit: cover;}
+
+/* Correção robusta para o container e vídeo do leitor de código de barras */
+#readerGlobal{width:100%; max-width: 400px; margin: 0 auto; background:#151519; overflow:hidden; border-radius:10px; min-height: 250px;}
+#readerGlobal video{width:100%!important; height: auto !important; border-radius:10px; background:transparent!important; object-fit: cover;}
+
 .small{font-size:11px;color:#a1a1aa}
 
 .toolbar{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px}
@@ -675,19 +678,20 @@ function verificarStatusValidade(dataIso){
  return { status: 'normal', texto: '' };
 }
 
-/* Leitor Scanner Otimizado para Códigos de Barras e QR Code */
+/* Leitor Scanner Corrigido e Otimizado para Códigos de Barras e QR Code */
 function abrirScannerGlobal(destino = 'check') {
   destinoEscaneamento = destino;
   document.getElementById("modalScannerGlobal").classList.remove("hidden");
 }
 
 function fecharScannerGlobal() {
+  const statusEl = document.getElementById("scannerGlobalStatus");
   if (html5QrCodeGlobal && leitorGlobalIniciado) {
     html5QrCodeGlobal.stop().then(() => {
       leitorGlobalIniciado = false;
       document.getElementById("modalScannerGlobal").classList.add("hidden");
       document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
-      document.getElementById("scannerGlobalStatus").textContent = "Toque em “Iniciar câmera”.";
+      if(statusEl) statusEl.textContent = "Toque em “Iniciar câmera”.";
     }).catch(() => {
       leitorGlobalIniciado = false;
       document.getElementById("modalScannerGlobal").classList.add("hidden");
@@ -695,68 +699,56 @@ function fecharScannerGlobal() {
     });
   } else {
     document.getElementById("modalScannerGlobal").classList.add("hidden");
+    if(statusEl) statusEl.textContent = "Toque em “Iniciar câmera”.";
+    document.getElementById("iniciarCameraGlobalBtn").classList.remove("hidden");
   }
 }
 
-function iniciarLeitorGlobal() {
+async function iniciarLeitorGlobal() {
   const statusEl = document.getElementById("scannerGlobalStatus");
   statusEl.textContent = "Iniciando câmera e leitor de código de barras...";
   
   if (!html5QrCodeGlobal) {
-    const formatosSuportados = window.Html5QrcodeSupportedFormats ? [
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-      Html5QrcodeSupportedFormats.QR_CODE
-    ] : undefined;
-
-    html5QrCodeGlobal = new Html5Qrcode("readerGlobal", {
-      formatsToSupport: formatosSuportados,
-      verbose: false
-    });
+    try {
+      html5QrCodeGlobal = new Html5Qrcode("readerGlobal");
+    } catch (e) {
+      statusEl.textContent = "Erro ao instanciar leitor: " + e.message;
+      return;
+    }
   }
 
   const configLeitura = {
     fps: 15,
-    qrbox: (w, h) => {
-      return {
-        width: Math.floor(Math.min(w * 0.9, 320)),
-        height: Math.floor(Math.min(h * 0.5, 180))
-      };
-    },
-    experimentalFeatures: {
-      useBarCodeDetectorIfSupported: true
-    }
+    qrbox: { width: 250, height: 150 },
+    aspectRatio: 1.0
   };
 
-  html5QrCodeGlobal.start(
-    { facingMode: "environment" },
-    configLeitura,
-    decodedText => {
-      const destinoAtual = destinoEscaneamento;
-      fecharScannerGlobal();
-      if (destinoAtual === 'check') {
-        document.getElementById("checkCodigo").value = decodedText;
-        buscarProdutoPorCodigoCheck();
-      } else if (destinoAtual === 'produto') {
-        document.getElementById("produtoCodigo").value = decodedText;
+  try {
+    await html5QrCodeGlobal.start(
+      { facingMode: "environment" },
+      configLeitura,
+      decodedText => {
+        const destinoAtual = destinoEscaneamento;
+        fecharScannerGlobal();
+        if (destinoAtual === 'check') {
+          document.getElementById("checkCodigo").value = decodedText;
+          buscarProdutoPorCodigoCheck();
+        } else if (destinoAtual === 'produto') {
+          document.getElementById("produtoCodigo").value = decodedText;
+        }
+        mostrarToast("Código/QR lido com sucesso!", "success");
+      },
+      error => {
+        // Ignora erros frame a frame
       }
-      mostrarToast("Código/QR lido com sucesso!", "success");
-    },
-    error => {
-      // Ignora falhas temporárias de foco por frame
-    }
-  ).then(() => {
+    );
     leitorGlobalIniciado = true;
     statusEl.textContent = "Câmera ativa. Aponte para o código de barras ou QR Code.";
     document.getElementById("iniciarCameraGlobalBtn").classList.add("hidden");
-  }).catch(err => {
+  } catch (err) {
     console.error("Erro câmera:", err);
-    statusEl.textContent = "Erro ao acessar câmera: " + (err.message || err);
-  });
+    statusEl.textContent = "Erro ao acessar câmera. Verifique as permissões do navegador.";
+  }
 }
 
 /* Check de Estoque */
