@@ -7,8 +7,8 @@
 <title>Ana Luiza • Controle de Vencimentos</title>
 <!-- Biblioteca Oficial do Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Biblioteca ZXing para Leitura de Código de Barras via Câmera -->
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1"></script>
+<!-- Biblioteca Html5-Qrcode para Leitura de Código de Barras via Câmera -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <style>
 :root{
   --azul:#111111;--azul2:#232323;--fundo:#0b0b0d;--linha:#2d2d33;
@@ -127,7 +127,8 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 .scanner-container{width:100%;max-width:420px;background:#18181b;border:1px solid #33333a;border-radius:20px;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,0.8);text-align:center}
 .scanner-container h3{margin:0 0 10px;color:#fff;font-size:18px}
 .scanner-viewport{width:100%;height:260px;background:#000;border-radius:12px;overflow:hidden;position:relative;border:1px solid #3f3f46;margin-bottom:12px}
-.scanner-viewport video{width:100%;height:100%;object-fit:cover}
+#reader{width:100%;height:100%;position:relative;}
+#reader video{width:100%!important;height:100%!important;object-fit:cover!important}
 
 /* Toast Notification Styles */
 #toast-container{position:fixed;bottom:16px;right:16px;left:16px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -174,7 +175,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
   <div class="scanner-container">
     <h3>📷 Ler Código de Barras</h3>
     <div class="scanner-viewport">
-      <video id="videoScanner" muted playsinline></video>
+      <div id="reader"></div>
     </div>
     <p id="scannerStatusText" style="font-size:12px; color:#a1a1aa; margin:0 0 12px;">Aponte a câmera para o código de barras...</p>
     <button class="btn btn-secondary" style="width:100%" onclick="pararScanner()">Fechar Câmera</button>
@@ -514,60 +515,132 @@ const SUPABASE_ANON_KEY = 'sb_publishable_aoop3ZKaeb-_wx1POxGKNQ_TELGZLNF';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- ZXing Barcode Scanner Variables ---
-let codeReader = null;
+// --- Html5Qrcode Scanner Variables ---
+let html5QrCode = null;
 let scannerContextoAtivo = null; // 'check' ou 'produto'
 
 async function iniciarScanner(contexto) {
   scannerContextoAtivo = contexto;
   document.getElementById("modalScanner").classList.remove("hidden");
-  
-  if (!codeReader) {
-    codeReader = new ZXing.BrowserBarcodeReader();
+
+  requestAnimationFrame(() => {
+    setTimeout(startScanner, 300);
+  });
+}
+
+async function startScanner() {
+  const readerElement = document.getElementById("reader");
+  if (!readerElement) {
+    console.error("Elemento #reader não encontrado.");
+    mostrarToast("Erro ao iniciar o leitor de código de barras.", "error");
+    return;
   }
-  
+
+  // Verificar largura e altura reais antes de iniciar
+  const rect = readerElement.getBoundingClientRect();
+  console.log("Dimensões do #reader:", rect.width, rect.height);
+  if (rect.width === 0 || rect.height === 0) {
+    console.warn("Elemento #reader possui largura ou altura igual a zero.");
+  }
+
+  // Garantir que não há outra instância rodando (Regra 7)
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
+    } catch (e) {
+      console.warn("Erro ao parar instância anterior:", e);
+    }
+    html5QrCode = null;
+  }
+
+  html5QrCode = new Html5Qrcode("reader");
+
+  const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+  let cameraTarget = { facingMode: { ideal: "environment" } };
+
   try {
-    const videoInputDevices = await codeReader.listVideoInputDevices();
-    let selectedDeviceId = null;
-    
-    if (videoInputDevices && videoInputDevices.length > 0) {
-      // Tenta encontrar a câmera traseira (environment) ou pega a última da lista
-      const trasera = videoInputDevices.find(device => 
+    const devices = await Html5Qrcode.getCameras();
+    if (devices && devices.length > 0) {
+      // Priorizar a câmera traseira se houver dispositivos listados
+      const trasera = devices.find(device => 
         device.label.toLowerCase().includes('back') || 
         device.label.toLowerCase().includes('traseira') ||
         device.label.toLowerCase().includes('rear') ||
         device.label.toLowerCase().includes('environment')
       );
-      selectedDeviceId = trasera ? trasera.deviceId : videoInputDevices[videoInputDevices.length - 1].deviceId;
+      if (traseira) {
+        cameraTarget = trasera.id; // Utilizar cameraId disponível (Regra 5)
+      } else {
+        cameraTarget = devices[devices.length - 1].id;
+      }
+    }
+  } catch (err) {
+    console.warn("Não foi possível listar as câmeras, usando facingMode ideal:", err);
+  }
+
+  const onSuccess = (decodedText) => {
+    const codigoLido = decodedText;
+    pararScanner();
+    
+    if (scannerContextoAtivo === 'check') {
+      document.getElementById("checkCodigo").value = codigoLido;
+      buscarProdutoPorCodigoCheck();
+    } else if (scannerContextoAtivo === 'produto') {
+      document.getElementById("produtoCodigo").value = codigoLido;
+    }
+    mostrarToast(`Código lido: ${codigoLido}`, "success");
+  };
+
+  const onError = (errorMessage) => {
+    // Erros de leitura contínua (frame a frame) podem ser ignorados
+  };
+
+  try {
+    await html5QrCode.start(cameraTarget, config, onSuccess, onError);
+
+    // Confirmar criação do elemento video dentro de #reader (Regra 2)
+    const videoElement = readerElement.querySelector("video");
+    if (!videoElement) {
+        console.error("Erro crítico: Elemento <video> não foi criado dentro de #reader após start().");
+    } else {
+        console.log("Elemento <video> criado com sucesso dentro de #reader.");
+
+        // Logs solicitados (Regra 3)
+        const checkVideoState = () => {
+            console.log("video.readyState:", videoElement.readyState);
+            console.log("video.videoWidth:", videoElement.videoWidth);
+            console.log("video.videoHeight:", videoElement.videoHeight);
+
+            if (videoElement.readyState === 0 || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                console.warn("Atenção: Propriedades do vídeo permaneceram zeradas ou inválidas.");
+            }
+        };
+
+        checkVideoState();
+        videoElement.addEventListener('loadedmetadata', checkVideoState);
+        setTimeout(checkVideoState, 1000);
+        setTimeout(checkVideoState, 2000);
     }
 
-    codeReader.decodeFromVideoDevice(selectedDeviceId, 'videoScanner', (result, err) => {
-      if (result) {
-        const codigoLido = result.text;
-        pararScanner();
-        
-        if (scannerContextoAtivo === 'check') {
-          document.getElementById("checkCodigo").value = codigoLido;
-          buscarProdutoPorCodigoCheck();
-        } else if (scannerContextoAtivo === 'produto') {
-          document.getElementById("produtoCodigo").value = codigoLido;
-        }
-        mostrarToast(`Código lido: ${codigoLido}`, "success");
-      }
-      if (err && !(err instanceof ZXing.NotFoundException)) {
-        console.warn("Erro no scanner:", err);
-      }
-    });
   } catch (err) {
-    console.error("Erro ao iniciar câmera:", err);
-    mostrarToast("Não foi possível acessar a câmera para leitura. Verifique as permissões.", "error");
+    console.error("Falha ao executar Html5Qrcode.start():", err);
+    mostrarToast("Erro ao abrir a câmera. Verifique as permissões.", "error");
     pararScanner();
   }
 }
 
-function pararScanner() {
-  if (codeReader) {
-    codeReader.reset();
+async function pararScanner() {
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
+    } catch (e) {
+      console.warn("Erro ao parar o scanner:", e);
+    }
+    html5QrCode = null;
   }
   document.getElementById("modalScanner").classList.add("hidden");
   scannerContextoAtivo = null;
@@ -868,7 +941,7 @@ async function salvarCheckEstoque(){
    criadoEm:new Date().toISOString()
   };
   produtos.unshift(p);
-  registrarAcao("Cadastrou e Checou Estoque",nome,`Código ${codigo} • ${obs}`);
+  registrarAcao("Cadastrou e Checou Estudo",nome,`Código ${codigo} • ${obs}`);
   mostrarToast("Produto cadastrado e check salvo com sucesso!","success");
  }
 
