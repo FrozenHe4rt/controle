@@ -247,6 +247,13 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         </div>
         <div class="menu-item-action">➔</div>
       </div>
+      <div class="menu-item" onclick="abrirConsultaPacks()">
+        <div class="menu-item-info">
+          <h4>📦 Consulta de Unidades por Pack / Caixa</h4>
+          <p>Consulte produtos, veja unidades por fardo/caixa e calcule a soma total por packs</p>
+        </div>
+        <div class="menu-item-action">➔</div>
+      </div>
     </div>
 
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
@@ -260,6 +267,46 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
     </div>
   </div>
 </main>
+
+<!-- Modal Consulta de Packs / Caixas -->
+<div id="modalConsultaPacks" class="modal hidden">
+  <div class="modal-card large">
+    <h2>📦 Consulta e Calculadora de Packs / Caixas</h2>
+    <div class="notice notice-info" style="margin-bottom:12px;">Busque o produto pelo nome ou código. Defina o fator de unidades por pack/caixa e calcule o total de unidades instantaneamente!</div>
+
+    <div class="toolbar" style="grid-template-columns: 1fr; margin-bottom:12px;">
+      <input id="buscaPackInput" placeholder="🔎 Digite o nome ou código do produto..." oninput="renderizarListaPacks()">
+    </div>
+
+    <div id="listaPacksContainer" style="display:flex; flex-direction:column; gap:8px; max-height:350px; overflow-y:auto; margin-bottom:16px;"></div>
+
+    <!-- Bloco de Cálculo de Packs para o Produto Selecionado -->
+    <div id="blocoCalculoPackAtivo" class="hidden" style="background: rgba(255,255,255,0.02); border: 1px solid #3d3d43; border-radius: 14px; padding: 14px;">
+      <h3 id="packTituloSelecionado" style="margin:0 0 10px; color:#fff; font-size:15px;">Produto Selecionado</h3>
+      
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Unidades por Pack/Caixa</label>
+          <input id="packFatorUnidades" type="number" min="1" placeholder="Ex: 12" oninput="calcularTotalPacks()">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Quantos Packs / Caixas?</label>
+          <input id="packQtdCaixas" type="number" min="0" placeholder="Ex: 5" oninput="calcularTotalPacks()">
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:10px; border:1px solid #2f2f35;">
+        <span style="font-weight:700; font-size:14px; color:#fff;">Total Geral de Unidades:</span>
+        <div id="packResultadoTotal" style="font-size:20px; font-weight:800; color:var(--verde);">0 unidades</div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="fecharConsultaPacks()">Fechar</button>
+      <button class="btn btn-primary" onclick="salvarFatorPackAtual()">Salvar Fator no Produto</button>
+    </div>
+  </div>
+</div>
 
 <div id="modalCheckEstoque" class="modal hidden">
   <div class="modal-card large">
@@ -417,6 +464,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
       </div>
       <div class="field"><label>Produto</label><input id="produtoNome"></div>
       <div class="field"><label>Setor</label><select id="produtoSetor"><option value="">Selecione</option><option>Bebidas</option><option>Laticínios</option><option>Mercearia</option><option>Frios</option><option>Higiene</option><option>Outros</option></select></div>
+      <div class="field"><label>Unidades por Pack / Caixa (Opcional)</label><input id="produtoFatorPack" type="number" min="1" placeholder="Ex: 12"></div>
       <div class="field"><label>Foto (opcional)</label><input id="produtoFoto" type="file" accept="image/*" capture="environment" onchange="carregarFotoProduto()"></div>
       <div class="field full"><img id="produtoPreview" class="preview hidden"><br><button id="removerFotoBtn" class="btn btn-danger hidden" onclick="removerFotoProduto()" style="margin-top:6px">Remover foto</button></div>
 
@@ -536,7 +584,6 @@ async function startScanner() {
     return;
   }
 
-  // Garantir que não há outra instância rodando
   if (html5QrCode) {
     try {
       if (html5QrCode.isScanning) {
@@ -565,25 +612,15 @@ async function startScanner() {
     mostrarToast(`Código lido: ${codigoLido}`, "success");
   };
 
-  const onError = (errorMessage) => {
-    // Erros de leitura contínua (frame a frame) podem ser ignorados
-  };
+  const onError = (errorMessage) => {};
 
   try {
-    // CORREÇÃO CRUCIAL: Utilizar { facingMode: "environment" } diretamente resolve
-    // falhas em navegadores móveis (Chrome/Safari) que exigem permissão estrita de stream.
     await html5QrCode.start(
       { facingMode: "environment" }, 
       config, 
       onSuccess, 
       onError
     );
-
-    const videoElement = readerElement.querySelector("video");
-    if (videoElement) {
-        console.log("Elemento <video> criado com sucesso dentro de #reader.");
-    }
-
   } catch (err) {
     console.error("Falha ao executar Html5Qrcode.start():", err);
     mostrarToast("Erro ao abrir a câmera. Verifique as permissões do navegador.", "error");
@@ -672,6 +709,7 @@ let produtoConferenciaId = null;
 let produtoAtualId = null;
 let fotoProdutoBase64 = null;
 let abrirConferenciaDepoisDeSalvar = false;
+let produtoPackSelecionadoId = null;
 
 // Função para carregar os dados diretamente do Supabase na nuvem
 async function carregarDadosDaNuvem() {
@@ -765,6 +803,93 @@ function verificarStatusValidade(dataIso){
   return { status: 'vencendo', texto: ' ⚠️ VENCENDO' };
  }
  return { status: 'normal', texto: '' };
+}
+
+/* --- Funcionalidade: Consulta de Packs / Caixas --- */
+function abrirConsultaPacks(){
+ produtoPackSelecionadoId = null;
+ document.getElementById("buscaPackInput").value = "";
+ document.getElementById("blocoCalculoPackAtivo").classList.add("hidden");
+ document.getElementById("modalConsultaPacks").classList.remove("hidden");
+ renderizarListaPacks();
+}
+
+function fecharConsultaPacks(){
+ document.getElementById("modalConsultaPacks").classList.add("hidden");
+}
+
+function renderizarListaPacks(){
+ const termo = document.getElementById("buscaPackInput").value.toLowerCase().trim();
+ const container = document.getElementById("listaPacksContainer");
+
+ const filtrados = produtos.filter(p => {
+  const texto = [p.codigo, p.nome, p.setor].join(" ").toLowerCase();
+  return !termo || texto.includes(termo);
+ });
+
+ if(filtrados.length === 0){
+  container.innerHTML = `<div class="empty" style="padding:15px;">Nenhum produto encontrado.</div>`;
+  return;
+}
+
+ container.innerHTML = filtrados.map(p => {
+  const fator = p.fatorPack || 0;
+  const isSelected = produtoPackSelecionadoId === p.id;
+  return `
+   <div onclick="selecionarProdutoPack('${p.id}')" style="background:${isSelected ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isSelected ? 'var(--verde)' : '#2f2f35'}; border-radius:12px; padding:12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:0.15s ease;">
+    <div>
+     <h4 style="margin:0 0 2px; color:#fff; font-size:14px;">${escapeHtml(p.nome)}</h4>
+     <p style="margin:0; font-size:12px; color:#a1a1aa;">Cód: ${escapeHtml(p.codigo)} • <span style="color:#7dd3fc;">${escapeHtml(p.setor)}</span></p>
+    </div>
+    <div style="text-align:right;">
+     <span class="badge" style="background:${fator > '0' ? '#16331f' : '#34280f'}; color:${fator > 0 ? '#71e6a5' : '#f7ca73'}; border:1px solid ${fator > 0 ? '#285c3b' : '#604718'};">
+      📦 ${fator > 0 ? `${fator} un/pack` : 'Definir pack'}
+     </span>
+    </div>
+   </div>
+  `;
+ }).join("");
+}
+
+function selecionarProdutoPack(id){
+ produtoPackSelecionadoId = id;
+ const p = produtos.find(x => x.id === id);
+ if(!p) return;
+
+ document.getElementById("packTituloSelecionado</sup>").textContent = `📦 Produto: ${p.nome} (Cód: ${p.codigo})`;
+ document.getElementById("packFatorUnidades").value = p.fatorPack || "";
+ document.getElementById("packQtdCaixas").value = "";
+ document.getElementById("packResultadoTotal").textContent = "0 unidades";
+ document.getElementById("blocoCalculoPackAtivo").classList.remove("hidden");
+
+ renderizarListaPacks();
+}
+
+function calcularTotalPacks(){
+ const fator = parseInt(document.getElementById("packFatorUnidades").value) || 0;
+ const caixas = parseInt(document.getElementById("packQtdCaixas").value) || 0;
+ const total = fator * caixas;
+ document.getElementById("packResultadoTotal").textContent = `${total} unidades`;
+}
+
+async function salvarFatorPackAtual(){
+ if(!produtoPackSelecionadoId){
+  mostrarToast("Selecione um produto primeiro.","warning");
+  return;
+ }
+ const p = produtos.find(x => x.id === produtoPackSelecionadoId);
+ if(!p) return;
+
+ const fator = parseInt(document.getElementById("packFatorUnidades").value) || 0;
+ if(fator <= 0){
+  mostrarToast("Informe um fator de unidades por pack válido.","warning");
+  return;
+ }
+
+ p.fatorPack = fator;
+ await persistir();
+ mostrarToast("Fator de pack salvo no produto com sucesso!","success");
+ renderizarListaPacks();
 }
 
 /* Check de Estoque */
@@ -889,6 +1014,7 @@ async function salvarCheckEstoque(){
    nome,
    setor,
    foto:null,
+   fatorPack:null,
    conferencias:[{
     id:String(Date.now()),
     data:hojeISO(),
@@ -901,7 +1027,7 @@ async function salvarCheckEstoque(){
    criadoEm:new Date().toISOString()
   };
   produtos.unshift(p);
-  registrarAcao("Cadastrou e Checou Estudo",nome,`Código ${codigo} • ${obs}`);
+  registrarAcao("Cadastrou e Checou Estoque",nome,`Código ${codigo} • ${obs}`);
   mostrarToast("Produto cadastrado e check salvo com sucesso!","success");
  }
 
@@ -1114,6 +1240,7 @@ function renderizarProdutos(){
      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
       <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
       ${indicadorSistema}
+      ${p.fatorPack ? `<span class="badge" style="background:#1b2a4a; color:#93c5fd; border:1px solid #3b82f6;">📦 ${p.fatorPack} un/pack</span>` : ''}
      </div>
     </div>
    </div>
@@ -1172,6 +1299,7 @@ function abrirProdutoForm(id=null,opcoes={}){
  document.getElementById("produtoCodigo").value="";
  document.getElementById("produtoNome").value="";
  document.getElementById("produtoSetor").value="";
+ document.getElementById("produtoFatorPack").value="";
  document.getElementById("produtoFoto").value="";
  document.getElementById("produtoPreview").classList.add("hidden");
  document.getElementById("removerFotoBtn").classList.add("hidden");
@@ -1186,6 +1314,7 @@ function abrirProdutoForm(id=null,opcoes={}){
   document.getElementById("produtoCodigo").value=p.codigo;
   document.getElementById("produtoNome").value=p.nome;
   document.getElementById("produtoSetor").value=p.setor;
+  document.getElementById("produtoFatorPack").value=p.fatorPack || "";
   fotoProdutoBase64=p.foto||null;
 
   if(p.foto){
@@ -1267,6 +1396,8 @@ async function salvarProduto(){
  const codigo=document.getElementById("produtoCodigo").value.trim();
  const nome=document.getElementById("produtoNome").value.trim();
  const setor=document.getElementById("produtoSetor").value;
+ const fatorPackInput=document.getElementById("produtoFatorPack").value.trim();
+ const fatorPack = fatorPackInput ? parseInt(fatorPackInput) || null : null;
 
  if(!codigo||!nome||!setor){
   mostrarToast("Preencha código, produto e setor.","warning");
@@ -1297,8 +1428,9 @@ async function salvarProduto(){
   if(antigo.codigo!==codigo)mudancas.push(`código: ${antigo.codigo} → ${codigo}`);
   if(antigo.nome!==nome)mudancas.push(`nome: ${antigo.nome} → ${nome}`);
   if(antigo.setor!==setor)mudancas.push(`setor: ${antigo.setor} → ${setor}`);
+  if(antigo.fatorPack!==fatorPack)mudancas.push(`pack: ${antigo.fatorPack||'N/D'} → ${fatorPack||'N/D'}`);
 
-  produtos[i]={...antigo,codigo,nome,setor,foto:fotoProdutoBase64,atualizadoEm:new Date().toISOString()};
+  produtos[i]={...antigo,codigo,nome,setor,fatorPack,foto:fotoProdutoBase64,atualizadoEm:new Date().toISOString()};
   produtoSalvoId=produtos[i].id;
 
   const ultima=produtoUltimaConferencia(produtos[i]);
@@ -1349,6 +1481,7 @@ async function salvarProduto(){
    codigo,
    nome,
    setor,
+   fatorPack,
    foto:fotoProdutoBase64,
    conferencias:[{
     id:String(Date.now()),
@@ -1392,7 +1525,10 @@ function abrirDetalhe(id){
    <div class="detail-info">
     <h2>${escapeHtml(p.nome)}</h2>
     <p>Código: ${escapeHtml(p.codigo)}</p>
-    <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; justify-content:center;">
+     <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
+     ${p.fatorPack ? `<span class="badge" style="background:#1b2a4a; color:#93c5fd; border:1px solid #3b82f6;">📦 ${p.fatorPack} un/pack</span>` : ''}
+    </div>
    </div>
   </div>
   <h3 class="section-title">Histórico de validades e Status</h3>
@@ -1580,11 +1716,11 @@ function abrirHistoricoGeral(){
 function fecharHistoricoGeral(){document.getElementById("modalHistorico").classList.add("hidden")}
 
 function exportarCSV(){
- const cab=["Código","Produto","Setor","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
+ const cab=["Código","Produto","Setor","Unid/Pack","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
  const linhas=[];
  produtos.forEach(p=>(p.conferencias||[]).forEach(c=>{
   let statusStr = (c.datas||[]).map(d => `${formatarData(d)}: ${c.mapStatusDatas && c.mapStatusDatas[d] ? 'Sim' : 'Não'}`).join(" | ");
-  linhas.push([p.codigo,p.nome,p.setor,formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
+  linhas.push([p.codigo,p.nome,p.setor,p.fatorPack||"",formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
  }));
  const esc = v => `"${String(v || '').replace(/"/g, '""')}"`;
  const csv = "\ufeff" + [cab, ...linhas].map(l => l.map(esc).join(";")).join("\n");
