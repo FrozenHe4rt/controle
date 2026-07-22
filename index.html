@@ -610,83 +610,60 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 const SUPABASE_URL = 'https://ybdgdyypqtdwttxmyefb.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aoop3ZKaeb-_wx1POxGKNQ_TELGZLNF';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabaseClient = null;
+try {
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+  console.error("Erro ao iniciar Supabase:", e);
+}
 
 // --- Html5Qrcode Scanner Variables ---
 let html5QrCode = null;
-let scannerContextoAtivo = null; // 'check', 'produto' ou 'consulta'
+let scannerContextoAtivo = null;
 
 async function iniciarScanner(contexto) {
   scannerContextoAtivo = contexto;
-  document.getElementById("modalScanner").classList.remove("hidden");
+  const modalScanner = document.getElementById("modalScanner");
+  if (modalScanner) modalScanner.classList.remove("hidden");
 
-  requestAnimationFrame(() => {
-    setTimeout(startScanner, 300);
-  });
-}
-
-async function startScanner() {
-  const readerElement = document.getElementById("reader");
-  if (!readerElement) {
-    mostrarToast("Erro ao iniciar o leitor de código de barras.", "error");
-    return;
-  }
-
-  if (html5QrCode) {
+  setTimeout(async () => {
     try {
-      if (html5QrCode.isScanning) {
-        await html5QrCode.stop();
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
       }
-    } catch (e) {}
-    html5QrCode = null;
-  }
+      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+      
+      const onSuccess = (decodedText) => {
+        const codigoLido = decodedText;
+        pararScanner();
+        
+        if (scannerContextoAtivo === 'check') {
+          const el = document.getElementById("checkCodigo");
+          if(el) { el.value = codigoLido; buscarProdutoPorCodigoCheck(); }
+        } else if (scannerContextoAtivo === 'produto') {
+          const el = document.getElementById("produtoCodigo");
+          if(el) el.value = codigoLido;
+        } else if (scannerContextoAtivo === 'consulta') {
+          const el = document.getElementById("consultaCodigoInput");
+          if(el) { el.value = codigoLido; executarConsultaRapidaCodigo(); }
+        }
+        mostrarToast(`Código lido: ${codigoLido}`, "success");
+      };
 
-  html5QrCode = new Html5Qrcode("reader");
+      const onError = (errorMessage) => {};
 
-  const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-  let cameraTarget = { facingMode: { ideal: "environment" } };
-
-  try {
-    const devices = await Html5Qrcode.getCameras();
-    if (devices && devices.length > 0) {
-      const trasera = devices.find(device => 
-        device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('traseira') ||
-        device.label.toLowerCase().includes('rear') ||
-        device.label.toLowerCase().includes('environment')
+      await html5QrCode.start(
+        { facingMode: { ideal: "environment" } },
+        config,
+        onSuccess,
+        onError
       );
-      if (traseira) {
-        cameraTarget = trasera.id;
-      } else {
-        cameraTarget = devices[devices.length - 1].id;
-      }
+    } catch (err) {
+      console.error("Erro ao iniciar câmera:", err);
+      mostrarToast("Não foi possível acessar a câmera. Verifique permissões.", "error");
+      pararScanner();
     }
-  } catch (err) {}
-
-  const onSuccess = (decodedText) => {
-    const codigoLido = decodedText;
-    pararScanner();
-    
-    if (scannerContextoAtivo === 'check') {
-      document.getElementById("checkCodigo").value = codigoLido;
-      buscarProdutoPorCodigoCheck();
-    } else if (scannerContextoAtivo === 'produto') {
-      document.getElementById("produtoCodigo").value = codigoLido;
-    } else if (scannerContextoAtivo === 'consulta') {
-      document.getElementById("consultaCodigoInput").value = codigoLido;
-      executarConsultaRapidaCodigo();
-    }
-    mostrarToast(`Código lido: ${codigoLido}`, "success");
-  };
-
-  const onError = (errorMessage) => {};
-
-  try {
-    await html5QrCode.start(cameraTarget, config, onSuccess, onError);
-  } catch (err) {
-    mostrarToast("Erro ao abrir a câmera. Verifique as permissões.", "error");
-    pararScanner();
-  }
+  }, 400);
 }
 
 async function pararScanner() {
@@ -696,9 +673,9 @@ async function pararScanner() {
         await html5QrCode.stop();
       }
     } catch (e) {}
-    html5QrCode = null;
   }
-  document.getElementById("modalScanner").classList.add("hidden");
+  const modalScanner = document.getElementById("modalScanner");
+  if (modalScanner) modalScanner.classList.add("hidden");
   scannerContextoAtivo = null;
 }
 
@@ -746,19 +723,21 @@ function cadastrarRapidoDoCodigo(codigo) {
 // --- Service Worker Registration for PWA ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swCode = `
-      const CACHE_NAME = 'alns-vencimentos-v1';
-      self.addEventListener('install', e => { self.skipWaiting(); });
-      self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-      self.addEventListener('fetch', e => {
-        e.respondWith(
-          caches.match(e.request).then(response => response || fetch(e.request).catch(() => caches.match('./')))
-        );
-      });
-    `;
-    const blob = new Blob([swCode], { type: 'text/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+    try {
+      const swCode = `
+        const CACHE_NAME = 'alns-vencimentos-v2';
+        self.addEventListener('install', e => { self.skipWaiting(); });
+        self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+        self.addEventListener('fetch', e => {
+          e.respondWith(
+            caches.match(e.request).then(response => response || fetch(e.request).catch(() => caches.match('./')))
+          );
+        });
+      `;
+      const blob = new Blob([swCode], { type: 'text/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl).catch(() => {});
+    } catch(e){}
   });
 }
 
@@ -815,6 +794,7 @@ let contagemPassoAtual = 0;
 let produtoContagemSelecionado = null;
 
 async function carregarDadosDaNuvem() {
+  if(!supabaseClient) return;
   try {
     const { data, error } = await supabaseClient
       .from('app_dados')
@@ -830,30 +810,25 @@ async function carregarDadosDaNuvem() {
     }
   } catch (err) {
     console.error('Erro ao carregar do Supabase:', err);
-    mostrarToast('Erro ao sincronizar com a nuvem: ' + (err.message || ''), 'error');
   }
   atualizarTotais();
 }
 
 async function persistir() {
+  if(!supabaseClient) return;
   try {
     const atualizadoEm = new Date().toISOString();
     
-    const resProd = await supabaseClient
+    await supabaseClient
       .from('app_dados')
       .upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
       
-    if (resProd.error) throw resProd.error;
-
-    const resHist = await supabaseClient
+    await supabaseClient
       .from('app_dados')
       .upsert({ chave: 'historico', conteudo: historico, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
-      
-    if (resHist.error) throw resHist.error;
 
   } catch (err) {
     console.error('Erro ao salvar no Supabase:', err);
-    mostrarToast('Erro ao salvar na nuvem: ' + (err.message || ''), 'error');
   }
 }
 
@@ -966,8 +941,6 @@ async function salvarCheckEstoque(){
 
  let p=produtos.find(x=>x.codigo===codigo);
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
- let obs = `${statusTextoSistema}`;
-
  let mapStatusDatas = {};
  mapStatusDatas[dataVal] = noSistemaEmpresa;
 
@@ -979,12 +952,12 @@ async function salvarCheckEstoque(){
    id:String(Date.now()),
    data:hojeISO(),
    datas:[dataVal],
-   observacao:obs,
+   observacao:statusTextoSistema,
    noSistemaEmpresa: noSistemaEmpresa,
    mapStatusDatas: mapStatusDatas,
    criadoEm:new Date().toISOString()
   });
-  registrarAcao("Check de Estoque",p.nome,`Validade: ${formatarData(dataVal)} • ${obs}`);
+  registrarAcao("Check de Estoque",p.nome,`Validade: ${formatarData(dataVal)} • ${statusTextoSistema}`);
   mostrarToast("Check de estoque salvo com sucesso!","success");
  }else{
   p={
@@ -998,7 +971,7 @@ async function salvarCheckEstoque(){
     id:String(Date.now()),
     data:hojeISO(),
     datas:[dataVal],
-    observacao:obs,
+    observacao:statusTextoSistema,
     noSistemaEmpresa: noSistemaEmpresa,
     mapStatusDatas: mapStatusDatas,
     criadoEm:new Date().toISOString()
@@ -1006,7 +979,7 @@ async function salvarCheckEstoque(){
    criadoEm:new Date().toISOString()
   };
   produtos.unshift(p);
-  registrarAcao("Cadastrou e Checou Estoque",nome,`Código ${codigo} • ${obs}`);
+  registrarAcao("Cadastrou e Checou Estoque",nome,`Código ${codigo} • ${statusTextoSistema}`);
   mostrarToast("Produto cadastrado e check salvo com sucesso!","success");
  }
 
@@ -1120,6 +1093,7 @@ function avancarPassoContagem(){
 
 function calcularEExibirResumoContagem(){
  const p = produtoContagemSelecionado;
+ if(!p) return 0;
  const qtdCx = parseInt(p.qtdCx || 1, 10);
 
  const lojaCx = parseInt(document.getElementById("lojaCaixas").value || 0, 10);
@@ -1146,12 +1120,12 @@ function calcularEExibirResumoContagem(){
  `;
 
  document.getElementById("resultadoContagemFinalBox").innerHTML = htmlResumo;
- registrarAcao("Contagem de Estoque", p.nome, `Total Geral: ${totalGeral} unidades`);
+ return totalGeral;
 }
 
 function verificarPreenchimentoDataContagem() {
   const val = document.getElementById("contagemDataValidade").value;
-  if (val.trim()) {
+  if (val && val.trim()) {
     document.getElementById("contagemAreaSalvar").classList.remove("hidden");
   } else {
     document.getElementById("contagemAreaSalvar").classList.add("hidden");
@@ -1168,6 +1142,7 @@ async function salvarValidadeDaContagem(){
    return;
  }
 
+ const totalGeral = calcularEExibirResumoContagem();
  const statusTextoSistema = noSistema ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
  let mapStatusDatas = {};
  mapStatusDatas[dataVal] = noSistema;
@@ -1177,7 +1152,7 @@ async function salvarValidadeDaContagem(){
   id: String(Date.now()),
   data: hojeISO(),
   datas: [dataVal],
-  observacao: `Contagem guiada • ${statusTextoSistema}`,
+  observacao: `Contagem guiada • Total: ${totalGeral} un • ${statusTextoSistema}`,
   noSistemaEmpresa: noSistema,
   mapStatusDatas: mapStatusDatas,
   criadoEm: new Date().toISOString()
@@ -1186,7 +1161,7 @@ async function salvarValidadeDaContagem(){
  await persistir();
  atualizarTotais();
  fecharCalculadoraContagem();
- mostrarToast("Validade salva na ficha do produto com sucesso!","success");
+ mostrarToast("Validade e contagem salvas com sucesso!","success");
  abrirDetalhe(p.id);
 }
 
