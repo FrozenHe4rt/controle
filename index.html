@@ -182,6 +182,25 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
   </div>
 </div>
 
+<!-- Modal Consulta Rápida de Código / Ficha na Home -->
+<div id="modalConsultaRapida" class="modal hidden">
+  <div class="modal-card">
+    <h2>🔎 Consultar Produto por Código</h2>
+    <div class="field">
+      <label>Código do Produto</label>
+      <div style="display:grid; grid-template-columns: 1fr 46px; gap:6px;">
+        <input id="consultaCodigoInput" inputmode="numeric" placeholder="Digite ou leia o código">
+        <button type="button" class="btn btn-secondary" style="min-height:46px; padding:0; font-size:18px;" onclick="iniciarScanner('consulta')" title="Ler com Câmera">📷</button>
+      </div>
+    </div>
+    <div id="consultaRapidaResultado" class="notice hidden"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="fecharConsultaRapida()">Fechar</button>
+      <button class="btn btn-primary" onclick="executarConsultaRapidaCodigo()">Pesquisar</button>
+    </div>
+  </div>
+</div>
+
 <section id="loginPage" class="login-page">
   <div class="login-card">
     <div class="logo">AL</div>
@@ -229,6 +248,13 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         <strong style="font-size:clamp(14px, 4vw, 17px); margin-top:8px; color:#93c5fd">+ Novo</strong>
         <span class="card-sub" style="color:#93c5fd">Cadastrar produto</span>
       </div>
+    </div>
+
+    <!-- Novo Botão de Consulta Rápida na Home -->
+    <div style="margin-bottom:12px;">
+      <button class="btn btn-primary" style="width:100%; min-height:50px; font-size:15px; background:linear-gradient(135deg,#1d4ed8,#1e40af); border-color:#3b82f6;" onclick="abrirConsultaRapida()">
+        🔍 Consultar Código / Câmera (Ficha do Produto)
+      </button>
     </div>
 
     <div style="font-size: 13px; font-weight: 700; color: #a1a1aa; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Atividades e Ferramentas</div>
@@ -403,7 +429,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
         <div style="background: rgba(255,255,255,0.02); padding: 14px; border: 1px solid #33333a; border-radius: 12px; margin-top: 10px;">
           <div class="field" style="margin-bottom:10px;">
             <label>Data de Validade Encontrada (Opcional)</label>
-            <input id="contagemDataValidade" type="date">
+            <input id="contagemDataValidade" type="date" oninput="verificarPreenchimentoDataContagem()">
             <small style="color:var(--muted)">Se preenchida, você poderá salvar esta validade automaticamente no produto.</small>
           </div>
           <div id="contagemAreaSalvar" class="hidden">
@@ -588,7 +614,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- Html5Qrcode Scanner Variables ---
 let html5QrCode = null;
-let scannerContextoAtivo = null; // 'check' ou 'produto'
+let scannerContextoAtivo = null; // 'check', 'produto' ou 'consulta'
 
 async function iniciarScanner(contexto) {
   scannerContextoAtivo = contexto;
@@ -646,6 +672,9 @@ async function startScanner() {
       buscarProdutoPorCodigoCheck();
     } else if (scannerContextoAtivo === 'produto') {
       document.getElementById("produtoCodigo").value = codigoLido;
+    } else if (scannerContextoAtivo === 'consulta') {
+      document.getElementById("consultaCodigoInput").value = codigoLido;
+      executarConsultaRapidaCodigo();
     }
     mostrarToast(`Código lido: ${codigoLido}`, "success");
   };
@@ -671,6 +700,47 @@ async function pararScanner() {
   }
   document.getElementById("modalScanner").classList.add("hidden");
   scannerContextoAtivo = null;
+}
+
+// --- Consulta Rápida na Home ---
+function abrirConsultaRapida() {
+  document.getElementById("consultaCodigoInput").value = "";
+  document.getElementById("consultaRapidaResultado").classList.add("hidden");
+  document.getElementById("modalConsultaRapida").classList.remove("hidden");
+}
+
+function fecharConsultaRapida() {
+  document.getElementById("modalConsultaRapida").classList.add("hidden");
+}
+
+function executarConsultaRapidaCodigo() {
+  const codigo = document.getElementById("consultaCodigoInput").value.trim();
+  const resultadoDiv = document.getElementById("consultaRapidaResultado");
+
+  if (!codigo) {
+    mostrarToast("Informe ou leia o código do produto.", "warning");
+    return;
+  }
+
+  const p = produtos.find(x => x.codigo === codigo);
+  if (p) {
+    fecharConsultaRapida();
+    abrirDetalhe(p.id);
+  } else {
+    resultadoDiv.className = "notice notice-danger";
+    resultadoDiv.innerHTML = `
+      <strong>Produto não encontrado!</strong><br>
+      Não existe nenhum produto cadastrado com o código <strong>${escapeHtml(codigo)}</strong>.<br>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="cadastrarRapidoDoCodigo('${escapeHtml(codigo)}')">➕ Cadastrar este produto agora</button>
+    `;
+    resultadoDiv.classList.remove("hidden");
+  }
+}
+
+function cadastrarRapidoDoCodigo(codigo) {
+  fecharConsultaRapida();
+  abrirProdutoForm();
+  document.getElementById("produtoCodigo").value = codigo;
 }
 
 // --- Service Worker Registration for PWA ---
@@ -1076,17 +1146,16 @@ function calcularEExibirResumoContagem(){
  `;
 
  document.getElementById("resultadoContagemFinalBox").innerHTML = htmlResumo;
-
- const inputVal = document.getElementById("contagemDataValidade");
- inputVal.oninput = () => {
-  if(inputVal.value.trim()){
-   document.getElementById("contagemAreaSalvar").classList.remove("hidden");
-  }else{
-   document.getElementById("contagemAreaSalvar").classList.add("hidden");
-  }
- };
-
  registrarAcao("Contagem de Estoque", p.nome, `Total Geral: ${totalGeral} unidades`);
+}
+
+function verificarPreenchimentoDataContagem() {
+  const val = document.getElementById("contagemDataValidade").value;
+  if (val.trim()) {
+    document.getElementById("contagemAreaSalvar").classList.remove("hidden");
+  } else {
+    document.getElementById("contagemAreaSalvar").classList.add("hidden");
+  }
 }
 
 async function salvarValidadeDaContagem(){
@@ -1543,10 +1612,6 @@ async function salvarProduto(){
   produtoSalvoId=produtos[i].id;
 
   const ultima=produtoUltimaConferencia(produtos[i]);
-  const antigaData=ultima?ultima.data:"";
-  const antigasDatas=ultima?[...(ultima.datas||[])]:[];
-  const antigaObs=ultima?ultima.observacao||"":"";
-  
   let mapStatusDatasAntigo = (ultima && ultima.mapStatusDatas) ? {...ultima.mapStatusDatas} : {};
   let novoMapStatus = {};
   novasDatas.forEach(d => {
