@@ -215,7 +215,7 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 
 <main id="app" class="app hidden">
   <div class="topbar">
-    <div class="title"><h1>Controle de Vencimentos</h1><p>Painel principal (Híbrido: Nuvem + Local)</p></div>
+    <div class="title"><h1>Controle de Vencimentos</h1><p>Painel principal (Supabase Online)</p></div>
     <div class="userbox">
       <strong>Ana Luiza</strong>
       <div class="userbox-actions">
@@ -606,15 +606,13 @@ button,input,select,textarea{font:inherit}.hidden{display:none!important}
 </div>
 
 <script>
-// --- CONFIGURAÇÃO DO SUPABASE E FALLBACK LOCAL ---
+// --- CONFIGURAÇÃO DO SUPABASE ---
 const SUPABASE_URL = 'https://ybdgdyypqtdwttxmyefb.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aoop3ZKaeb-_wx1POxGKNQ_TELGZLNF';
 
 let supabaseClient = null;
 try {
-  if (window.supabase) {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } catch (e) {
   console.error("Erro ao iniciar Supabase:", e);
 }
@@ -735,7 +733,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     try {
       const swCode = `
-        const CACHE_NAME = 'alns-vencimentos-v3';
+        const CACHE_NAME = 'alns-vencimentos-v2';
         self.addEventListener('install', e => { self.skipWaiting(); });
         self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
         self.addEventListener('fetch', e => {
@@ -789,8 +787,6 @@ function hojeISO() {
 
 const LOGIN="ALNS",SENHA="ALNS";
 const K_BACKUP="alns_ultimo_backup";
-const K_LOCAL_PROD="alns_produtos_local";
-const K_LOCAL_HIST="alns_historico_local";
 
 let produtos = [];
 let historico = [];
@@ -806,45 +802,27 @@ let contagemPassoAtual = 0;
 let produtoContagemSelecionado = null;
 
 async function carregarDadosDaNuvem() {
-  let carregouNuvem = false;
-  if(supabaseClient) {
-    try {
-      const { data, error } = await supabaseClient
-        .from('app_dados')
-        .select('*');
+  if(!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('app_dados')
+      .select('*');
 
-      if (!error && data && data.length > 0) {
-        data.forEach(row => {
-          if (row.chave === 'produtos') produtos = row.conteudo || [];
-          if (row.chave === 'historico') historico = row.conteudo || [];
-        });
-        carregouNuvem = true;
-      }
-    } catch (err) {
-      console.warn('Aviso: Não foi possível carregar do Supabase, usando armazenamento local.', err);
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      data.forEach(row => {
+        if (row.chave === 'produtos') produtos = row.conteudo || [];
+        if (row.chave === 'historico') historico = row.conteudo || [];
+      });
     }
+  } catch (err) {
+    console.error('Erro ao carregar do Supabase:', err);
   }
-
-  // Fallback para LocalStorage se a nuvem estiver vazia ou indisponível
-  if (!carregouNuvem || produtos.length === 0) {
-    try {
-      const pLocal = localStorage.getItem(K_LOCAL_PROD);
-      const hLocal = localStorage.getItem(K_LOCAL_HIST);
-      if (pLocal) produtos = JSON.parse(pLocal);
-      if (hLocal) historico = JSON.parse(hLocal);
-    } catch(e) {}
-  }
-
   atualizarTotais();
 }
 
 async function persistir() {
-  // Salva sempre no localStorage para garantir funcionamento imediato offline/online
-  try {
-    localStorage.setItem(K_LOCAL_PROD, JSON.stringify(produtos));
-    localStorage.setItem(K_LOCAL_HIST, JSON.stringify(historico));
-  } catch(e) {}
-
   if(!supabaseClient) return;
   try {
     const atualizadoEm = new Date().toISOString();
@@ -858,7 +836,7 @@ async function persistir() {
       .upsert({ chave: 'historico', conteudo: historico, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
 
   } catch (err) {
-    console.warn('Aviso: Dados salvos localmente, mas falhou ao sincronizar com Supabase:', err);
+    console.error('Erro ao salvar no Supabase:', err);
   }
 }
 
@@ -1125,6 +1103,10 @@ function avancarPassoContagem(){
 }
 
 function calcularEExibirResumoContagem(){
+ const selectId = document.getElementById("contagemProdutoId").value;
+ if(!produtoContagemSelecionado && selectId) {
+   produtoContagemSelecionado = produtos.find(x => String(x.id) === String(selectId));
+ }
  const p = produtoContagemSelecionado;
  if(!p) return 0;
  const qtdCx = parseInt(p.qtdCx || 1, 10);
@@ -1171,50 +1153,50 @@ async function salvarValidadeDaContagem(){
    produtoContagemSelecionado = produtos.find(x => String(x.id) === String(selectId));
  }
 
- const p = produtoContagemSelecionado;
- const dataVal = document.getElementById("contagemDataValidade").value;
- const noSistema = document.getElementById("contagemNoSistema").checked;
-
- if(!p) {
+ if(!produtoContagemSelecionado) {
    mostrarToast("Nenhum produto selecionado para salvar.","error");
    return;
  }
 
+ const indice = produtos.findIndex(x => String(x.id) === String(produtoContagemSelecionado.id));
+ if(indice === -1) {
+   mostrarToast("Produto não encontrado no array local.","error");
+   return;
+ }
+
+ const dataVal = document.getElementById("contagemDataValidade").value;
  if(!dataVal) {
    mostrarToast("Informe a data de validade para salvar.","warning");
    return;
  }
 
- try {
-   const totalGeral = calcularEExibirResumoContagem();
-   const statusTextoSistema = noSistema ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
-   let mapStatusDatas = {};
-   mapStatusDatas[dataVal] = noSistema;
+ const totalGeral = calcularEExibirResumoContagem();
+ const noSistema = document.getElementById("contagemNoSistema").checked;
+ const statusTextoSistema = noSistema ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
+ let mapStatusDatas = {};
+ mapStatusDatas[dataVal] = noSistema;
 
-   p.conferencias = p.conferencias || [];
-   const novaConf = {
-    id: String(Date.now()),
-    data: hojeISO(),
-    datas: [dataVal],
-    observacao: `Contagem guiada • Total: ${totalGeral} un • ${statusTextoSistema}`,
-    noSistemaEmpresa: noSistema,
-    mapStatusDatas: mapStatusDatas,
-    criadoEm: new Date().toISOString()
-   };
+ const novaConferencia = {
+  id: String(Date.now()),
+  data: hojeISO(),
+  datas: [dataVal],
+  observacao: `Contagem guiada • Total: ${totalGeral} un • ${statusTextoSistema}`,
+  noSistemaEmpresa: noSistema,
+  mapStatusDatas: mapStatusDatas,
+  criadoEm: new Date().toISOString()
+ };
 
-   p.conferencias.unshift(novaConf);
+ produtos[indice].conferencias = produtos[indice].conferencias || [];
+ produtos[indice].conferencias.unshift(novaConferencia);
 
-   await persistir();
+ registrarAcao("Contagem Guiada", produtos[indice].nome, `Validade: ${formatarData(dataVal)} • Total: ${totalGeral} un`);
 
-   atualizarTotais();
-   fecharCalculadoraContagem();
-   mostrarToast("Validade e contagem salvas com sucesso!","success");
-   
-   abrirDetalhe(p.id);
-
- } catch (err) {
-   mostrarToast("Erro ao salvar contagem.", "error");
- }
+ await persistir();
+ atualizarTotais();
+ fecharCalculadoraContagem();
+ mostrarToast("Validade e contagem salvas com sucesso!","success");
+ 
+ abrirDetalhe(produtos[indice].id);
 }
 
 /* Calculadora Flexível de Validade e Fabricação */
@@ -1889,12 +1871,8 @@ function baixar(blob,nome){const a=document.createElement("a");a.href=URL.create
 
 document.getElementById("loginSenha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
 
-// Executa carregamento automático e exibe o app direto caso já esteja autenticado
 if(sessionStorage.getItem("alns_logado_v2")==="sim"){
  carregarDadosDaNuvem().then(() => mostrarApp());
-} else {
- // Pré-carrega dados caso queira ver offline
- carregarDadosDaNuvem();
 }
 </script>
 </body>
