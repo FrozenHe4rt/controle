@@ -810,39 +810,71 @@ async function carregarDadosDaNuvem() {
 
     if (error) throw error;
 
+    let encontrouProdutos = false;
+    let encontrouHistorico = false;
+
     if (data && data.length > 0) {
       data.forEach(row => {
-        if (row.chave === 'produtos') produtos = row.conteudo || [];
-        if (row.chave === 'historico') historico = row.conteudo || [];
+        if (row.chave === 'produtos') {
+          produtos = row.conteudo || [];
+          encontrouProdutos = true;
+        }
+        if (row.chave === 'historico') {
+          historico = row.conteudo || [];
+          encontrouHistorico = true;
+        }
       });
     }
+
+    // Validação automática e criação se não existirem
+    if (!encontrouProdutos) {
+      produtos = [];
+      await supabaseClient.from('app_dados').upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
+    }
+    if (!encontrouHistorico) {
+      historico = [];
+      await supabaseClient.from('app_dados').upsert({ chave: 'historico', conteudo: historico, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
+    }
+
   } catch (err) {
     console.error('Erro ao carregar do Supabase:', err);
+    mostrarToast("Erro ao carregar dados do Supabase. Verifique sua conexão.", "error");
   }
   atualizarTotais();
 }
 
 async function persistir() {
-  if(!supabaseClient) return;
-  try {
-    const atualizadoEm = new Date().toISOString();
-    
-    await supabaseClient
-      .from('app_dados')
-      .upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
-      
-    await supabaseClient
-      .from('app_dados')
-      .upsert({ chave: 'historico', conteudo: historico, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
-
-  } catch (err) {
-    console.error('Erro ao salvar no Supabase:', err);
+  if(!supabaseClient) {
+    throw new Error("Cliente Supabase não inicializado.");
   }
+  
+  const atualizadoEm = new Date().toISOString();
+  
+  // Verificação individual e rigorosa de cada gravação
+  const { error: errProd } = await supabaseClient
+    .from('app_dados')
+    .upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
+    
+  if (errProd) {
+    console.error('Erro ao salvar produtos no Supabase:', errProd);
+    throw new Error(`Erro ao salvar produtos: ${errProd.message || 'Erro desconhecido'}`);
+  }
+    
+  const { error: errHist } = await supabaseClient
+    .from('app_dados')
+    .upsert({ chave: 'historico', conteudo: historico, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
+
+  if (errHist) {
+    console.error('Erro ao salvar histórico no Supabase:', errHist);
+    throw new Error(`Erro ao salvar histórico: ${errHist.message || 'Erro desconhecido'}`);
+  }
+
+  // Recarregar dados para garantir sincronização total
+  await carregarDadosDaNuvem();
 }
 
 function registrarAcao(acao,produto,detalhes=""){
  historico.unshift({id:Date.now()+Math.random(),acao,produto,detalhes,data:new Date().toISOString()});
- persistir();
 }
 
 async function entrar(){
@@ -952,6 +984,7 @@ async function salvarCheckEstoque(){
  let mapStatusDatas = {};
  mapStatusDatas[dataVal] = noSistemaEmpresa;
 
+ let produtoSalvo;
  if(p){
   p.nome=nome;
   p.setor=setor;
@@ -966,7 +999,7 @@ async function salvarCheckEstoque(){
    criadoEm:new Date().toISOString()
   });
   registrarAcao("Check de Estoque",p.nome,`Validade: ${formatarData(dataVal)} • ${statusTextoSistema}`);
-  mostrarToast("Check de estoque salvo com sucesso!","success");
+  produtoSalvo = p;
  }else{
   p={
    id:String(Date.now()),
@@ -988,13 +1021,18 @@ async function salvarCheckEstoque(){
   };
   produtos.unshift(p);
   registrarAcao("Cadastrou e Checou Estoque",nome,`Código ${codigo} • ${statusTextoSistema}`);
-  mostrarToast("Produto cadastrado e check salvo com sucesso!","success");
+  produtoSalvo = p;
  }
 
- await persistir();
- atualizarTotais();
- fecharCheckEstoque();
- abrirDetalhe(p.id);
+ try {
+   await persistir();
+   atualizarTotais();
+   fecharCheckEstoque();
+   abrirDetalhe(produtoSalvo.id);
+   mostrarToast("Check de estoque salvo com sucesso!","success");
+ } catch (err) {
+   mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+ }
 }
 
 /* --- Contagem Guiada de Estoque com Validade e Salvamento Corrigida --- */
@@ -1191,12 +1229,16 @@ async function salvarValidadeDaContagem(){
 
  registrarAcao("Contagem Guiada", produtos[indice].nome, `Validade: ${formatarData(dataVal)} • Total: ${totalGeral} un`);
 
- await persistir();
- atualizarTotais();
- fecharCalculadoraContagem();
- mostrarToast("Validade e contagem salvas com sucesso!","success");
- 
- abrirDetalhe(produtos[indice].id);
+ try {
+   await persistir();
+   atualizarTotais();
+   fecharCalculadoraContagem();
+   mostrarToast("Validade e contagem salvas com sucesso!","success");
+   abrirDetalhe(produtos[indice].id);
+ } catch (err) {
+   produtos[indice].conferencias.shift(); // Reverte alteração local em caso de falha
+   mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+ }
 }
 
 /* Calculadora Flexível de Validade e Fabricação */
@@ -1610,6 +1652,7 @@ async function salvarProduto(){
  if(produtoEditandoId){
   const i=produtos.findIndex(p=>p.id===produtoEditandoId);
   const antigo=produtos[i];
+  const backupAntigo = JSON.parse(JSON.stringify(antigo));
   const mudancas=[];
 
   if(antigo.codigo!==codigo)mudancas.push(`código: ${antigo.codigo} → ${codigo}`);
@@ -1645,7 +1688,24 @@ async function salvarProduto(){
   }
 
   registrarAcao("Editou produto",nome,mudancas.join(" • ")||"Atualizou o cadastro");
-  mostrarToast("Produto atualizado com sucesso!","success");
+
+  try {
+    await persistir();
+    fecharProdutoForm();
+    atualizarTotais();
+    mostrarToast("Produto atualizado com sucesso!","success");
+
+    if(abrirConferenciaDepoisDeSalvar){
+     abrirConferenciaDepoisDeSalvar=false;
+     abrirConferencia(produtoSalvoId);
+    }else{
+     abrirDetalhe(produtoSalvoId);
+    }
+  } catch (err) {
+    produtos[i] = backupAntigo; // Reverte alteração local
+    mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+  }
+
  }else{
   let novoMapStatus = {};
   novasDatas.forEach(d => { novoMapStatus[d] = false; });
@@ -1671,18 +1731,23 @@ async function salvarProduto(){
   produtos.unshift(novo);
   produtoSalvoId=novo.id;
   registrarAcao("Criou produto",nome,`Código ${codigo}`);
-  mostrarToast("Produto cadastrado com sucesso!","success");
- }
 
- await persistir();
- fecharProdutoForm();
- atualizarTotais();
+  try {
+    await persistir();
+    fecharProdutoForm();
+    atualizarTotais();
+    mostrarToast("Produto cadastrado com sucesso!","success");
 
- if(abrirConferenciaDepoisDeSalvar){
-  abrirConferenciaDepoisDeSalvar=false;
-  abrirConferencia(produtoSalvoId);
- }else{
-  abrirDetalhe(produtoSalvoId);
+    if(abrirConferenciaDepoisDeSalvar){
+     abrirConferenciaDepoisDeSalvar=false;
+     abrirConferencia(produtoSalvoId);
+    }else{
+     abrirDetalhe(produtoSalvoId);
+    }
+  } catch (err) {
+    produtos.shift(); // Reverte inserção local
+    mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+  }
  }
 }
 
@@ -1746,12 +1811,18 @@ async function alternarStatusSistemaData(produtoId, confId, dataVal, statusCheck
  if(!c) return;
 
  if(!c.mapStatusDatas) c.mapStatusDatas = {};
+ const valorAnterior = c.mapStatusDatas[dataVal];
  c.mapStatusDatas[dataVal] = statusCheckbox;
 
- await persistir();
- atualizarTotais();
- abrirDetalhe(produtoId);
- mostrarToast("Status atualizado!","success");
+ try {
+   await persistir();
+   atualizarTotais();
+   abrirDetalhe(produtoId);
+   mostrarToast("Status atualizado!","success");
+ } catch (err) {
+   c.mapStatusDatas[dataVal] = valorAnterior; // Reverte alteração local
+   mostrarToast(err.message || "Erro ao salvar status no banco de dados.", "error");
+ }
 }
 
 function fecharDetalhe(){document.getElementById("modalDetalhe").classList.add("hidden")}
@@ -1810,11 +1881,17 @@ async function salvarConferencia(){
  p.conferencias.unshift(conf);
  
  registrarAcao("Nova conferência",p.nome,`Validades: ${datas.map(formatarData).join(", ")} • ${obsFinal}`);
- await persistir();
- fecharConferencia();
- atualizarTotais();
- abrirDetalhe(p.id);
- mostrarToast("Conferência salva com sucesso!","success");
+
+ try {
+   await persistir();
+   fecharConferencia();
+   atualizarTotais();
+   abrirDetalhe(p.id);
+   mostrarToast("Conferência salva com sucesso!","success");
+ } catch (err) {
+   p.conferencias.shift(); // Reverte conferência local em caso de erro
+   mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+ }
 }
 
 async function apagarConferencia(produtoId,confId){
@@ -1824,22 +1901,38 @@ async function apagarConferencia(produtoId,confId){
   return;
  }
  if(!confirm(`Apagar o registro de validade de ${formatarData(c.data)}?`))return;
+ 
+ const conferenciasBackup = [...p.conferencias];
  p.conferencias=p.conferencias.filter(x=>x.id!==confId);
  registrarAcao("Apagou conferência",p.nome,`Validade de ${formatarData(c.data)}`);
- await persistir();
- atualizarTotais();
- abrirDetalhe(produtoId);
- mostrarToast("Registro apagado.","warning");
+
+ try {
+   await persistir();
+   atualizarTotais();
+   abrirDetalhe(produtoId);
+   mostrarToast("Registro apagado.","warning");
+ } catch (err) {
+   p.conferencias = conferenciasBackup; // Reverte alteração local
+   mostrarToast(err.message || "Erro ao apagar no banco de dados.", "error");
+ }
 }
 
 async function apagarProduto(id){
  const p=produtos.find(x=>x.id===id);if(!p||!confirm(`Apagar "${p.nome}" e todo o histórico?`))return;
+ 
+ const produtosBackup = [...produtos];
  produtos=produtos.filter(x=>x.id!==id);
  registrarAcao("Apagou produto",p.nome,`Código ${p.codigo}`);
- await persistir();
- fecharDetalhe();
- atualizarTotais();
- mostrarToast("Produto apagado com sucesso.","warning");
+
+ try {
+   await persistir();
+   fecharDetalhe();
+   atualizarTotais();
+   mostrarToast("Produto apagado com sucesso.","warning");
+ } catch (err) {
+   produtos = produtosBackup; // Reverte alteração local
+   mostrarToast(err.message || "Erro ao apagar no banco de dados.", "error");
+ }
 }
 
 function abrirHistoricoGeral(){
