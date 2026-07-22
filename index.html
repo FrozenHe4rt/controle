@@ -651,7 +651,6 @@ async function iniciarScanner(contexto) {
 
       const onError = (errorMessage) => {};
 
-      // Primeiro tenta a câmera traseira (environment), se falhar usa a padrão disponível
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
@@ -998,7 +997,7 @@ async function salvarCheckEstoque(){
  abrirDetalhe(p.id);
 }
 
-/* --- Contagem Guiada de Estoque com Validade e Salvamento --- */
+/* --- Contagem Guiada de Estoque com Validade e Salvamento Corrigida --- */
 function abrirCalculadoraContagem(){
  const select = document.getElementById("contagemProdutoId");
  select.innerHTML = '<option value="">Selecione um produto...</option>' + produtos.map(p => `<option value="${p.id}">${escapeHtml(p.nome)} (Cód: ${escapeHtml(p.codigo)})</option>`).join("");
@@ -1021,6 +1020,8 @@ function verificarProdutoContagem(){
  const infoBox = document.getElementById("contagemInfoQtdCx");
  const btnIniciar = document.getElementById("btnIniciarContagem");
 
+ console.log("[CONTAGEM] Produto selecionado ID:", id);
+
  if(!id){
   produtoContagemSelecionado = null;
   infoBox.classList.add("hidden");
@@ -1028,17 +1029,23 @@ function verificarProdutoContagem(){
   return;
  }
 
- produtoContagemSelecionado = produtos.find(x => x.id === id);
+ produtoContagemSelecionado = produtos.find(x => String(x.id) === String(id));
  if(produtoContagemSelecionado){
   const qtdCx = produtoContagemSelecionado.qtdCx || 1;
   infoBox.textContent = `📦 Quantidade por fardo/caixa cadastrada: ${qtdCx} unidades.`;
   infoBox.classList.remove("hidden");
   btnIniciar.classList.remove("hidden");
+  console.log("[CONTAGEM] Produto encontrado:", produtoContagemSelecionado.nome);
+ } else {
+  console.warn("[CONTAGEM] Produto não encontrado no array local!");
  }
 }
 
 function iniciarPassosContagem(){
- if(!produtoContagemSelecionado) return;
+ if(!produtoContagemSelecionado) {
+   mostrarToast("Selecione um produto válido primeiro.", "warning");
+   return;
+ }
  contagemPassoAtual = 1;
  
  document.getElementById("lojaCaixas").value = "0";
@@ -1142,36 +1149,64 @@ function verificarPreenchimentoDataContagem() {
 }
 
 async function salvarValidadeDaContagem(){
+ console.log("[CONTAGEM] Botão Salvar Validade acionado.");
+ 
+ const selectId = document.getElementById("contagemProdutoId").value;
+ if(!produtoContagemSelecionado && selectId) {
+   produtoContagemSelecionado = produtos.find(x => String(x.id) === String(selectId));
+ }
+
  const p = produtoContagemSelecionado;
  const dataVal = document.getElementById("contagemDataValidade").value;
  const noSistema = document.getElementById("contagemNoSistema").checked;
 
- if(!p || !dataVal) {
+ console.log("[CONTAGEM] Dados capturados:", { produto: p?.nome, dataVal, noSistema });
+
+ if(!p) {
+   mostrarToast("Nenhum produto selecionado para salvar.","error");
+   console.error("[CONTAGEM ERRO] produtoContagemSelecionado está nulo.");
+   return;
+ }
+
+ if(!dataVal) {
    mostrarToast("Informe a data de validade para salvar.","warning");
    return;
  }
 
- const totalGeral = calcularEExibirResumoContagem();
- const statusTextoSistema = noSistema ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
- let mapStatusDatas = {};
- mapStatusDatas[dataVal] = noSistema;
+ try {
+   const totalGeral = calcularEExibirResumoContagem();
+   const statusTextoSistema = noSistema ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
+   let mapStatusDatas = {};
+   mapStatusDatas[dataVal] = noSistema;
 
- p.conferencias = p.conferencias || [];
- p.conferencias.unshift({
-  id: String(Date.now()),
-  data: hojeISO(),
-  datas: [dataVal],
-  observacao: `Contagem guiada • Total: ${totalGeral} un • ${statusTextoSistema}`,
-  noSistemaEmpresa: noSistema,
-  mapStatusDatas: mapStatusDatas,
-  criadoEm: new Date().toISOString()
- });
+   p.conferencias = p.conferencias || [];
+   const novaConf = {
+    id: String(Date.now()),
+    data: hojeISO(),
+    datas: [dataVal],
+    observacao: `Contagem guiada • Total: ${totalGeral} un • ${statusTextoSistema}`,
+    noSistemaEmpresa: noSistema,
+    mapStatusDatas: mapStatusDatas,
+    criadoEm: new Date().toISOString()
+   };
 
- await persistir();
- atualizarTotais();
- fecharCalculadoraContagem();
- mostrarToast("Validade e contagem salvas com sucesso!","success");
- abrirDetalhe(p.id);
+   p.conferencias.unshift(novaConf);
+   console.log("[CONTAGEM] Conferência adicionada ao produto localmente:", novaConf);
+
+   await persistir();
+   console.log("[CONTAGEM] Dados persistidos com sucesso no Supabase.");
+
+   atualizarTotais();
+   fecharCalculadoraContagem();
+   mostrarToast("Validade e contagem salvas com sucesso!","success");
+   
+   // Abre a ficha detalhada do produto atualizado
+   abrirDetalhe(p.id);
+
+ } catch (err) {
+   console.error("[CONTAGEM ERRO CRÍTICO] Falha ao salvar contagem:", err);
+   mostrarToast("Erro ao salvar contagem. Verifique o console.", "error");
+ }
 }
 
 /* Calculadora Flexível de Validade e Fabricação */
