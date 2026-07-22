@@ -631,7 +631,6 @@ async function iniciarScanner(contexto) {
       if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
       }
-      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
       
       const onSuccess = (decodedText) => {
         const codigoLido = decodedText;
@@ -652,12 +651,22 @@ async function iniciarScanner(contexto) {
 
       const onError = (errorMessage) => {};
 
-      await html5QrCode.start(
-        { facingMode: { ideal: "environment" } },
-        config,
-        onSuccess,
-        onError
-      );
+      // Primeiro tenta a câmera traseira (environment), se falhar usa a padrão disponível
+      try {
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          onSuccess,
+          onError
+        );
+      } catch (errEnv) {
+        await html5QrCode.start(
+          { facingMode: "user" },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          onSuccess,
+          onError
+        );
+      }
     } catch (err) {
       console.error("Erro ao iniciar câmera:", err);
       mostrarToast("Não foi possível acessar a câmera. Verifique permissões.", "error");
