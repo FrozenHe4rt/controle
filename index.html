@@ -826,7 +826,6 @@ async function carregarDadosDaNuvem() {
       });
     }
 
-    // Validação automática e criação se não existirem
     if (!encontrouProdutos) {
       produtos = [];
       await supabaseClient.from('app_dados').upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
@@ -850,7 +849,6 @@ async function persistir() {
   
   const atualizadoEm = new Date().toISOString();
   
-  // Verificação individual e rigorosa de cada gravação
   const { error: errProd } = await supabaseClient
     .from('app_dados')
     .upsert({ chave: 'produtos', conteudo: produtos, atualizado_em: atualizadoEm }, { onConflict: 'chave' });
@@ -869,7 +867,6 @@ async function persistir() {
     throw new Error(`Erro ao salvar histórico: ${errHist.message || 'Erro desconhecido'}`);
   }
 
-  // Recarregar dados para garantir sincronização total
   await carregarDadosDaNuvem();
 }
 
@@ -1035,7 +1032,7 @@ async function salvarCheckEstoque(){
  }
 }
 
-/* --- Contagem Guiada de Estoque com Validade e Salvamento Corrigida --- */
+/* --- Contagem Guiada de Estoque com Salvamento Automático Robusto --- */
 function abrirCalculadoraContagem(){
  const select = document.getElementById("contagemProdutoId");
  select.innerHTML = '<option value="">Selecione um produto...</option>' + produtos.map(p => `<option value="${p.id}">${escapeHtml(p.nome)} (Cód: ${escapeHtml(p.codigo)})</option>`).join("");
@@ -1075,6 +1072,12 @@ function verificarProdutoContagem(){
 }
 
 function iniciarPassosContagem(){
+ // Garante a vinculação correta do produto selecionado pelo ID atual
+ const selectId = document.getElementById("contagemProdutoId").value;
+ if(selectId) {
+   produtoContagemSelecionado = produtos.find(x => String(x.id) === String(selectId));
+ }
+
  if(!produtoContagemSelecionado) {
    mostrarToast("Selecione um produto válido primeiro.", "warning");
    return;
@@ -1196,9 +1199,9 @@ async function salvarValidadeDaContagem(){
    return;
  }
 
- const indice = produtos.findIndex(x => String(x.id) === String(produtoContagemSelecionado.id));
- if(indice === -1) {
-   mostrarToast("Produto não encontrado no array local.","error");
+ const produtoAlvo = produtos.find(x => String(x.id) === String(produtoContagemSelecionado.id));
+ if(!produtoAlvo) {
+   mostrarToast("Produto não encontrado na lista atual.","error");
    return;
  }
 
@@ -1224,20 +1227,21 @@ async function salvarValidadeDaContagem(){
   criadoEm: new Date().toISOString()
  };
 
- produtos[indice].conferencias = produtos[indice].conferencias || [];
- produtos[indice].conferencias.unshift(novaConferencia);
+ produtoAlvo.conferencias = produtoAlvo.conferencias || [];
+ produtoAlvo.conferencias.unshift(novaConferencia);
 
- registrarAcao("Contagem Guiada", produtos[indice].nome, `Validade: ${formatarData(dataVal)} • Total: ${totalGeral} un`);
+ registrarAcao("Contagem Guiada", produtoAlvo.nome, `Validade: ${formatarData(dataVal)} • Total: ${totalGeral} un`);
 
  try {
    await persistir();
    atualizarTotais();
    fecharCalculadoraContagem();
-   mostrarToast("Validade e contagem salvas com sucesso!","success");
-   abrirDetalhe(produtos[indice].id);
+   mostrarToast("Validade e contagem salvas com sucesso na ficha!","success");
+   abrirDetalhe(produtoAlvo.id);
  } catch (err) {
-   produtos[indice].conferencias.shift(); // Reverte alteração local em caso de falha
-   mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+   produtoAlvo.conferencias.shift(); // Reverte alteração local em caso de falha no banco
+   console.error("Erro ao salvar contagem guiada:", err);
+   mostrarToast(`Erro ao salvar no Supabase: ${err.message || 'Erro desconhecido'}`, "error");
  }
 }
 
@@ -1702,7 +1706,7 @@ async function salvarProduto(){
      abrirDetalhe(produtoSalvoId);
     }
   } catch (err) {
-    produtos[i] = backupAntigo; // Reverte alteração local
+    produtos[i] = backupAntigo;
     mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
   }
 
@@ -1745,7 +1749,7 @@ async function salvarProduto(){
      abrirDetalhe(produtoSalvoId);
     }
   } catch (err) {
-    produtos.shift(); // Reverte inserção local
+    produtos.shift();
     mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
   }
  }
@@ -1820,7 +1824,7 @@ async function alternarStatusSistemaData(produtoId, confId, dataVal, statusCheck
    abrirDetalhe(produtoId);
    mostrarToast("Status atualizado!","success");
  } catch (err) {
-   c.mapStatusDatas[dataVal] = valorAnterior; // Reverte alteração local
+   c.mapStatusDatas[dataVal] = valorAnterior;
    mostrarToast(err.message || "Erro ao salvar status no banco de dados.", "error");
  }
 }
@@ -1889,7 +1893,7 @@ async function salvarConferencia(){
    abrirDetalhe(p.id);
    mostrarToast("Conferência salva com sucesso!","success");
  } catch (err) {
-   p.conferencias.shift(); // Reverte conferência local em caso de erro
+   p.conferencias.shift();
    mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
  }
 }
@@ -1912,7 +1916,7 @@ async function apagarConferencia(produtoId,confId){
    abrirDetalhe(produtoId);
    mostrarToast("Registro apagado.","warning");
  } catch (err) {
-   p.conferencias = conferenciasBackup; // Reverte alteração local
+   p.conferencias = conferenciasBackup;
    mostrarToast(err.message || "Erro ao apagar no banco de dados.", "error");
  }
 }
@@ -1930,7 +1934,7 @@ async function apagarProduto(id){
    atualizarTotais();
    mostrarToast("Produto apagado com sucesso.","warning");
  } catch (err) {
-   produtos = produtosBackup; // Reverte alteração local
+   produtos = produtosBackup;
    mostrarToast(err.message || "Erro ao apagar no banco de dados.", "error");
  }
 }
