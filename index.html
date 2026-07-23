@@ -1072,7 +1072,6 @@ function verificarProdutoContagem(){
 }
 
 function iniciarPassosContagem(){
- // Garante a vinculação correta do produto selecionado pelo ID atual
  const selectId = document.getElementById("contagemProdutoId").value;
  if(selectId) {
    produtoContagemSelecionado = produtos.find(x => String(x.id) === String(selectId));
@@ -1239,7 +1238,7 @@ async function salvarValidadeDaContagem(){
    mostrarToast("Validade e contagem salvas com sucesso na ficha!","success");
    abrirDetalhe(produtoAlvo.id);
  } catch (err) {
-   produtoAlvo.conferencias.shift(); // Reverte alteração local em caso de falha no banco
+   produtoAlvo.conferencias.shift();
    console.error("Erro ao salvar contagem guiada:", err);
    mostrarToast(`Erro ao salvar no Supabase: ${err.message || 'Erro desconhecido'}`, "error");
  }
@@ -1543,53 +1542,60 @@ function abrirProdutoForm(id=null,opcoes={}){
   adicionarCampoDataProduto();
  }
 
- document.getElementById("modalProduto").classList.remove("hidden")
+ document.getElementById("modalProduto").classList.remove("hidden");
 }
 
 function adicionarCampoDataProduto(valor=""){
- const linha=document.createElement("div");
- linha.className="date-row";
+ const container=document.getElementById("produtoListaDatas");
+ const div=document.createElement("div");
+ div.className="date-row";
+ div.innerHTML=`
+  <input type="date" class="produto-data-validade" value="${valor}">
+  <button type="button" class="add-date" onclick="adicionarCampoDataProduto()">+</button>
+  <button type="button" class="remove-date" onclick="this.parentElement.remove()">-</button>
+ `;
+ container.appendChild(div);
+}
 
- const input=document.createElement("input");
- input.type="date";
- input.className="produto-data-validade";
- input.value=valor;
+function carregarFotoProduto(){
+ const arquivo=document.getElementById("produtoFoto").files[0];
+ if(!arquivo)return;
+ const reader=new FileReader();
+ reader.onload=function(e){
+  // Redimensiona imagem para otimizar armazenamento
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const MAX_WIDTH = 300;
+    const MAX_HEIGHT = 300;
+    let width = img.width;
+    let height = img.height;
 
- const mais=document.createElement("button");
- mais.type="button";
- mais.className="add-date";
- mais.textContent="+";
- mais.onclick=()=>adicionarCampoDataProduto();
+    if (width > height) {
+      if (width > MAX_WIDTH) {
+        height *= MAX_WIDTH / width;
+        width = MAX_WIDTH;
+      }
+    } else {
+      if (height > MAX_HEIGHT) {
+        width *= MAX_HEIGHT / height;
+        height = MAX_HEIGHT;
+      }
+    }
 
- const menos=document.createElement("button");
- menos.type="button";
- menos.className="remove-date";
- menos.textContent="−";
- menos.onclick=()=>{
-  const total=document.querySelectorAll(".produto-data-validade").length;
-  if(total>1)linha.remove();
-  else input.value="";
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
+    fotoProdutoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+    document.getElementById("produtoPreview").src=fotoProdutoBase64;
+    document.getElementById("produtoPreview").classList.remove("hidden");
+    document.getElementById("removerFotoBtn").classList.remove("hidden");
+  };
+  img.src = e.target.result;
  };
-
- linha.append(input,mais,menos);
- document.getElementById("produtoListaDatas").appendChild(linha);
-}
-
-function fecharProdutoForm(){
- document.getElementById("modalProduto").classList.add("hidden");
-}
-
-async function carregarFotoProduto(){
- const arq=document.getElementById("produtoFoto").files[0];if(!arq)return;
- try{
-  fotoProdutoBase64=await comprimirImagem(arq,1024,1024,.7);
-  document.getElementById("produtoPreview").src=fotoProdutoBase64;
-  document.getElementById("produtoPreview").classList.remove("hidden");
-  document.getElementById("removerFotoBtn").classList.remove("hidden");
-  mostrarToast("Foto carregada com sucesso!","success");
- }catch{
-  mostrarToast("Não foi possível processar a imagem.","error");
- }
+ reader.readAsDataURL(arquivo);
 }
 
 function removerFotoProduto(){
@@ -1597,124 +1603,60 @@ function removerFotoProduto(){
  document.getElementById("produtoFoto").value="";
  document.getElementById("produtoPreview").classList.add("hidden");
  document.getElementById("removerFotoBtn").classList.add("hidden");
- mostrarToast("Foto removida.","warning");
 }
 
-function comprimirImagem(arquivo,maxW,maxH,q){
- return new Promise((resolve,reject)=>{
-  const r=new FileReader();
-  r.onerror=reject;
-  r.onload=e=>{
-   const img=new Image();
-   img.onerror=reject;
-   img.onload=()=>{
-    let w=img.width,h=img.height,s=Math.min(1,maxW/w,maxH/h);
-    w=Math.round(w*s);h=Math.round(h*s);
-    const c=document.createElement("canvas");c.width=w;c.height=h;
-    const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
-    x.drawImage(img,0,0,w,h);
-    resolve(c.toDataURL("image/jpeg",q));
-   };
-   img.src=e.target.result;
-  };
-  r.readAsDataURL(arquivo);
- });
+function fecharProdutoForm(){
+ document.getElementById("modalProduto").classList.add("hidden");
 }
 
 async function salvarProduto(){
  const codigo=document.getElementById("produtoCodigo").value.trim();
  const nome=document.getElementById("produtoNome").value.trim();
  const setor=document.getElementById("produtoSetor").value;
- const qtdCx = parseInt(document.getElementById("produtoQtdCx").value || 1, 10);
+ const qtdCx=parseInt(document.getElementById("produtoQtdCx").value||1,10);
+ const confData=document.getElementById("produtoConfData").value;
+ const observacao=document.getElementById("produtoConfObservacao").value.trim();
+
+ const inputsDatas=document.querySelectorAll(".produto-data-validade");
+ const datasArr=[...inputsDatas].map(i=>i.value).filter(Boolean);
 
  if(!codigo||!nome||!setor){
-  mostrarToast("Preencha código, produto e setor.","warning");
+  mostrarToast("Preencha código, nome e setor do produto.","warning");
+  return;
+ }
+ if(datasArr.length===0){
+  mostrarToast("Informe pelo menos uma data de validade.","warning");
   return;
  }
 
- if(isNaN(qtdCx) || qtdCx < 1){
-  mostrarToast("A quantidade por fardo/caixa deve ser pelo menos 1.","warning");
-  return;
- }
-
- const novasDatas = [...new Set([...document.querySelectorAll(".produto-data-validade")].map(x=>x.value).filter(Boolean))].sort();
- if(!novasDatas.length){
-  mostrarToast("É obrigatório informar pelo menos uma data de validade.","warning");
-  return;
- }
-
- const duplicado=produtos.find(p=>p.codigo===codigo&&p.id!==produtoEditandoId);
- if(duplicado){
-  mostrarToast("Já existe produto com este código. Abrindo...","warning");
-  fecharProdutoForm();
-  abrirDetalhe(duplicado.id);
-  return;
- }
-
- let produtoSalvoId;
-
+ let p;
  if(produtoEditandoId){
-  const i=produtos.findIndex(p=>p.id===produtoEditandoId);
-  const antigo=produtos[i];
-  const backupAntigo = JSON.parse(JSON.stringify(antigo));
-  const mudancas=[];
+  p=produtos.find(x=>x.id===produtoEditandoId);
+  if(!p)return;
+  p.codigo=codigo;
+  p.nome=nome;
+  p.setor=setor;
+  p.qtdCx=qtdCx;
+  if(fotoProdutoBase64!==null) p.foto=fotoProdutoBase64;
 
-  if(antigo.codigo!==codigo)mudancas.push(`código: ${antigo.codigo} → ${codigo}`);
-  if(antigo.nome!==nome)mudancas.push(`nome: ${antigo.nome} → ${nome}`);
-  if(antigo.setor!==setor)mudancas.push(`setor: ${antigo.setor} → ${setor}`);
-  if((antigo.qtdCx || 1)!==qtdCx)mudancas.push(`qtd/cx: ${antigo.qtdCx || 1} → ${qtdCx}`);
-
-  produtos[i]={...antigo,codigo,nome,setor,qtdCx,foto:fotoProdutoBase64,atualizadoEm:new Date().toISOString()};
-  produtoSalvoId=produtos[i].id;
-
-  const ultima=produtoUltimaConferencia(produtos[i]);
-  let mapStatusDatasAntigo = (ultima && ultima.mapStatusDatas) ? {...ultima.mapStatusDatas} : {};
-  let novoMapStatus = {};
-  novasDatas.forEach(d => {
-   novoMapStatus[d] = mapStatusDatasAntigo[d] !== undefined ? mapStatusDatasAntigo[d] : false;
-  });
-
+  const ultima=produtoUltimaConferencia(p);
   if(ultima){
-   ultima.data=document.getElementById("produtoConfData").value||hojeISO();
-   ultima.datas=novasDatas;
-   ultima.observacao=document.getElementById("produtoConfObservacao").value.trim();
-   ultima.mapStatusDatas = novoMapStatus;
+   ultima.data=confData||ultima.data;
+   ultima.datas=datasArr;
+   ultima.observacao=observacao;
   }else{
-   produtos[i].conferencias=produtos[i].conferencias||[];
-   produtos[i].conferencias.unshift({
+   p.conferencias=p.conferencias||[];
+   p.conferencias.unshift({
     id:String(Date.now()),
-    data:document.getElementById("produtoConfData").value||hojeISO(),
-    datas:novasDatas,
-    observacao:document.getElementById("produtoConfObservacao").value.trim(),
-    mapStatusDatas: novoMapStatus,
+    data:confData||hojeISO(),
+    datas:datasArr,
+    observacao,
     criadoEm:new Date().toISOString()
    });
   }
-
-  registrarAcao("Editou produto",nome,mudancas.join(" • ")||"Atualizou o cadastro");
-
-  try {
-    await persistir();
-    fecharProdutoForm();
-    atualizarTotais();
-    mostrarToast("Produto atualizado com sucesso!","success");
-
-    if(abrirConferenciaDepoisDeSalvar){
-     abrirConferenciaDepoisDeSalvar=false;
-     abrirConferencia(produtoSalvoId);
-    }else{
-     abrirDetalhe(produtoSalvoId);
-    }
-  } catch (err) {
-    produtos[i] = backupAntigo;
-    mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
-  }
-
+  registrarAcao("Editou Produto",nome,`Código: ${codigo}`);
  }else{
-  let novoMapStatus = {};
-  novasDatas.forEach(d => { novoMapStatus[d] = false; });
-
-  const novo={
+  p={
    id:String(Date.now()),
    codigo,
    nome,
@@ -1723,254 +1665,253 @@ async function salvarProduto(){
    foto:fotoProdutoBase64,
    conferencias:[{
     id:String(Date.now()),
-    data:document.getElementById("produtoConfData").value||hojeISO(),
-    datas:novasDatas,
-    observacao:document.getElementById("produtoConfObservacao").value.trim(),
-    mapStatusDatas: novoMapStatus,
+    data:confData||hojeISO(),
+    datas:datasArr,
+    observacao,
     criadoEm:new Date().toISOString()
    }],
    criadoEm:new Date().toISOString()
   };
+  produtos.unshift(p);
+  registrarAcao("Cadastrou Produto",nome,`Código: ${codigo}`);
+ }
 
-  produtos.unshift(novo);
-  produtoSalvoId=novo.id;
-  registrarAcao("Criou produto",nome,`Código ${codigo}`);
-
-  try {
-    await persistir();
-    fecharProdutoForm();
-    atualizarTotais();
-    mostrarToast("Produto cadastrado com sucesso!","success");
-
-    if(abrirConferenciaDepoisDeSalvar){
-     abrirConferenciaDepoisDeSalvar=false;
-     abrirConferencia(produtoSalvoId);
-    }else{
-     abrirDetalhe(produtoSalvoId);
-    }
-  } catch (err) {
-    produtos.shift();
-    mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
-  }
+ try {
+   await persistir();
+   atualizarTotais();
+   fecharProdutoForm();
+   mostrarToast("Produto salvo com sucesso!","success");
+   
+   if(abrirConferenciaDepoisDeSalvar){
+    abrirConferencia(p.id);
+   }else{
+    abrirDetalhe(p.id);
+   }
+ } catch (err) {
+   mostrarToast(err.message || "Erro ao salvar produto.", "error");
  }
 }
 
 function abrirDetalhe(id){
- fecharModalProdutos();
  produtoAtualId=id;
  const p=produtos.find(x=>x.id===id);
  if(!p)return;
- const confs=[...(p.conferencias||[])].sort((a,b)=>b.data.localeCompare(a.data));
- 
+
+ const conferencias=(p.conferencias||[]).map(c=>{
+  const datasHtml=(c.datas||[]).map(d=>{
+   const info=verificarStatusValidade(d);
+   return `<span class="badge ${info.status==='vencido'?'badge-vencido':info.status==='vencendo'?'badge-vencendo':''}">${formatarData(d)}${info.texto}</span>`;
+  }).join(" ");
+  return `
+   <div class="conf-card">
+    <div class="conf-top">
+     <strong>Conferência em ${formatarData(c.data)}</strong>
+     <button class="btn btn-danger" style="min-height:28px; padding:4px 8px; font-size:11px;" onclick="deletarConferencia('${p.id}','${c.id}')">Excluir</button>
+    </div>
+    <div style="margin-top:6px; display:flex; gap:4px; flex-wrap:wrap;">${datasHtml}</div>
+    ${c.observacao?`<p>${escapeHtml(c.observacao)}</p>`:""}
+   </div>
+  `;
+ }).join("");
+
  document.getElementById("detalheConteudo").innerHTML=`
   <div class="detail-head">
    ${p.foto?`<img class="detail-photo" src="${p.foto}" alt="">`:`<div class="detail-photo"></div>`}
    <div class="detail-info">
     <h2>${escapeHtml(p.nome)}</h2>
-    <p>Código: ${escapeHtml(p.codigo)} • Qtd por fardo/caixa: ${p.qtdCx || 1}</p>
-    <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span>
+    <p><strong>Código:</strong> ${escapeHtml(p.codigo)}</p>
+    <p><strong>Setor:</strong> <span class="setor ${escapeHtml(p.setor)}">${escapeHtml(p.setor)}</span></p>
+    <p><strong>Qtd por fardo/caixa:</strong> ${p.qtdCx || 1} un</p>
    </div>
   </div>
-  <h3 class="section-title">Histórico de validades e Status</h3>
-  <div style="font-size:11px; color:#a1a1aa; margin-bottom:10px;">💡 Marque se cada data já foi lançada no sistema da empresa.</div>
-  ${confs.length?confs.map(c=>{
-   if(!c.mapStatusDatas){
-    c.mapStatusDatas = {};
-    (c.datas||[]).forEach(d => { c.mapStatusDatas[d] = c.noSistemaEmpresa !== undefined ? c.noSistemaEmpresa : false; });
-   }
+  <h3 class="section-title">Histórico de Conferências e Validades</h3>
+  ${conferencias||'<p class="small">Nenhuma conferência registrada.</p>'}
+  <div style="margin-top:16px;">
+   <button class="btn btn-danger" style="width:100%" onclick="deletarProduto('${p.id}')">🗑️ Excluir Produto Definitivamente</button>
+  </div>
+ `;
 
-   return `<div class="conf-card">
-    <div class="conf-top"><strong>Registro em: ${formatarData(c.data)}</strong><button class="btn btn-danger" style="min-height:32px;padding:4px 8px;font-size:11px;" onclick="event.stopPropagation();apagarConferencia('${p.id}','${c.id}')">Apagar</button></div>
-    <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
-     ${(c.datas||[]).map(d=>{
-      const info=verificarStatusValidade(d);
-      let classeBadge = "";
-      if(info.status==='vencido') classeBadge = "badge-vencido";
-      else if(info.status==='vencendo') classeBadge = "badge-vencendo";
-      
-      const jaLancado = c.mapStatusDatas[d] === true;
-      
-      return `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(255,255,255,0.02); padding:6px 10px; border:1px solid #33333a; border-radius:8px;">
-       <div>
-        <span class="badge ${classeBadge}" style="margin-right:6px;">${formatarData(d)}${info.texto}</span>
-       </div>
-       <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700;">
-        <input type="checkbox" ${jaLancado ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--verde); cursor:pointer;" onchange="alternarStatusSistemaData('${p.id}','${c.id}','${d}',this.checked)">
-        <span style="color:${jaLancado ? '#71e6a5' : '#f7ca73'}">${jaLancado ? '🟢 No Sistema' : '🟡 Pendente'}</span>
-       </label>
-      </div>`;
-     }).join("")}
-    </div>
-    <p style="margin-top:8px;">${escapeHtml(c.observacao||"Sem observação")}</p>
-   </div>`;
-  }).join(""):`<div class="notice notice-info">Ainda não há validades registradas.</div>`}
-  <button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="apagarProduto('${p.id}')">Apagar produto</button>`;
- document.getElementById("modalDetalhe").classList.remove("hidden")
+ document.getElementById("modalDetalhe").classList.remove("hidden");
 }
 
-async function alternarStatusSistemaData(produtoId, confId, dataVal, statusCheckbox){
- const p = produtos.find(x => x.id === produtoId);
- if(!p) return;
- const c = p.conferencias.find(x => x.id === confId);
- if(!c) return;
-
- if(!c.mapStatusDatas) c.mapStatusDatas = {};
- const valorAnterior = c.mapStatusDatas[dataVal];
- c.mapStatusDatas[dataVal] = statusCheckbox;
-
- try {
-   await persistir();
-   atualizarTotais();
-   abrirDetalhe(produtoId);
-   mostrarToast("Status atualizado!","success");
- } catch (err) {
-   c.mapStatusDatas[dataVal] = valorAnterior;
-   mostrarToast(err.message || "Erro ao salvar status no banco de dados.", "error");
- }
+function fecharDetalhe(){
+ document.getElementById("modalDetalhe").classList.add("hidden");
+ renderizarProdutos();
 }
 
-function fecharDetalhe(){document.getElementById("modalDetalhe").classList.add("hidden")}
-function editarProdutoAtual(){fecharDetalhe();abrirProdutoForm(produtoAtualId)}
-function abrirNovaConferenciaAtual(){fecharDetalhe();abrirConferencia(produtoAtualId)}
+function editarProdutoAtual(){
+ fecharDetalhe();
+ abrirProdutoForm(produtoAtualId);
+}
+
+function abrirNovaConferenciaAtual(){
+ fecharDetalhe();
+ abrirConferencia(produtoAtualId);
+}
 
 function abrirConferencia(id){
  produtoConferenciaId=id;
  const p=produtos.find(x=>x.id===id);
  if(!p)return;
- document.getElementById("conferenciaProdutoInfo").textContent=`${p.nome} • código ${p.codigo}`;
+
+ document.getElementById("conferenciaProdutoInfo").textContent=`Produto: ${p.nome} (Cód: ${p.codigo})`;
  document.getElementById("confData").value=hojeISO();
- document.getElementById("confObservacao").value="";
- 
  document.getElementById("confNoSistemaEmpresa").checked=false;
-
+ document.getElementById("confObservacao").value="";
  document.getElementById("listaDatas").innerHTML="";
- adicionarCampoData();
- document.getElementById("modalConferencia").classList.remove("hidden")
-}
-function fecharConferencia(){document.getElementById("modalConferencia").classList.add("hidden")}
+ adicionarCampoDataConferencia();
 
-function adicionarCampoData(valor=""){
- const linha=document.createElement("div");linha.className="date-row";
- const input=document.createElement("input");input.type="date";input.className="data-validade";input.value=valor;
- const mais=document.createElement("button");mais.type="button";mais.className="add-date";mais.textContent="+";mais.onclick=()=>adicionarCampoData();
- const menos=document.createElement("button");menos.type="button";menos.className="remove-date";menos.textContent="−";menos.onclick=()=>{const t=document.querySelectorAll(".data-validade").length;if(t>1)linha.remove();else input.value=""};
- linha.append(input,mais,menos);document.getElementById("listaDatas").appendChild(linha)
+ document.getElementById("modalConferencia").classList.remove("hidden");
+}
+
+function adicionarCampoDataConferencia(valor=""){
+ const container=document.getElementById("listaDatas");
+ const div=document.createElement("div");
+ div.className="date-row";
+ div.innerHTML=`
+  <input type="date" class="conf-data-validade" value="${valor}">
+  <button type="button" class="add-date" onclick="adicionarCampoDataConferencia()">+</button>
+  <button type="button" class="remove-date" onclick="this.parentElement.remove()">-</button>
+ `;
+ container.appendChild(div);
+}
+
+function fecharConferencia(){
+ document.getElementById("modalConferencia").classList.add("hidden");
 }
 
 async function salvarConferencia(){
- const p=produtos.find(x=>x.id===produtoConferenciaId);if(!p)return;
- const datas=[...new Set([...document.querySelectorAll(".data-validade")].map(i=>i.value).filter(Boolean))].sort();
- if(!datas.length){mostrarToast("É obrigatório informar pelo menos uma data de validade.","warning");return}
- 
+ const p=produtos.find(x=>x.id===produtoConferenciaId);
+ if(!p)return;
+
+ const dataConf=document.getElementById("confData").value;
+ const observacao=document.getElementById("confObservacao").value.trim();
  const noSistemaEmpresa = document.getElementById("confNoSistemaEmpresa").checked;
- const obsUsuario = document.getElementById("confObservacao").value.trim();
+ 
+ const inputsDatas=document.querySelectorAll(".conf-data-validade");
+ const datasArr=[...inputsDatas].map(i=>i.value).filter(Boolean);
+
+ if(!dataConf||datasArr.length===0){
+  mostrarToast("Informe a data da conferência e pelo menos uma data de validade.","warning");
+  return;
+ }
 
  const statusTextoSistema = noSistemaEmpresa ? "🟢 No Sistema da Empresa: SIM" : "🟡 No Sistema da Empresa: NÃO";
- let obsFinal = `${statusTextoSistema}${obsUsuario ? " • " + obsUsuario : ""}`;
-
+ const obsFinal = observacao ? `${observacao} • ${statusTextoSistema}` : statusTextoSistema;
+ 
  let mapStatusDatas = {};
- datas.forEach(d => { mapStatusDatas[d] = noSistemaEmpresa; });
+ datasArr.forEach(d => { mapStatusDatas[d] = noSistemaEmpresa; });
 
- const conf={
+ p.conferencias=p.conferencias||[];
+ p.conferencias.unshift({
   id:String(Date.now()),
-  data:document.getElementById("confData").value,
-  datas,
+  data:dataConf,
+  datas:datasArr,
   observacao:obsFinal,
   noSistemaEmpresa: noSistemaEmpresa,
   mapStatusDatas: mapStatusDatas,
   criadoEm:new Date().toISOString()
- };
+ });
 
- p.conferencias=p.conferencias||[];
- p.conferencias.unshift(conf);
- 
- registrarAcao("Nova conferência",p.nome,`Validades: ${datas.map(formatarData).join(", ")} • ${obsFinal}`);
+ registrarAcao("Nova Conferência",p.nome,`Validades: ${datasArr.map(formatarData).join(", ")} • ${statusTextoSistema}`);
 
  try {
    await persistir();
-   fecharConferencia();
    atualizarTotais();
-   abrirDetalhe(p.id);
+   fecharConferencia();
    mostrarToast("Conferência salva com sucesso!","success");
+   abrirDetalhe(p.id);
  } catch (err) {
    p.conferencias.shift();
-   mostrarToast(err.message || "Erro ao salvar no banco de dados.", "error");
+   mostrarToast(err.message || "Erro ao salvar conferência.", "error");
  }
 }
 
-async function apagarConferencia(produtoId,confId){
- const p=produtos.find(x=>x.id===produtoId),c=p?.conferencias?.find(x=>x.id===confId);if(!p||!c)return;
- if(p.conferencias.length<=1){
-  mostrarToast("Não é permitido apagar o único registro.","error");
-  return;
- }
- if(!confirm(`Apagar o registro de validade de ${formatarData(c.data)}?`))return;
+async function deletarConferencia(prodId,confId){
+ if(!confirm("Deseja realmente excluir esta conferência?"))return;
+ const p=produtos.find(x=>x.id===prodId);
+ if(!p)return;
+ p.conferencias=p.conferencias.filter(c=>c.id!==confId);
+ registrarAcao("Excluiu Conferência",p.nome);
  
- const conferenciasBackup = [...p.conferencias];
- p.conferencias=p.conferencias.filter(x=>x.id!==confId);
- registrarAcao("Apagou conferência",p.nome,`Validade de ${formatarData(c.data)}`);
-
  try {
    await persistir();
    atualizarTotais();
-   abrirDetalhe(produtoId);
-   mostrarToast("Registro apagado.","warning");
+   abrirDetalhe(p.id);
+   mostrarToast("Conferência excluída com sucesso!","success");
  } catch (err) {
-   p.conferencias = conferenciasBackup;
-   mostrarToast(err.message || "Erro ao apagar no banco de dados.", "error");
+   mostrarToast(err.message || "Erro ao excluir conferência.", "error");
  }
 }
 
-async function apagarProduto(id){
- const p=produtos.find(x=>x.id===id);if(!p||!confirm(`Apagar "${p.nome}" e todo o histórico?`))return;
- 
- const produtosBackup = [...produtos];
+async function deletarProduto(id){
+ if(!confirm("Deseja realmente excluir este produto e todo seu histórico?"))return;
+ const p=produtos.find(x=>x.id===id);
  produtos=produtos.filter(x=>x.id!==id);
- registrarAcao("Apagou produto",p.nome,`Código ${p.codigo}`);
+ registrarAcao("Excluiu Produto",p?p.nome:"ID "+id);
 
  try {
    await persistir();
-   fecharDetalhe();
    atualizarTotais();
-   mostrarToast("Produto apagado com sucesso.","warning");
+   fecharDetalhe();
+   fecharModalProdutos();
+   mostrarToast("Produto excluído com sucesso!","success");
  } catch (err) {
-   produtos = produtosBackup;
-   mostrarToast(err.message || "Erro ao apagar no banco de dados.", "error");
+   mostrarToast(err.message || "Erro ao excluir produto.", "error");
  }
 }
 
 function abrirHistoricoGeral(){
- document.getElementById("listaHistorico").innerHTML=historico.map(h=>`<div class="history-item"><strong>${escapeHtml(h.acao)}</strong> — ${escapeHtml(h.produto)}<br>${h.detalhes?`<span>${escapeHtml(h.detalhes)}</span><br>`:""}<small>${new Date(h.data).toLocaleString("pt-BR")}</small></div>`).join("")||"Nenhum histórico.";
- document.getElementById("modalHistorico").classList.remove("hidden")
+ const container=document.getElementById("listaHistorico");
+ container.innerHTML=historico.length?historico.map(h=>`
+  <div class="history-item">
+   <strong>${escapeHtml(h.acao)}: ${escapeHtml(h.produto)}</strong><br>
+   <small>${escapeHtml(h.detalhes||"")}</small><br>
+   <small style="color:var(--muted)">${new Date(h.data).toLocaleString("pt-BR")}</small>
+  </div>
+ `).join(""):`<p class="small">Nenhum registro no histórico.</p>`;
+ document.getElementById("modalHistorico").classList.remove("hidden");
 }
-function fecharHistoricoGeral(){document.getElementById("modalHistorico").classList.add("hidden")}
+
+function fecharHistoricoGeral(){
+ document.getElementById("modalHistorico").classList.add("hidden");
+}
 
 function exportarCSV(){
- const cab=["Código","Produto","Setor","Qtd/Cx","Data da conferência","Datas de Validade","Status no Sistema por Data","Observação"];
- const linhas=[];
- produtos.forEach(p=>(p.conferencias||[]).forEach(c=>{
-  let statusStr = (c.datas||[]).map(d => `${formatarData(d)}: ${c.mapStatusDatas && c.mapStatusDatas[d] ? 'Sim' : 'Não'}`).join(" | ");
-  linhas.push([p.codigo,p.nome,p.setor,p.qtdCx || 1,formatarData(c.data),c.datas.map(formatarData).join(" | "),statusStr,c.observacao||""]);
- }));
- const esc = v => `"${String(v || '').replace(/"/g, '""')}"`;
- const csv = "\ufeff" + [cab, ...linhas].map(l => l.map(esc).join(";")).join("\n");
- baixar(new Blob([csv],{type:"text/csv;charset=utf-8"}),`vencimentos_${hojeISO()}.csv`);
- mostrarToast("Relatório CSV exportado com sucesso!","success");
+ let csv="Codigo;Nome;Setor;QtdCx;DatasValidade;UltimaConferencia\n";
+ produtos.forEach(p=>{
+  const datas=todasDatasProduto(p).join(" | ");
+  const ultima=produtoUltimaConferencia(p);
+  csv+=`"${p.codigo}","${p.nome}","${p.setor}","${p.qtdCx||1}","${datas}","${ultima?ultima.data:""}"\n`;
+ });
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download=`controle_vencimentos_${hojeISO()}.csv`;
+ a.click();
+ mostrarToast("Planilha Excel exportada com sucesso!","success");
 }
 
 function exportarBackup(){
- const conteudo=JSON.stringify({versao:2,exportadoEm:new Date().toISOString(),produtos,historico},null,2);
- baixar(new Blob([conteudo],{type:"application/json"}),`backup_alns_${hojeISO()}.json`);
- localStorage.setItem(K_BACKUP,new Date().toISOString());atualizarBackupUI();
- mostrarToast("Backup gerado com sucesso!","success");
+ const dados={produtos,historico,versao:2,data:new Date().toISOString()};
+ const blob=new Blob([JSON.stringify(dados,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download=`backup_vencimentos_${hojeISO()}.json`;
+ a.click();
+ localStorage.setItem(K_BACKUP,new Date().toISOString());
+ atualizarBackupUI();
+ mostrarToast("Backup realizado com sucesso!","success");
 }
-function baixar(blob,nome){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 
-document.getElementById("loginSenha").addEventListener("keydown",e=>{if(e.key==="Enter")entrar()});
-
-if(sessionStorage.getItem("alns_logado_v2")==="sim"){
- carregarDadosDaNuvem().then(() => mostrarApp());
-}
+window.addEventListener('load', async () => {
+ if(sessionStorage.getItem("alns_logado_v2")==="sim"){
+  await carregarDadosDaNuvem();
+  mostrarApp();
+ }
+});
 </script>
 </body>
 </html>
