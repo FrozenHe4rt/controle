@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ALNS - ULTIMATE CORE V12.8</title>
+    <title>ALNS - ULTIMATE CORE V12.9</title>
     <!-- Bibliotecas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -30,13 +30,12 @@
         body { font-family: 'Rajdhani', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-tap-highlight-color: transparent; user-select: none; }
         .glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(139, 92, 246, 0.2); }
         .neon-text-purple { text-shadow: 0 0 12px rgba(139, 92, 246, 0.9); }
-        .btn-press:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-press:active { transform: scale(0.92); opacity: 0.8; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         input, select { user-select: text; }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
         
         .alns-symbol {
-            width: 48px; height: 44px; border: 2px solid #8b5cf6; border-radius: 12px;
+            width: 50px; height: 46px; border: 2px solid #8b5cf6; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             position: relative; background: rgba(139, 92, 246, 0.1);
             box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); cursor: pointer;
@@ -48,163 +47,190 @@
             animation: spin 12s linear infinite;
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
         .blitz-step { display: none; }
-        .blitz-step.active { display: block; animation: fadeIn 0.4s ease-out; }
+        .blitz-step.active { display: block !important; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(0,0,0,0.4) !important; color: #94a3b8 !important; }
-        .tool-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid #1e293b; margin-bottom: 1rem; }
+        input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(0,0,0,0.5) !important; }
+        .tool-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.8rem; border-bottom: 1px solid #1e293b; margin-bottom: 1.2rem; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col pb-20 md:pb-6">
+<body class="min-h-screen flex flex-col pb-24 md:pb-6">
 
-    <!-- LOGIN HUD -->
-    <div id="view-login" class="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center p-4">
+    <!-- LOGIN -->
+    <div id="view-login" class="fixed inset-0 z-[2000] bg-slate-950 flex items-center justify-center p-4">
         <div class="glass p-8 rounded-[2.5rem] max-w-md w-full text-center space-y-6 border-t-8 border-game-accent shadow-2xl">
             <div class="alns-symbol mx-auto mb-2"><span>AL</span></div>
-            <h1 class="text-3xl font-black neon-text-purple italic uppercase leading-none text-white">ALNS V12.8</h1>
+            <h1 class="text-3xl font-black neon-text-purple italic uppercase leading-none">ALNS CORE</h1>
             <form onsubmit="realizarLogin(event)" class="space-y-4 text-white">
-                <input type="password" id="login-senha" placeholder="SENHA" required class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-center font-black focus:border-game-cyan uppercase shadow-inner text-lg tracking-widest">
-                <button type="submit" class="w-full bg-game-accent text-white p-4 rounded-2xl font-black uppercase btn-press tracking-widest shadow-lg">CONECTAR</button>
+                <input type="password" id="login-senha" placeholder="SENHA" required class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-center font-black focus:border-game-cyan uppercase text-lg tracking-[0.3em]">
+                <button type="submit" class="w-full bg-game-accent text-white p-4 rounded-2xl font-black uppercase btn-press shadow-lg">CONECTAR</button>
             </form>
         </div>
     </div>
 
     <!-- HUD SUPERIOR -->
-    <header class="glass sticky top-0 z-50 px-4 py-2 flex items-center justify-between border-b border-game-accent/30 shadow-xl">
-        <div class="flex items-center gap-3">
-            <div class="alns-symbol" onclick="navigate('dashboard')"><span>AL</span></div>
-            <div class="leading-none" onclick="navigate('dashboard')">
+    <header class="glass sticky top-0 z-[100] px-4 py-3 flex items-center justify-between border-b border-game-accent/30 shadow-xl">
+        <div class="flex items-center gap-3" onclick="navigate('dashboard')">
+            <div class="alns-symbol"><span>AL</span></div>
+            <div class="leading-none">
                 <h2 class="text-xs font-black tracking-tighter uppercase neon-text-cyan">A.L.N.S.</h2>
-                <span class="text-[7px] font-bold text-slate-500 uppercase italic leading-none">CLOUD SYNC ACTIVE</span>
+                <span class="text-[7px] font-bold text-slate-500 uppercase italic">V12.9 ELITE</span>
             </div>
         </div>
         <div class="flex gap-2">
-             <button onclick="atualizarDashboard(); checkCloudDrafts(); showToast('SYNCING...')" class="p-2 bg-slate-800/50 text-game-cyan rounded-xl border border-slate-700 btn-press"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-             <button onclick="realizarLogout()" class="p-2 bg-slate-800/50 text-game-danger rounded-xl border border-slate-700 btn-press"><i data-lucide="power" class="w-4 h-4"></i></button>
+             <button onclick="atualizarDashboard(); showToast('SINC...')" class="p-2.5 bg-slate-800/50 text-game-cyan rounded-xl border border-slate-700 btn-press"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+             <button onclick="realizarLogout()" class="p-2.5 bg-slate-800/50 text-game-danger rounded-xl border border-slate-700 btn-press"><i data-lucide="power" class="w-5 h-5"></i></button>
         </div>
     </header>
 
     <!-- BARRA DE PESQUISA -->
-    <div class="bg-slate-950/90 backdrop-blur-md sticky top-[65px] md:top-[73px] z-40 p-3 border-b border-slate-800 text-white font-black">
+    <div class="bg-slate-950/90 backdrop-blur-md sticky top-[72px] z-[90] p-3 border-b border-slate-800">
         <div class="max-w-7xl mx-auto flex gap-2">
-            <div class="relative flex-1 font-black">
+            <div class="relative flex-1">
                 <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-game-cyan"></i>
-                <input type="text" id="global-search" oninput="executarPesquisaGlobal(this.value)" placeholder="PESQUISAR..." class="w-full bg-slate-900 border border-slate-700 pl-10 pr-4 py-2 rounded-xl text-sm focus:border-game-cyan outline-none uppercase font-black tracking-widest text-game-cyan shadow-inner font-black">
+                <input type="text" id="global-search" oninput="executarPesquisaGlobal(this.value)" placeholder="PESQUISAR..." class="w-full bg-slate-900 border border-slate-700 pl-10 pr-4 py-2 rounded-xl text-sm focus:border-game-cyan outline-none uppercase font-black tracking-widest text-game-cyan shadow-inner">
             </div>
-            <button onclick="dispararScannerGenerico('global-search')" class="bg-game-cyan text-slate-950 px-4 py-2 rounded-xl font-black btn-press font-black"><i data-lucide="camera" class="w-4 h-4"></i></button>
+            <button onclick="dispararScannerGenerico('global-search')" class="bg-game-cyan text-slate-950 px-4 py-2 rounded-xl font-black btn-press"><i data-lucide="camera" class="w-4 h-4"></i></button>
         </div>
     </div>
 
     <!-- MAIN -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
         
         <!-- DASHBOARD (BASE) -->
         <section id="view-dashboard" class="space-y-4 animate-fadeIn">
-            <!-- RASCUNHO BLITZ CLOUD -->
+            <!-- RASCUNHO BLITZ -->
             <div id="draft-alert" class="hidden glass p-4 rounded-2xl border-l-8 border-game-warning flex items-center justify-between shadow-lg">
                 <div class="flex items-center gap-3">
                     <i data-lucide="cloud-lightning" class="text-game-warning w-6 h-6 animate-pulse"></i>
-                    <div><p class="text-[8px] font-black text-game-warning uppercase">Missão em Nuvem Detectada</p><p id="draft-name" class="text-xs font-bold uppercase text-white truncate max-w-[120px]">---</p></div>
+                    <div><p class="text-[8px] font-black text-game-warning uppercase leading-none">Blitz Pendente</p><p id="draft-name" class="text-xs font-bold uppercase text-white truncate max-w-[120px]">---</p></div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="resgatarBlitz()" class="bg-game-warning text-slate-950 px-4 py-2 rounded-lg font-black text-[9px] uppercase btn-press italic">RETOMAR</button>
-                    <button onclick="abrirConfirmacao('DESCARTAR?', 'Excluir da nuvem?', () => { excluirDraftCloud(); })" class="bg-slate-800 text-slate-500 px-3 rounded-lg font-black text-[9px]">X</button>
+                    <button onclick="resgatarBlitz()" class="bg-game-warning text-slate-950 px-4 py-2 rounded-lg font-black text-[10px] uppercase btn-press italic">RETOMAR</button>
+                    <button onclick="abrirConfirmacao('APAGAR?', 'Excluir rascunho?', () => { excluirDraftCloud(); })" class="bg-slate-800 text-slate-500 px-3 rounded-lg font-black text-[9px]">X</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white font-black">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button onclick="navigate('blitz-flow')" class="glass p-5 rounded-3xl border-l-8 border-game-success flex items-center justify-between btn-press shadow-lg text-white">
-                    <div class="text-left font-black"><span class="text-[8px] font-black text-slate-500 uppercase font-black">Operação</span><h2 class="text-lg font-black text-game-success uppercase italic font-black">Blitz</h2></div>
+                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Ação Ativa</span><h2 class="text-lg font-black text-game-success uppercase italic leading-none">Blitz</h2></div>
                     <i data-lucide="zap" class="text-game-success w-6 h-6"></i>
                 </button>
                 <button onclick="navigate('registro-rapido')" class="glass p-5 rounded-3xl border-l-8 border-game-cyan flex items-center justify-between btn-press shadow-lg text-white">
-                    <div class="text-left font-black"><span class="text-[8px] font-black text-slate-500 uppercase font-black">Input Único</span><h2 class="text-lg font-black text-game-cyan uppercase italic font-black">Registro Direto</h2></div>
+                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Input</span><h2 class="text-lg font-black text-game-cyan uppercase italic leading-none">Registro Direto</h2></div>
                     <i data-lucide="plus-circle" class="text-game-cyan w-6 h-6"></i>
                 </button>
                 <button onclick="navigate('calc-mercadorias')" class="glass p-5 rounded-3xl border-l-8 border-game-accent flex items-center justify-between btn-press shadow-lg text-white">
-                    <div class="text-left font-black"><span class="text-[8px] font-black text-slate-500 uppercase font-black">Logística</span><h2 class="text-lg font-black text-game-accent uppercase italic leading-none text-sm md:text-lg font-black">Calculadora de mercadoria</h2></div>
+                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase italic leading-none text-xs">Calculadora de mercadoria</span></div>
                     <i data-lucide="layers" class="text-game-accent w-6 h-6"></i>
                 </button>
-                <button onclick="navigate('calc-validade')" class="glass p-5 rounded-3xl border-l-8 border-game-warning flex items-center justify-between btn-press shadow-lg text-white font-black">
-                    <div class="text-left font-black"><span class="text-[8px] font-black text-slate-500 uppercase font-black">Tempo</span><h2 class="text-lg font-black text-game-warning uppercase italic leading-none text-sm md:text-lg font-black">Calculadora de validades</h2></div>
+                <button onclick="navigate('calc-validade')" class="glass p-5 rounded-3xl border-l-8 border-game-warning flex items-center justify-between btn-press shadow-lg text-white">
+                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase italic leading-none text-xs">Calculadora de validades</span></div>
                     <i data-lucide="calendar" class="text-game-warning w-6 h-6"></i>
                 </button>
             </div>
 
             <div class="grid grid-cols-2 gap-3 text-white font-black">
                 <div onclick="navigate('consulta')" class="glass p-4 rounded-2xl border border-slate-800 cursor-pointer btn-press group">
-                    <p class="text-[8px] font-black text-slate-500 uppercase">Cadastrados</p>
-                    <h3 id="dash-total" class="text-2xl font-black text-white mt-1 group-hover:text-game-cyan transition-colors font-black">0</h3>
+                    <p class="text-[8px] font-black text-slate-500 uppercase">Produtos</p>
+                    <h3 id="dash-total" class="text-2xl font-black text-white mt-1 group-hover:text-game-cyan transition-colors">0</h3>
                 </div>
-                <div onclick="abrirFiltroCritico()" class="glass p-4 rounded-2xl border border-slate-800 cursor-pointer btn-press group text-right font-black">
+                <div onclick="abrirFiltroCritico()" class="glass p-4 rounded-2xl border border-slate-800 cursor-pointer btn-press group text-right">
                     <p class="text-[8px] font-black text-game-danger uppercase italic">Vencendo (7D)</p>
-                    <h3 id="dash-vencidos" class="text-2xl font-black text-game-danger mt-1 group-hover:neon-text-purple transition-all font-black">0</h3>
+                    <h3 id="dash-vencidos" class="text-2xl font-black text-game-danger mt-1 group-hover:neon-text-purple transition-all">0</h3>
                 </div>
             </div>
         </section>
 
         <!-- REGISTRO DIRETO -->
         <section id="view-registro-rapido" class="hidden space-y-4 animate-fadeIn">
-            <div class="glass p-6 md:p-8 rounded-[2rem] border-t-8 border-game-cyan space-y-4 shadow-2xl text-white">
+            <div class="glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4 shadow-2xl text-white">
                 <div class="tool-header">
-                    <button onclick="navigate('dashboard')" class="p-2 bg-slate-800 rounded-xl text-slate-400 btn-press"><i data-lucide="chevron-left"></i></button>
+                    <button onclick="navigate('dashboard')" class="p-3 bg-slate-800 rounded-xl text-game-cyan btn-press"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
                     <h2 class="text-xl font-black uppercase text-game-cyan italic leading-none">Registro Direto</h2>
                     <div class="w-10"></div>
                 </div>
                 <form id="form-reg" onsubmit="salvarRegistroDireto(event)" class="space-y-4">
                     <div class="flex gap-2">
-                        <input type="text" id="reg-ean" placeholder="EAN" required class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-mono font-black text-game-cyan shadow-inner" onblur="verificarEanExistente(this.value)">
-                        <button type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-4 rounded-xl btn-press"><i data-lucide="scan"></i></button>
+                        <input type="text" id="reg-ean" placeholder="EAN" required class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-mono font-black text-game-cyan shadow-inner">
+                        <button type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-5 rounded-xl btn-press"><i data-lucide="scan" class="w-6 h-6"></i></button>
                     </div>
-                    <input type="text" id="reg-nome" placeholder="NOME DO PRODUTO" required class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase">
+                    <input type="text" id="reg-nome" placeholder="NOME DO PRODUTO" required class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase text-white">
                     <select id="reg-cat" required class="w-full bg-slate-900 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase">
                         <option value="">CATEGORIA</option>
                         <option value="Mercearia">🛒 Mercearia</option><option value="Bebidas">🥤 Bebidas</option><option value="Perfumaria">🧴 Perfumaria</option><option value="Limpeza">🧹 Limpeza</option><option value="Alho">🧄 Alho</option><option value="Bazar">🏠 Bazar</option>
                     </select>
                     <div class="grid grid-cols-2 gap-2">
                         <input type="date" id="reg-data" required class="bg-slate-950 border border-slate-800 p-4 rounded-xl font-black text-white text-sm">
-                        <input type="text" id="reg-qtd" placeholder="QTD" required oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-4 rounded-xl font-black text-game-success text-center text-xl">
+                        <input type="text" id="reg-qtd" placeholder="QTD" required oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-4 rounded-xl font-black text-game-success text-center text-xl shadow-inner">
                     </div>
-                    <button type="submit" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase tracking-widest shadow-xl btn-press">SALVAR</button>
+                    <button type="submit" class="w-full bg-game-cyan text-slate-950 p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl btn-press">SALVAR</button>
                 </form>
-                <button id="btn-reg-voltar-portal" onclick="voltarAoPortalContexto()" class="hidden w-full bg-slate-800 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] italic border border-game-cyan/20">Voltar ao Portal</button>
+                <button id="btn-reg-voltar-portal" onclick="voltarAoPortalContexto()" class="hidden w-full bg-slate-800 text-game-cyan p-3 rounded-xl font-black uppercase text-[10px] italic border border-game-cyan/20 btn-press">Reabrir Portal</button>
             </div>
         </section>
 
         <!-- CALCULADORAS -->
-        <section id="view-calc-mercadorias" class="hidden space-y-4 animate-fadeIn text-white">
-            <div class="glass p-5 rounded-2xl border-t-4 border-game-success">
+        <section id="view-calc-mercadorias" class="hidden space-y-4 animate-fadeIn">
+            <div class="glass p-5 rounded-2xl border-t-4 border-game-success text-white">
                 <div class="tool-header">
-                    <button onclick="navigate('dashboard')" class="p-2 bg-slate-800 rounded-xl text-slate-400 btn-press"><i data-lucide="chevron-left"></i></button>
+                    <button onclick="navigate('dashboard')" class="p-2.5 bg-slate-800 rounded-lg text-game-success btn-press"><i data-lucide="chevron-left"></i></button>
                     <h3 class="text-[10px] font-black uppercase text-game-success tracking-widest italic">Calculadora de mercadoria</h3>
-                    <div class="w-10"></div>
+                    <div class="w-8"></div>
                 </div>
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3 font-black">
-                    <input type="text" id="cv-f" placeholder="FRENTE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-black text-center">
-                    <input type="text" id="cv-p" placeholder="PROFUNDIDADE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-black text-center">
-                    <input type="text" id="cv-a" placeholder="ALTURA" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-black text-center">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="cv-f" placeholder="FRENTE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-center">
+                    <input type="text" id="cv-p" placeholder="PROFUNDIDADE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-center">
+                    <input type="text" id="cv-a" placeholder="ALTURA" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-center">
                 </div>
-                <div class="mt-4 p-4 bg-game-success/10 border border-game-success/20 rounded-xl text-center"><h4 id="cv-res" class="text-4xl font-black text-game-success font-black">0</h4></div>
+                <div class="mt-4 p-4 bg-game-success/10 border border-game-success/20 rounded-xl text-center"><h4 id="cv-res" class="text-4xl font-black text-game-success">0</h4></div>
                 <button onclick="resetCalcGondola()" class="w-full mt-2 text-[8px] font-black uppercase text-slate-500 italic">Limpar</button>
             </div>
-            <div class="glass p-5 rounded-2xl border-t-4 border-game-cyan">
-                <h3 class="text-[10px] font-black uppercase text-game-cyan mb-3 tracking-widest italic font-black">Módulo Laços</h3>
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3 font-black">
-                    <input type="text" id="cl-l" placeholder="LAÇOS" oninput="formatarInputMoeda(this); calcLaco()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-black text-center">
-                    <input type="text" id="cl-f" placeholder="FARDOS/LAÇO" oninput="formatarInputMoeda(this); calcLaco()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-black text-center">
-                    <input type="text" id="cl-u" placeholder="UN/FARDO" oninput="formatarInputMoeda(this); calcLaco()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-black text-center">
+            <div class="glass p-5 rounded-2xl border-t-4 border-game-cyan text-white">
+                <h3 class="text-[10px] font-black uppercase text-game-cyan mb-3 tracking-widest italic leading-none text-center">Módulo Laços</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="cl-l" placeholder="LAÇOS" oninput="formatarInputMoeda(this); calcLaco()" class="bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-center">
+                    <input type="text" id="cl-f" placeholder="FARDOS/LAÇO" oninput="formatarInputMoeda(this); calcLaco()" class="bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-center">
+                    <input type="text" id="cl-u" placeholder="UN/FARDO" oninput="formatarInputMoeda(this); calcLaco()" class="bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-center">
                 </div>
-                <div class="mt-4 p-4 bg-game-cyan/10 border border-game-cyan/20 rounded-xl text-center"><h4 id="cl-res" class="text-4xl font-black text-game-cyan font-black">0</h4></div>
-                <button onclick="resetCalcLaco()" class="w-full mt-2 text-[8px] font-black uppercase text-slate-500 italic text-white">Limpar</button>
+                <div class="mt-4 p-4 bg-game-cyan/10 border border-game-cyan/20 rounded-xl text-center"><h4 id="cl-res" class="text-4xl font-black text-game-cyan">0</h4></div>
+                <button onclick="resetCalcLaco()" class="w-full mt-2 text-[8px] font-black uppercase text-slate-500 italic">Limpar</button>
             </div>
         </section>
 
-        <!-- CONSULTA (LISTA) -->
+        <!-- CALCULADORA VALIDADE -->
+        <section id="view-calc-validade" class="hidden max-w-xl mx-auto animate-fadeIn text-white">
+            <div class="glass p-8 rounded-[2.5rem] border-t-8 border-game-warning space-y-4 text-center shadow-2xl">
+                <div class="tool-header">
+                    <button onclick="navigate('dashboard')" class="p-2.5 bg-slate-800 rounded-lg text-game-warning btn-press"><i data-lucide="chevron-left"></i></button>
+                    <h2 class="text-xl font-black text-game-warning uppercase italic font-black">Calculadora de validades</h2>
+                    <div class="w-8"></div>
+                </div>
+                <div class="space-y-4">
+                    <input type="date" id="cron-data" class="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl outline-none font-black text-center text-xl text-white">
+                    <div class="flex gap-2">
+                        <input type="number" id="cron-qtd" value="1" class="w-24 bg-slate-950 border border-slate-800 p-4 rounded-2xl font-black text-center text-2xl text-white shadow-inner">
+                        <select id="cron-un" class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-2xl font-black uppercase">
+                            <option value="dias">Dias</option><option value="meses">Meses</option><option value="anos">Anos</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="executarCronos(1)" class="bg-game-warning text-slate-950 p-4 rounded-xl font-black uppercase text-[10px] btn-press shadow-lg font-black">VENCIMENTO</button>
+                        <button onclick="executarCronos(-1)" class="bg-slate-800 text-game-warning p-4 rounded-xl font-black uppercase text-[10px] btn-press font-black">FABRICAÇÃO</button>
+                    </div>
+                    <div id="cron-res" class="hidden p-6 bg-game-warning/10 border border-game-warning/30 rounded-2xl text-center text-4xl font-black text-game-warning italic neon-text-purple tracking-tighter">---</div>
+                    <button onclick="resetCalcValidade()" class="w-full text-[9px] font-black text-slate-500 uppercase italic py-2">Zerar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONSULTA (MATRIX) -->
         <section id="view-consulta" class="hidden space-y-4 animate-fadeIn">
-            <div class="glass p-3 rounded-2xl border border-slate-800">
+            <div class="glass p-4 rounded-2xl border border-slate-800 mb-2">
                 <div class="tool-header mb-0 border-0 pb-0">
-                    <button onclick="navigate('dashboard')" class="p-2 bg-slate-800 rounded-xl text-slate-400 btn-press"><i data-lucide="chevron-left"></i></button>
+                    <button onclick="navigate('dashboard')" class="p-3 bg-slate-800 rounded-xl text-game-cyan btn-press"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
                     <h1 class="text-xl font-black uppercase italic border-l-4 border-game-cyan pl-3">Inventário</h1>
                     <div class="w-10"></div>
                 </div>
@@ -214,50 +240,54 @@
 
         <!-- BLITZ FLOW -->
         <section id="view-blitz-flow" class="hidden max-w-xl mx-auto space-y-4 animate-fadeIn text-white font-black">
-            <!-- Passo 0: EAN -->
+            <!-- Passo 0 -->
             <div id="blitz-step-0" class="blitz-step active glass p-8 rounded-[2rem] border-t-8 border-game-success text-center space-y-6">
                 <div class="tool-header">
-                    <button onclick="navigate('dashboard')" class="p-2 bg-slate-800 rounded-xl text-slate-400 btn-press"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black uppercase italic tracking-widest text-game-success">Operação Blitz</h2>
+                    <button onclick="navigate('dashboard')" class="p-3 bg-slate-800 rounded-xl text-game-success btn-press"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                    <h2 class="text-xl font-black uppercase italic tracking-widest text-game-success">Blitz Operação</h2>
                     <div class="w-10"></div>
                 </div>
                 <div class="flex gap-2">
-                    <input type="text" id="blitz-ean" class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-mono text-center text-game-success text-lg shadow-inner font-black uppercase" placeholder="EAN">
-                    <button onclick="dispararScannerGenerico('blitz-ean')" class="bg-game-success text-slate-950 px-4 rounded-xl btn-press"><i data-lucide="camera"></i></button>
+                    <input type="text" id="blitz-ean" class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-mono text-center text-game-success text-lg shadow-inner font-black uppercase" placeholder="CÓDIGO EAN">
+                    <button onclick="dispararScannerGenerico('blitz-ean')" class="bg-game-success text-slate-950 px-5 rounded-xl btn-press"><i data-lucide="camera" class="w-6 h-6"></i></button>
                 </div>
-                <button onclick="checkBlitzProduto()" class="w-full bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase shadow-xl">LOCALIZAR</button>
-                <button id="btn-blitz-voltar-portal" onclick="voltarAoPortalContexto()" class="hidden w-full bg-slate-800 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] italic border border-game-cyan/20">Voltar ao Portal</button>
+                <button onclick="checkBlitzProduto()" class="w-full bg-game-success text-slate-950 p-5 rounded-2xl font-black uppercase btn-press shadow-xl">LOCALIZAR</button>
+                <button id="btn-blitz-voltar-portal" onclick="voltarAoPortalContexto()" class="hidden w-full bg-slate-800 text-game-cyan p-3 rounded-xl font-black uppercase text-[10px] italic border border-game-cyan/20">Voltar ao Portal</button>
             </div>
-            <!-- Cadastro Blitz -->
+            
+            <!-- Cadastro Interno Blitz -->
             <div id="blitz-step-cad" class="blitz-step glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4">
-                <h2 class="text-lg font-black text-game-warning uppercase italic text-center">Novo EAN</h2>
-                <input type="text" id="blitz-cad-nome" placeholder="NOME DO ITEM" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase text-white shadow-inner">
-                <select id="blitz-cad-cat" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase">
+                <h2 class="text-lg font-black text-game-warning uppercase italic text-center leading-none">Novo Registro</h2>
+                <input type="text" id="blitz-cad-nome" placeholder="NOME DO PRODUTO" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase text-white shadow-inner">
+                <select id="blitz-cad-cat" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black uppercase text-white">
                     <option value="Mercearia">🛒 Mercearia</option><option value="Bebidas">🥤 Bebidas</option><option value="Perfumaria">🧴 Perfumaria</option><option value="Limpeza">🧹 Limpeza</option><option value="Alho">🧄 Alho</option><option value="Bazar">🏠 Bazar</option>
                 </select>
-                <button onclick="salvarNovoProdutoBlitz()" class="w-full bg-game-warning text-slate-950 p-4 rounded-xl font-black uppercase btn-press">SALVAR</button>
+                <button onclick="salvarNovoProdutoBlitz()" class="w-full bg-game-warning text-slate-950 p-4 rounded-xl font-black uppercase btn-press">SALVAR E SEGUIR</button>
             </div>
-            <!-- Lotes -->
-            <div id="blitz-step-datas" class="blitz-step glass p-10 rounded-[2rem] border-t-8 border-game-accent text-center space-y-5">
-                <h2 class="text-lg font-black text-game-accent uppercase italic">Lotes</h2>
-                <input type="number" id="blitz-qtd-datas" value="1" min="1" class="w-24 bg-slate-950 border-2 border-game-accent p-4 rounded-2xl text-3xl font-black text-center text-game-accent outline-none font-black shadow-inner">
-                <button onclick="definirLotesBlitz()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase btn-press shadow-lg shadow-violet-500/30">CONFIGURAR</button>
+
+            <!-- Qtd Datas -->
+            <div id="blitz-step-datas" class="blitz-step glass p-10 rounded-[2rem] border-t-8 border-game-accent text-center space-y-6 text-white shadow-2xl">
+                <h2 class="text-xl font-black text-game-accent uppercase leading-none italic">Variantes de Validade</h2>
+                <input type="number" id="blitz-qtd-datas" value="1" min="1" class="w-24 bg-slate-950 border-2 border-game-accent p-4 rounded-2xl text-4xl font-black text-center text-game-accent outline-none shadow-inner font-black">
+                <button onclick="definirLotesBlitz()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase btn-press shadow-lg shadow-violet-500/30">CONFIGURAR COLETA</button>
             </div>
-            <!-- Datas -->
-            <div id="blitz-step-set-dates" class="blitz-step glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4 shadow-2xl">
-                <h2 class="text-lg font-black uppercase text-center text-game-cyan italic leading-none">Calendário de Lotes</h2>
+
+            <!-- Inserir Datas -->
+            <div id="blitz-step-set-dates" class="blitz-step glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4 text-white">
+                <h2 class="text-lg font-black uppercase text-center text-game-cyan italic leading-none">Matriz de Validades</h2>
                 <div id="blitz-dates-inputs" class="space-y-3"></div>
-                <button onclick="startContagemSetores()" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase btn-press shadow-xl">INICIAR CONTAGEM</button>
+                <button onclick="startContagemSetores()" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase btn-press">INICIAR COLETA</button>
             </div>
-            <!-- Setor Coleta -->
-            <div id="blitz-step-sector" class="blitz-step glass p-5 rounded-[2rem] border-t-8 border-game-success space-y-5 shadow-2xl">
+
+            <!-- Setores de Contagem -->
+            <div id="blitz-step-sector" class="blitz-step glass p-5 rounded-[2rem] border-t-8 border-game-success space-y-5 shadow-2xl text-white">
                 <div class="flex justify-between items-start border-b border-slate-800 pb-3 leading-none font-black">
                     <div><span id="blitz-sector-badge" class="text-[8px] font-black bg-game-success/20 text-game-success px-2 py-1 rounded-full uppercase border border-game-success/30 font-black">---</span><h2 id="blitz-sector-name" class="text-xl font-black uppercase text-white italic mt-1 leading-none font-black">---</h2></div>
                     <div class="text-right leading-none font-black"><p class="text-[8px] font-black text-slate-500 uppercase italic mb-1">Lote</p><p id="blitz-sector-val" class="text-[10px] font-black text-game-cyan leading-none font-black">--/--/--</p></div>
                 </div>
-                <div class="space-y-4 font-black">
+                <div class="space-y-4">
                     <input type="text" id="blitz-inp-soltas" placeholder="UN SOLTAS" oninput="formatarInputMoeda(this)" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-black text-3xl text-center text-white focus:border-game-success shadow-inner">
-                    <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-800 grid grid-cols-2 gap-2 shadow-inner">
+                    <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
                         <input type="text" id="blitz-inp-f-qtd" placeholder="FARDOS" oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-3 rounded-lg outline-none font-black text-center text-xs text-white">
                         <input type="text" id="blitz-inp-f-un" placeholder="UN/F" oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-3 rounded-lg outline-none font-black text-center text-xs text-white">
                     </div>
@@ -272,25 +302,24 @@
                     <button onclick="confirmarSetorBlitz()" class="flex-[3] bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase btn-press shadow-xl flex items-center justify-center gap-2 text-xs">Confirmar <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                 </div>
             </div>
-            <!-- Final -->
-            <div id="blitz-step-final" class="blitz-step glass p-8 rounded-[3rem] border-t-8 border-game-accent space-y-6 text-center shadow-2xl text-white">
-                 <h2 class="text-xl font-black uppercase italic text-center neon-text-purple leading-none tracking-widest font-black">Concluir Operação</h2>
+            <!-- Passo Final -->
+            <div id="blitz-step-final" class="blitz-step glass p-8 rounded-[2rem] border-t-8 border-game-accent space-y-6 text-center shadow-2xl text-white">
+                 <h2 class="text-xl font-black uppercase italic text-center neon-text-purple leading-none tracking-widest font-black">Conclusão de Blitz</h2>
                  <div id="blitz-resumo-corpo" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar pr-1 shadow-inner text-left text-white"></div>
-                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase btn-press shadow-xl text-xs border border-violet-400">Sincronizar Matrix</button>
+                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-5 rounded-2xl font-black uppercase btn-press shadow-xl border border-violet-400 text-sm font-black">SINCRONIZAR BANCO</button>
             </div>
         </section>
-
     </main>
 
     <!-- PORTAL MODAL -->
     <div id="modal-portal" class="hidden fixed inset-0 z-[150] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 text-center text-white">
         <div class="glass p-6 md:p-8 rounded-[2rem] max-w-sm w-full border-t-8 border-game-cyan space-y-6 shadow-2xl font-black">
             <h3 id="portal-nome" class="text-lg font-black uppercase text-game-cyan leading-tight italic">---</h3>
-            <p id="portal-ean" class="text-[10px] font-mono text-slate-500 uppercase mt-1 leading-none font-black"></p>
+            <p id="portal-ean" class="text-[10px] font-mono text-slate-500 mt-1 uppercase font-black tracking-widest"></p>
             <div class="grid grid-cols-1 gap-2.5 text-white">
-                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 hover:bg-game-cyan/20 rounded-xl border border-slate-700 font-black uppercase text-xs btn-press text-white font-black font-black"><span>Ficha Técnica</span> <i data-lucide="info" class="w-4 h-4 text-game-cyan"></i></button>
-                <button onclick="portalAcao('registro')" class="flex items-center justify-between p-4 bg-slate-800 hover:bg-game-warning/20 rounded-xl border border-slate-700 font-black uppercase text-xs btn-press text-white font-black font-black"><span>Registro Único</span> <i data-lucide="plus" class="w-4 h-4 text-game-warning"></i></button>
-                <button onclick="portalAcao('blitz')" class="flex items-center justify-between p-4 bg-slate-800 hover:bg-game-success/20 rounded-xl border border-slate-700 font-black uppercase text-xs btn-press text-white font-black font-black"><span>Iniciar Blitz</span> <i data-lucide="zap" class="w-4 h-4 text-game-success"></i></button>
+                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 hover:bg-game-cyan/20 rounded-xl border border-slate-700 font-black uppercase text-xs btn-press text-white font-black"><span>Ficha Técnica</span> <i data-lucide="info" class="w-4 h-4 text-game-cyan"></i></button>
+                <button onclick="portalAcao('registro')" class="flex items-center justify-between p-4 bg-slate-800 hover:bg-game-warning/20 rounded-xl border border-slate-700 font-black uppercase text-xs btn-press text-white font-black"><span>Registro Único</span> <i data-lucide="plus" class="w-4 h-4 text-game-warning"></i></button>
+                <button onclick="portalAcao('blitz')" class="flex items-center justify-between p-4 bg-slate-800 hover:bg-game-success/20 rounded-xl border border-slate-700 font-black uppercase text-xs btn-press text-white font-black"><span>Iniciar Blitz</span> <i data-lucide="zap" class="w-4 h-4 text-game-success"></i></button>
             </div>
             <button onclick="fecharPortal()" class="text-[10px] font-black uppercase text-slate-500 italic py-2 btn-press">Cancelar</button>
         </div>
@@ -299,15 +328,15 @@
     <!-- FICHA HUD -->
     <div id="modal-ficha" class="hidden fixed inset-0 z-[160] bg-slate-950/95 flex items-center justify-center p-4">
         <div class="glass p-5 md:p-6 rounded-[2rem] max-w-lg w-full border-l-8 border-game-accent relative space-y-5 shadow-2xl modal-container no-scrollbar text-white font-black">
-            <button onclick="fecharFicha()" class="absolute top-4 right-4 p-1.5 bg-slate-800 rounded-full font-black"><i data-lucide="x" class="w-4 h-4 text-white"></i></button>
+            <button onclick="fecharFicha()" class="absolute top-4 right-4 p-2 bg-slate-800 rounded-full font-black"><i data-lucide="x" class="w-5 h-5 text-white"></i></button>
             <div class="text-center leading-none">
                 <h3 id="ficha-nome" class="text-xl font-black uppercase text-game-accent italic leading-tight font-black">---</h3>
                 <p id="ficha-ean" class="text-[9px] font-mono text-slate-500 mt-1 uppercase leading-none font-bold font-black"></p>
             </div>
             <div id="ficha-corpo" class="space-y-2 font-black"></div>
             <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-800">
-                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px] border border-game-danger/20 font-black font-black">Eliminar</button>
-                <button onclick="voltarAoPortalContexto()" id="btn-ficha-voltar-portal" class="bg-game-cyan/10 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] border border-game-cyan/20 font-black font-black">Portal</button>
+                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px] border border-game-danger/20 font-black">Eliminar</button>
+                <button onclick="voltarAoPortalContexto()" id="btn-ficha-voltar-portal" class="bg-game-cyan/10 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] border border-game-cyan/20 font-black">Portal</button>
             </div>
         </div>
     </div>
@@ -319,17 +348,17 @@
             <h2 id="confirm-title" class="text-lg font-black uppercase text-game-danger italic leading-none font-black">ALERTA</h2>
             <p id="confirm-msg" class="text-[11px] text-slate-400 font-bold uppercase font-black"></p>
             <div class="flex gap-2 font-black">
-                <button id="confirm-yes" class="flex-1 bg-game-danger text-white p-3.5 rounded-xl font-black uppercase text-[10px] btn-press shadow-lg font-black">Sim</button>
-                <button onclick="fecharConfirmacao()" class="flex-1 bg-slate-800 text-slate-400 p-3.5 rounded-xl font-black uppercase text-[10px] btn-press font-black">Não</button>
+                <button id="confirm-yes" class="flex-1 bg-game-danger text-white p-4 rounded-xl font-black uppercase text-[10px] btn-press shadow-lg font-black">Sim</button>
+                <button onclick="fecharConfirmacao()" class="flex-1 bg-slate-800 text-slate-400 p-4 rounded-xl font-black uppercase text-[10px] btn-press font-black">Não</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL AUTH -->
     <div id="modal-auth" class="hidden fixed inset-0 z-[700] bg-slate-950/95 flex items-center justify-center p-4 text-center text-white font-black">
-        <div class="glass p-8 rounded-[3rem] max-w-sm w-full border-t-8 border-game-accent space-y-6 font-black">
-            <h2 class="text-xl font-black uppercase text-game-accent italic font-black uppercase">Security</h2>
-            <input type="password" id="auth-pass" placeholder="SENHA" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl outline-none text-center font-black tracking-[0.5em] focus:border-game-accent text-white uppercase text-xl shadow-inner font-black">
+        <div class="glass p-10 rounded-[3rem] max-w-sm w-full border-t-8 border-game-accent space-y-6 shadow-2xl">
+            <h2 class="text-xl font-black uppercase text-game-accent italic font-black uppercase leading-none">Security Core</h2>
+            <input type="password" id="auth-pass" placeholder="SENHA" class="w-full bg-slate-900 border border-slate-700 p-5 rounded-2xl outline-none text-center font-black tracking-[0.5em] focus:border-game-accent text-white uppercase text-xl shadow-inner font-black">
             <button onclick="validarAuthGamer()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase tracking-widest btn-press shadow-lg font-black">AUTORIZAR</button>
             <button onclick="fecharAuthGamer()" class="w-full text-slate-500 font-black uppercase text-[9px] py-1 btn-press font-black">Voltar</button>
         </div>
@@ -337,14 +366,21 @@
 
     <!-- SCANNER MODAL -->
     <div id="modal-scanner-generico" class="hidden fixed inset-0 z-[300] bg-slate-950 flex flex-col items-center justify-center p-4 font-black">
-        <div id="reader-generico" class="w-full max-w-sm rounded-3xl overflow-hidden border-2 border-game-cyan shadow-[0_0_40px_#06b6d4] font-black"></div>
-        <button onclick="fecharScannerGenerico()" class="mt-10 bg-game-danger text-white px-14 py-4 rounded-2xl font-black uppercase tracking-widest btn-press shadow-xl text-xs font-black">Cancelar</button>
+        <div id="reader-generico" class="w-full max-w-sm rounded-[2rem] overflow-hidden border-2 border-game-cyan shadow-[0_0_40px_rgba(6,182,212,0.4)] font-black"></div>
+        <button onclick="fecharScannerGenerico()" class="mt-8 bg-game-danger text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest btn-press shadow-lg shadow-red-500/20 text-xs font-black">Abortar Scan</button>
     </div>
 
     <div id="toast-container" class="fixed top-14 right-5 z-[800] flex flex-col gap-2 pointer-events-none font-bold uppercase text-[10px] font-black"></div>
 
+    <!-- NAV INFERIOR -->
+    <nav class="glass border-t border-game-accent/30 fixed bottom-0 left-0 right-0 z-50 py-4 px-6 flex justify-around items-center md:hidden rounded-t-[1.5rem] shadow-2xl">
+        <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-1 text-game-cyan btn-press"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[8px] font-black uppercase tracking-widest font-black">Base</span></button>
+        <button onclick="navigate('blitz-flow')" class="flex flex-col items-center gap-1 text-game-success btn-press"><i data-lucide="zap" class="w-6 h-6"></i><span class="text-[8px] font-black uppercase tracking-widest font-black">Blitz</span></button>
+        <button onclick="navigate('consulta')" class="flex flex-col items-center gap-1 text-slate-400 btn-press"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[8px] font-black uppercase tracking-widest font-black">Data</span></button>
+    </nav>
+
     <script>
-        // --- SUPABASE CLIENT ---
+        // --- CONFIG & SUPABASE ---
         const SUPABASE_URL = 'https://zwtvekbsfzjrsnisireg.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_5i19XNHPnnVVH5Vrqfj52g_hlyrNWo2';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -352,8 +388,6 @@
         // --- STATE ---
         let db = { produtos: [] };
         let blitzState = { ean: '', prod: null, lotes: [], currentSectorIdx: 0, currentLoteIdx: 0, answers: {} };
-        let rascunhoBlitz = JSON.parse(localStorage.getItem('alns_blitz_draft')) || null;
-        
         const SETORES = [
             {id: 'prateleira', nome: 'Prateleira', comp: false},
             {id: 'geladeira', nome: 'Geladeira', comp: true},
@@ -362,12 +396,17 @@
             {id: 'ponta', nome: 'Ponta de Gôndola', comp: false},
             {id: 'deposito', nome: 'Depósito', comp: true}
         ];
-        
+        let rascunhoBlitz = JSON.parse(localStorage.getItem('alns_blitz_draft')) || null;
         let html5QrCodeGenerico = null;
         let pAtivoEan = null;
         let authCallback = null;
 
-        document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); verificarSessao(); atualizarDashboard(); checkDraft(); });
+        document.addEventListener('DOMContentLoaded', () => { 
+            lucide.createIcons(); 
+            verificarSessao(); 
+            atualizarDashboard(); 
+            checkDraft();
+        });
 
         // --- UTILS ---
         function fNum(n) { return new Intl.NumberFormat('pt-BR').format(n || 0); }
@@ -377,7 +416,7 @@
             i.value = v ? new Intl.NumberFormat('pt-BR').format(parseInt(v)) : '';
         }
 
-        // --- SUPABASE ACTIONS ---
+        // --- CORE SYNC ---
         async function atualizarDashboard() {
             try {
                 const { data, error } = await supabaseClient.from('produtos').select('*, validades(*)');
@@ -398,23 +437,28 @@
                 sessionStorage.setItem('alns_logado', 'true');
                 document.getElementById('view-login').classList.add('hidden');
                 atualizarDashboard();
-            } else { showToast('ERRO', 'danger'); }
+                checkCloudDrafts();
+            } else { showToast('SENHA INVÁLIDA', 'danger'); }
         }
 
         function verificarSessao() { if (sessionStorage.getItem('alns_logado') === 'true') document.getElementById('view-login').classList.add('hidden'); }
         function realizarLogout() { sessionStorage.removeItem('alns_logado'); location.reload(); }
 
+        // --- NAV MOTOR ---
         function navigate(id) {
-            // Reset contexto se for Dashboard
+            // Se for para Dashboard, resetamos o contexto do produto
             if(id === 'dashboard') {
                 pAtivoEan = null;
                 resetInterfaceCampos();
             }
+
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
             const target = document.getElementById(`view-${id}`);
             if(target) target.classList.remove('hidden');
+            
             if(id === 'consulta') renderizarConsulta();
             if(id === 'blitz-flow' && !rascunhoBlitz) resetBlitzInterface();
+            
             lucide.createIcons();
             window.scrollTo(0,0);
         }
@@ -465,22 +509,17 @@
             if(!state.ean) return;
             await supabaseClient.from('blitz_drafts').upsert({ ean: state.ean, data: state, updated_at: new Date() }, { onConflict: 'ean' });
         }
-
         async function checkCloudDrafts() {
             const { data } = await supabaseClient.from('blitz_drafts').select('*').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-            if (data) {
-                rascunhoBlitz = data.data;
-                checkDraft();
-            }
+            if (data) { rascunhoBlitz = data.data; checkDraft(); }
         }
-
         async function excluirDraftCloud() {
             if(rascunhoBlitz) {
                 await supabaseClient.from('blitz_drafts').delete().eq('ean', rascunhoBlitz.ean);
                 localStorage.removeItem('alns_blitz_draft');
                 rascunhoBlitz = null;
                 checkDraft();
-                showToast('DELETADO');
+                showToast('REMOVIDO');
             }
         }
 
@@ -492,6 +531,7 @@
             document.getElementById('blitz-step-0').classList.add('active');
             document.getElementById('blitz-ean').value = pAtivoEan || '';
             document.getElementById('btn-blitz-voltar-portal').style.display = pAtivoEan ? 'block' : 'none';
+            document.getElementById('blitz-dates-inputs').innerHTML = '';
         }
 
         async function checkBlitzProduto() {
@@ -506,10 +546,9 @@
 
         async function salvarNovoProdutoBlitz() {
             const n = document.getElementById('blitz-cad-nome').value.toUpperCase();
-            const c = document.getElementById('blitz-cad-cat').value;
             if(!n) return;
-            await supabaseClient.from('produtos').insert({ ean: blitzState.ean, nome: n, categoria: c });
-            blitzState.prod = { ean: blitzState.ean, nome: n, categoria: c };
+            await supabaseClient.from('produtos').insert({ ean: blitzState.ean, nome: n, categoria: document.getElementById('blitz-cad-cat').value });
+            blitzState.prod = { ean: blitzState.ean, nome: n, categoria: document.getElementById('blitz-cad-cat').value };
             document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
             document.getElementById('blitz-step-datas').classList.add('active');
         }
@@ -556,7 +595,6 @@
             if(!blitzState.answers[date]) blitzState.answers[date] = {};
             blitzState.answers[date][SETORES[blitzState.currentSectorIdx].id] = tot;
             
-            // Sync rascunho
             localStorage.setItem('alns_blitz_draft', JSON.stringify(blitzState));
             await syncDraftToCloud(blitzState);
 
@@ -577,9 +615,9 @@
             document.getElementById('blitz-step-final').classList.add('active');
             let h = ''; let g = 0;
             Object.keys(blitzState.answers).forEach(d => {
-                let sub = 0; h += `<div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800 space-y-1 font-black"><p class="text-[10px] font-black text-game-cyan uppercase leading-none">${d.split('-').reverse().join('/')}</p>`;
-                SETORES.forEach(s => { const v = blitzState.answers[d][s.id] || 0; sub += v; h += `<div class="flex justify-between text-[8px] uppercase font-bold opacity-60 font-black"><span>${s.nome}</span><span>${fNum(v)}</span></div>`; });
-                h += `<p class="text-right font-black text-game-success text-xs border-t border-slate-800 pt-1 uppercase">TOTAL: ${fNum(sub)}</p></div>`;
+                let sub = 0; h += `<div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800 space-y-1"><p class="text-[10px] font-black text-game-cyan uppercase">${d.split('-').reverse().join('/')}</p>`;
+                SETORES.forEach(s => { const v = blitzState.answers[d][s.id] || 0; sub += v; h += `<div class="flex justify-between text-[8px] uppercase font-bold opacity-60"><span>${s.nome}</span><span>${fNum(v)}</span></div>`; });
+                h += `<p class="text-right font-black text-game-success text-xs border-t border-slate-800 mt-1 uppercase">LOTE TOTAL: ${fNum(sub)}</p></div>`;
                 g += sub;
             });
             h += `<div class="p-4 bg-game-success/20 border-2 border-game-success rounded-2xl text-center"><p class="text-[9px] font-black uppercase text-game-success mb-1">TOTAL FINAL</p><h4 class="text-3xl font-black text-white">${fNum(g)} UN</h4></div>`;
@@ -610,7 +648,7 @@
                 let prods = db.produtos.filter(p => p.categoria === cat && (p.nome.includes(f) || p.ean.includes(f)));
                 if(soCriticos) prods = prods.filter(p => p.validades.some(v => new Date(v.data + 'T00:00:00') <= limite));
                 if(prods.length === 0) return;
-                let h = `<div class="glass rounded-2xl overflow-hidden border border-slate-800"><div class="bg-slate-800/50 p-3 font-black text-[10px] text-game-cyan flex justify-between uppercase"><span>📦 ${cat}</span><span>${prods.length} ITENS</span></div><div class="p-2 space-y-2 text-white">`;
+                let h = `<div class="glass rounded-2xl overflow-hidden border border-slate-800 shadow-xl"><div class="bg-slate-800/50 p-3 font-black text-[10px] text-game-cyan flex justify-between uppercase"><span>📦 ${cat}</span><span>${prods.length} ITENS</span></div><div class="p-2 space-y-2 text-white">`;
                 prods.forEach(p => {
                     const tot = p.validades.reduce((acc,v)=>acc+v.qtd, 0);
                     const temCrit = p.validades.some(v => new Date(v.data + 'T00:00:00') <= limite);
@@ -632,8 +670,8 @@
             let h = `<div class="space-y-2 text-white font-black">`;
             p.validades.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(v => {
                 const isCrit = new Date(v.data + 'T00:00:00') <= limite;
-                h += `<div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800 text-sm font-black italic shadow-inner">
-                    <div class="flex flex-col leading-none font-black"><span class="${isCrit ? 'text-game-danger underline font-black' : 'text-white'}">${v.data.split('-').reverse().join('/')}</span><span class="text-[9px] text-slate-500 mt-1 uppercase font-bold">${fNum(v.qtd)} UNIDADES</span></div>
+                h += `<div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800 text-sm font-black italic shadow-inner leading-none">
+                    <div class="flex flex-col"><span class="${isCrit ? 'text-game-danger underline font-black' : 'text-white'}">${v.data.split('-').reverse().join('/')}</span><span class="text-[9px] text-slate-500 mt-1 uppercase font-bold">${fNum(v.qtd)} UN</span></div>
                     <button onclick="solicitarExclusaoData('${ean}', '${v.data}')" class="p-2 bg-game-danger/10 text-game-danger rounded-lg font-black"><i data-lucide="trash-2" class="w-4 h-4 text-game-danger"></i></button></div>`;
             });
             document.getElementById('ficha-corpo').innerHTML = h + `</div>`;
@@ -641,7 +679,7 @@
             lucide.createIcons();
         }
 
-        // --- CORE ---
+        // --- CORE ACTIONS ---
         function realizarLogin(e) { e.preventDefault(); if(document.getElementById('login-senha').value.toLowerCase() === 'alns') { sessionStorage.setItem('alns_logado', 'true'); document.getElementById('view-login').classList.add('hidden'); atualizarDashboard(); checkCloudDrafts(); } else { showToast('ERRO', 'danger'); } }
         function realizarLogout() { sessionStorage.removeItem('alns_logado'); location.reload(); }
         function abrirConfirmacao(titulo, msg, cb) { document.getElementById('confirm-title').innerText = titulo; document.getElementById('confirm-msg').innerText = msg; document.getElementById('modal-confirm').classList.remove('hidden'); document.getElementById('confirm-yes').onclick = () => { fecharConfirmacao(); cb(); }; }
@@ -658,12 +696,13 @@
             const ean = document.getElementById('reg-ean').value;
             const d = document.getElementById('reg-data').value;
             const q = uNum(document.getElementById('reg-qtd').value);
-            const { error } = await supabaseClient.from('produtos').upsert({ ean, nome: document.getElementById('reg-nome').value.toUpperCase(), categoria: document.getElementById('reg-cat').value }, { onConflict: 'ean' });
-            if (error) return showToast('ERRO BANCO', 'danger');
+            const nome = document.getElementById('reg-nome').value.toUpperCase();
+            const cat = document.getElementById('reg-cat').value;
+            await supabaseClient.from('produtos').upsert({ ean, nome, categoria: cat }, { onConflict: 'ean' });
             const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
             if(vEx) await supabaseClient.from('validades').update({ qtd: q }).eq('id', vEx.id);
             else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: q });
-            showToast('SALVO'); pAtivoEan = null; e.target.reset(); await atualizarDashboard(); navigate('dashboard');
+            showToast('SALVO'); e.target.reset(); await atualizarDashboard(); navigate('dashboard');
         }
 
         function executarPesquisaGlobal(val) {
@@ -681,11 +720,17 @@
             if(t === 'blitz') { navigate('blitz-flow'); document.getElementById('blitz-ean').value = pAtivoEan; checkBlitzProduto(); }
         }
 
+        async function verificarEanExistente(ean) {
+            if(!ean) return;
+            const { data: p } = await supabaseClient.from('produtos').select('*').eq('ean', ean).single();
+            if(p) { document.getElementById('reg-nome').value = p.nome; document.getElementById('reg-nome').disabled = true; document.getElementById('reg-cat').value = p.categoria; document.getElementById('reg-cat').disabled = true; }
+            else { document.getElementById('reg-nome').disabled = false; document.getElementById('reg-cat').disabled = false; }
+        }
+
         function voltarAoPortalContexto() { fecharFicha(); document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden')); const p = db.produtos.find(it => it.ean === pAtivoEan); document.getElementById('portal-nome').innerText = p ? p.nome : "ITEM NOVO"; document.getElementById('portal-ean').innerText = `EAN: ${pAtivoEan}`; document.getElementById('modal-portal').classList.remove('hidden'); }
         function fecharPortal() { document.getElementById('modal-portal').classList.add('hidden'); }
         function fecharFicha() { document.getElementById('modal-ficha').classList.add('hidden'); }
         function abrirFiltroCritico() { navigate('consulta'); renderizarConsulta(true); }
-
         function showToast(m, type='success') { const t = document.createElement('div'); t.className = `p-4 rounded-xl border-2 ${type==='success'?'border-game-cyan':'border-game-danger'} bg-game-card shadow-2xl font-black uppercase text-[10px] tracking-widest animate-bounce text-white`; t.innerText = m; document.getElementById('toast-container').appendChild(t); setTimeout(() => t.remove(), 2500); }
 
         function dispararScannerGenerico(id) {
