@@ -39,15 +39,15 @@
         .tool-header { display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 1px solid #1e293b; margin-bottom: 20px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col pb-24">
+<body class="min-h-screen flex flex-col pb-24 font-black">
 
-    <!-- LOGIN -->
-    <div id="view-login" class="fixed inset-0 z-[7000] bg-slate-950 flex items-center justify-center p-4 font-black">
+    <!-- LOGIN HUD -->
+    <div id="view-login" class="fixed inset-0 z-[7000] bg-slate-950 flex items-center justify-center p-4">
         <div class="glass p-10 rounded-[3rem] max-w-md w-full text-center space-y-6 border-t-8 border-game-cyan shadow-2xl">
             <div class="flex justify-center mb-2"><div class="al-symbol text-2xl w-16 h-16 border-4">AL</div></div>
-            <h1 class="text-2xl font-black italic uppercase text-white tracking-tighter leading-tight font-black">Ana Luiza<br><span class="text-game-cyan not-italic font-medium text-lg tracking-widest opacity-80 uppercase">Controladoria</span></h1>
+            <h1 class="text-2xl font-black italic uppercase text-white tracking-tighter leading-tight">Ana Luiza<br><span class="text-game-cyan not-italic font-medium text-lg tracking-widest opacity-80 uppercase">Controladoria</span></h1>
             <form onsubmit="realizarLogin(event)" class="space-y-4">
-                <input type="password" id="login-senha" placeholder="DIGITE A SENHA" required class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-center font-black focus:border-game-cyan uppercase text-white text-lg">
+                <input type="password" id="login-senha" placeholder="SENHA DE ACESSO" required class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-center font-black focus:border-game-cyan uppercase text-white text-lg">
                 <button type="submit" class="w-full bg-game-cyan text-slate-950 p-4 rounded-2xl font-black uppercase btn-press tracking-widest shadow-lg">ENTRAR</button>
             </form>
         </div>
@@ -63,7 +63,7 @@
             </div>
         </div>
         <div class="flex gap-2">
-             <button onclick="atualizarDashboard(); showToast('SINCRONIZANDO...')" class="p-2 bg-slate-800/50 text-game-cyan rounded-xl border border-slate-700 btn-press"><i data-lucide="refresh-cw" class="w-4 h-4 font-black"></i></button>
+             <button onclick="atualizarDashboard(); showToast('ATUALIZANDO...')" class="p-2 bg-slate-800/50 text-game-cyan rounded-xl border border-slate-700 btn-press"><i data-lucide="refresh-cw" class="w-4 h-4 font-black"></i></button>
              <button onclick="realizarLogout()" class="p-2 bg-slate-800/50 text-game-danger rounded-xl border border-slate-700 btn-press"><i data-lucide="power" class="w-4 h-4 font-black"></i></button>
         </div>
     </header>
@@ -73,7 +73,7 @@
         <div class="max-w-7xl mx-auto flex gap-2 text-white font-black">
             <div class="relative flex-1 font-black">
                 <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-game-cyan font-black"></i>
-                <input type="text" id="global-search" oninput="limparEan(this); executarPesquisaGlobal(this.value)" placeholder="BUSCAR POR CÓDIGO..." class="w-full bg-slate-900 border border-slate-700 pl-10 pr-4 py-2 rounded-xl text-sm focus:border-game-cyan outline-none uppercase font-black text-white">
+                <input type="text" id="global-search" oninput="limparEan(this); executarPesquisaGlobal(this.value)" placeholder="BUSCAR CÓDIGO..." class="w-full bg-slate-900 border border-slate-700 pl-10 pr-4 py-2 rounded-xl text-sm focus:border-game-cyan outline-none uppercase font-black text-white">
             </div>
             <button onclick="dispararScannerGenerico('global-search')" class="bg-game-cyan text-slate-950 px-4 py-2 rounded-xl font-black btn-press"><i data-lucide="camera" class="w-4 h-4 text-slate-950"></i></button>
         </div>
@@ -81,15 +81,12 @@
 
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 font-black">
         
-        <!-- DASHBOARD (MENU) -->
+        <!-- DASHBOARD (MENU PRINCIPAL) -->
         <section id="view-dashboard" class="space-y-4 animate-fadeIn">
             <div id="cloud-draft-alert" class="hidden glass border-l-4 border-game-warning p-4 rounded-2xl flex justify-between items-center shadow-lg">
                 <div class="flex items-center gap-3">
                     <i data-lucide="cloud-download" class="text-game-warning w-5 h-5"></i>
-                    <div>
-                        <p class="text-[8px] text-slate-500 uppercase">Trabalho pendente:</p>
-                        <p class="text-[10px] font-black uppercase text-game-warning"><span id="cloud-draft-name"></span></p>
-                    </div>
+                    <div><p class="text-[8px] text-slate-500 uppercase">Trabalho pendente:</p><p class="text-[10px] font-black uppercase text-game-warning"><span id="cloud-draft-name"></span></p></div>
                 </div>
                 <div class="flex gap-1">
                     <button onclick="confirmarExcluirRascunho()" class="p-2 bg-game-danger/10 text-game-danger rounded-lg border border-game-danger/20 btn-press"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -99,19 +96,19 @@
 
             <div class="grid grid-cols-1 gap-3">
                 <button onclick="navigate('blitz-flow')" class="dash-card glass border-l-game-success text-white btn-press">
-                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Contagem por Setor</span><h2 class="text-lg font-black text-game-success uppercase italic leading-none">BLITZ</h2></div>
+                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Contagem Geral</span><h2 class="text-lg font-black text-game-success uppercase italic leading-none">Contar Estoque (BLITZ)</h2></div>
                     <i data-lucide="zap" class="text-game-success w-7 h-7"></i>
                 </button>
                 <button onclick="prepararRegistroNovo()" class="dash-card glass border-l-game-cyan text-white btn-press">
-                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Lançar lote rápido</span><h2 class="text-lg font-black text-game-cyan uppercase italic leading-none">Lançar Produto</h2></div>
+                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Adicionar Lote</span><h2 class="text-lg font-black text-game-cyan uppercase italic leading-none">Lançar Produto</h2></div>
                     <i data-lucide="plus-circle" class="text-game-cyan w-7 h-7"></i>
                 </button>
                 <button onclick="navigate('calc-mercadorias')" class="dash-card glass border-l-game-accent text-white btn-press">
-                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Anotar Estoque</span><h2 class="text-lg font-black text-game-accent uppercase italic leading-none">Contar Mercadoria</h2></div>
+                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Contar Fardos</span><h2 class="text-lg font-black text-game-accent uppercase italic leading-none">Calculadora de Quantidades</h2></div>
                     <i data-lucide="layers" class="text-game-accent w-7 h-7"></i>
                 </button>
                 <button onclick="navigate('calc-validade')" class="dash-card glass border-l-game-warning text-white btn-press">
-                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Descobrir Vencimento</span><h2 class="text-lg font-black text-game-warning uppercase italic leading-none">Calculadora de Datas</h2></div>
+                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Cálculo de Vencimento</span><h2 class="text-lg font-black text-game-warning uppercase italic leading-none">Calculadora de Datas</h2></div>
                     <i data-lucide="calendar" class="text-game-warning w-7 h-7"></i>
                 </button>
             </div>
@@ -128,34 +125,14 @@
             </div>
         </section>
 
-        <!-- CONTAR MERCADORIA (CALCULADORAS) -->
-        <section id="view-calc-mercadorias" class="hidden space-y-4 animate-fadeIn text-white">
-            <div class="glass p-6 rounded-[2rem] border-t-8 border-game-accent shadow-2xl space-y-6">
-                <div class="tool-header">
-                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-accent btn-press"><i data-lucide="chevron-left"></i></button>
-                    <h3 class="text-sm font-black uppercase text-game-accent italic leading-none">Contar Mercadoria</h3>
-                </div>
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                        <p class="text-[10px] font-black uppercase text-slate-500 italic">Pelo Espaço (Cubagem)</p>
-                        <div class="grid grid-cols-3 gap-2">
-                            <input type="text" id="cv-f" placeholder="FRENTE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
-                            <input type="text" id="cv-p" placeholder="PROFUND." oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
-                            <input type="text" id="cv-a" placeholder="ALTURA" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
-                        </div>
-                        <div class="p-4 bg-game-accent/10 border border-game-accent/20 rounded-xl text-center shadow-inner"><h4 id="cv-res" class="text-4xl font-black text-game-accent">0</h4></div>
-                    </div>
-                    <div class="border-t border-slate-800 pt-4 space-y-2">
-                        <p class="text-[10px] font-black uppercase text-slate-500 italic">Contagem por Laços (Fardos)</p>
-                        <div class="grid grid-cols-3 gap-2">
-                            <input type="text" id="cl-l" placeholder="LAÇOS" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
-                            <input type="text" id="cl-f" placeholder="FARD/L" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
-                            <input type="text" id="cl-u" placeholder="UN/FAR" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
-                        </div>
-                        <div class="p-4 bg-game-cyan/10 border border-game-cyan/20 rounded-xl text-center shadow-inner"><h4 id="cl-res" class="text-4xl font-black text-game-cyan">0</h4></div>
-                    </div>
-                </div>
+        <!-- LISTA DE ESTOQUE -->
+        <section id="view-consulta" class="hidden space-y-4 animate-fadeIn">
+            <div class="glass p-3 rounded-2xl flex items-center justify-between border-game-cyan/20">
+                <button onclick="voltarParaBase()" class="p-2 bg-slate-800 rounded-xl text-game-cyan btn-press"><i data-lucide="chevron-left" class="font-black"></i></button>
+                <h1 class="text-xl font-black uppercase italic border-l-4 border-game-cyan pl-3 leading-none">Estoque</h1>
+                <div class="w-10"></div>
             </div>
+            <div id="container-consulta" class="space-y-4 pb-10"></div>
         </section>
 
         <!-- LANÇAR PRODUTO -->
@@ -165,10 +142,10 @@
                     <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-cyan btn-press"><i data-lucide="chevron-left"></i></button>
                     <h2 id="reg-titulo" class="text-xl font-black uppercase text-game-cyan italic leading-none">Lançar Produto</h2>
                 </div>
-                <form id="form-reg" onsubmit="salvarRegistroDireto(event)" class="space-y-4">
+                <form id="form-reg" onsubmit="salvarRegistroDireto(event)" class="space-y-4 font-black">
                     <div class="flex gap-2">
                         <input type="text" id="reg-ean" placeholder="CÓDIGO (SÓ NÚMEROS)" oninput="limparEan(this); autocompletarProdutoRegistro(this.value)" required class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-game-cyan font-mono outline-none shadow-inner">
-                        <button id="btn-scan-reg" type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-4 rounded-xl btn-press shadow-lg shadow-cyan-500/20"><i data-lucide="scan" class="w-5 h-5 text-slate-950 font-black"></i></button>
+                        <button id="btn-scan-reg" type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-4 rounded-xl btn-press shadow-lg shadow-cyan-500/20"><i data-lucide="scan" class="w-5 h-5 text-slate-950"></i></button>
                     </div>
                     <input type="text" id="reg-nome" placeholder="NOME DO PRODUTO" required class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl uppercase font-black outline-none shadow-inner">
                     <select id="reg-cat" required class="w-full bg-slate-900 border border-slate-800 p-3.5 rounded-xl uppercase outline-none shadow-inner">
@@ -179,7 +156,7 @@
                         <input type="date" id="reg-data" required class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-black text-white text-sm outline-none shadow-inner">
                         <input type="text" id="reg-qtd" placeholder="QUANTOS?" required oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-black text-game-success text-center text-xl shadow-inner outline-none">
                     </div>
-                    <button type="submit" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase shadow-xl btn-press tracking-widest mt-2">SALVAR AGORA</button>
+                    <button type="submit" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase shadow-xl btn-press tracking-widest mt-2">SALVAR NO ESTOQUE</button>
                 </form>
             </div>
         </section>
@@ -234,7 +211,6 @@
                 <div class="space-y-4">
                     <input type="text" id="blitz-inp-soltas" placeholder="UNIDADES SOLTAS" oninput="formatarInputMoeda(this)" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl text-3xl text-center text-white outline-none focus:border-game-success shadow-inner font-black">
                     
-                    <!-- MÓDULO DE LAÇOS NA BLITZ (Geladeira, Ilhas e Depósito) -->
                     <div id="blitz-laco-area" class="hidden p-3 bg-slate-900/50 rounded-xl border border-slate-800 space-y-3 shadow-inner">
                         <p class="text-[9px] text-game-cyan font-black uppercase text-center">Contagem por Laços</p>
                         <div class="grid grid-cols-3 gap-2">
@@ -259,18 +235,38 @@
             <div id="step-final" class="step-tela glass p-8 rounded-[3rem] border-t-8 border-game-accent space-y-6 text-center shadow-2xl">
                  <h2 class="text-xl font-black uppercase italic text-game-accent leading-none tracking-widest">Tudo Pronto!</h2>
                  <div id="blitz-resumo-corpo" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar text-left text-xs shadow-inner p-2 rounded-xl bg-slate-900/30 font-black"></div>
-                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase shadow-xl btn-press tracking-widest">SALVAR NO ESTOQUE</button>
+                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase shadow-xl btn-press tracking-widest">SINCRONIZAR TUDO</button>
             </div>
         </section>
 
-        <!-- LISTA DE ESTOQUE -->
-        <section id="view-consulta" class="hidden space-y-4 animate-fadeIn">
-            <div class="glass p-3 rounded-2xl flex items-center justify-between border-game-cyan/20">
-                <button onclick="voltarParaBase()" class="p-2 bg-slate-800 rounded-xl text-game-cyan btn-press"><i data-lucide="chevron-left" class="font-black"></i></button>
-                <h1 class="text-xl font-black uppercase italic border-l-4 border-game-cyan pl-3 leading-none">Estoque Geral</h1>
-                <div class="w-10"></div>
+        <!-- CALCULADORA DE QUANTIDADES -->
+        <section id="view-calc-mercadorias" class="hidden space-y-4 animate-fadeIn text-white">
+            <div class="glass p-6 rounded-[2rem] border-t-8 border-game-accent shadow-2xl space-y-6">
+                <div class="tool-header">
+                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-accent btn-press"><i data-lucide="chevron-left"></i></button>
+                    <h3 class="text-sm font-black uppercase text-game-accent italic leading-none">Calculadora de Quantidades</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-black uppercase text-slate-500 italic">Pelo Espaço (Cubagem)</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="cv-f" placeholder="FRENTE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
+                            <input type="text" id="cv-p" placeholder="PROFUND." oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
+                            <input type="text" id="cv-a" placeholder="ALTURA" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
+                        </div>
+                        <div class="p-4 bg-game-accent/10 border border-game-accent/20 rounded-xl text-center shadow-inner"><h4 id="cv-res" class="text-4xl font-black text-game-accent">0</h4></div>
+                    </div>
+                    <div class="border-t border-slate-800 pt-4 space-y-2">
+                        <p class="text-[10px] font-black uppercase text-slate-500 italic">Contagem por Laços (Fardos)</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="cl-l" placeholder="LAÇOS" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
+                            <input type="text" id="cl-f" placeholder="FARD/L" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
+                            <input type="text" id="cl-u" placeholder="UN/FAR" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs outline-none">
+                        </div>
+                        <div class="p-4 bg-game-cyan/10 border border-game-cyan/20 rounded-xl text-center shadow-inner"><h4 id="cl-res" class="text-4xl font-black text-game-cyan">0</h4></div>
+                    </div>
+                </div>
             </div>
-            <div id="container-consulta" class="space-y-4 pb-10"></div>
         </section>
 
         <!-- CALCULADORA DE DATAS -->
@@ -278,7 +274,7 @@
             <div class="glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4 text-center shadow-2xl">
                 <div class="tool-header">
                     <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-lg text-game-warning btn-press"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black text-game-warning uppercase italic leading-none text-center">Calcular Datas</h2>
+                    <h2 class="text-xl font-black text-game-warning uppercase italic leading-none text-center">Calculadora de Datas</h2>
                 </div>
                 <input type="date" id="cron-data" class="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl text-center text-xl text-white outline-none focus:border-game-warning shadow-inner">
                 <div class="flex gap-2 font-black">
@@ -296,10 +292,10 @@
         </section>
     </main>
 
-    <!-- HUD AVISOS -->
+    <!-- MODAL AVISO -->
     <div id="modal-check" class="hidden fixed inset-0 z-[8000] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="glass p-8 rounded-[2.5rem] max-w-sm w-full border-t-8 border-game-warning space-y-6 text-center shadow-2xl animate-fadeIn">
-            <div class="w-16 h-16 bg-game-warning/20 rounded-full flex items-center justify-center mx-auto border-2 border-game-warning"><i data-lucide="alert-triangle" class="w-8 h-8 text-game-warning"></i></div>
+        <div class="glass p-8 rounded-[2.5rem] max-w-sm w-full border-t-8 border-game-warning space-y-6 text-center shadow-2xl animate-fadeIn font-black">
+            <div class="w-16 h-16 bg-game-warning/20 rounded-full flex items-center justify-center mx-auto border-2 border-game-warning font-black"><i data-lucide="alert-triangle" class="w-8 h-8 text-game-warning"></i></div>
             <h2 id="check-title" class="text-2xl font-black text-game-warning uppercase italic leading-tight">Aviso!</h2>
             <div id="check-msg" class="text-slate-300 font-bold uppercase text-[11px] space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 text-left shadow-inner"></div>
             <div class="flex gap-2">
@@ -311,35 +307,36 @@
 
     <!-- MODAL PORTAL -->
     <div id="modal-portal" class="hidden fixed inset-0 z-[150] bg-slate-950/95 flex items-center justify-center p-4 text-center">
-        <div class="glass p-8 rounded-[2rem] max-w-sm w-full border-t-8 border-game-cyan space-y-6 shadow-2xl">
-            <h3 id="portal-nome" class="text-lg font-black uppercase text-game-cyan italic leading-tight font-black">---</h3>
+        <div class="glass p-8 rounded-[2rem] max-w-sm w-full border-t-8 border-game-cyan space-y-6 shadow-2xl font-black">
+            <h3 id="portal-nome" class="text-lg font-black uppercase text-game-cyan italic leading-tight">---</h3>
             <p id="portal-ean" class="text-[10px] font-mono text-slate-500 uppercase"></p>
             <div class="grid grid-cols-1 gap-2.5 font-black">
-                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs btn-press tracking-widest font-black"><span>Ver Detalhes</span> <i data-lucide="info" class="w-4 h-4 text-game-cyan font-black"></i></button>
-                <button onclick="portalAcao('registro')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs btn-press tracking-widest font-black"><span>Lançar Lote</span> <i data-lucide="plus" class="w-4 h-4 text-game-warning font-black"></i></button>
-                <button onclick="portalAcao('blitz')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs btn-press tracking-widest font-black"><span>Fazer Blitz</span> <i data-lucide="zap" class="w-4 h-4 text-game-success font-black"></i></button>
+                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs btn-press tracking-widest font-black"><span>Ver Detalhes</span> <i data-lucide="info" class="w-4 h-4 text-game-cyan"></i></button>
+                <button onclick="portalAcao('registro')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs btn-press tracking-widest font-black"><span>Lançar Lote</span> <i data-lucide="plus" class="w-4 h-4 text-game-warning"></i></button>
+                <button onclick="portalAcao('blitz')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs btn-press tracking-widest font-black"><span>Fazer Blitz</span> <i data-lucide="zap" class="w-4 h-4 text-game-success"></i></button>
             </div>
             <button onclick="fecharPortal()" class="text-[10px] font-black text-slate-500 italic btn-press uppercase">Voltar</button>
         </div>
     </div>
 
+    <!-- FICHA DETALHADA -->
     <div id="modal-ficha" class="hidden fixed inset-0 z-[160] bg-slate-950/95 flex items-center justify-center p-4 font-black">
-        <div class="glass p-6 rounded-[2rem] max-w-lg w-full border-l-8 border-game-accent relative space-y-5 shadow-2xl font-black">
-            <button onclick="fecharFicha()" class="absolute top-4 right-4 p-1.5 bg-slate-800 rounded-full btn-press font-black"><i data-lucide="x" class="w-4 h-4 text-white font-black"></i></button>
+        <div class="glass p-6 rounded-[2rem] max-w-lg w-full border-l-8 border-game-accent relative space-y-5 shadow-2xl">
+            <button onclick="fecharFicha()" class="absolute top-4 right-4 p-1.5 bg-slate-800 rounded-full btn-press"><i data-lucide="x" class="w-4 h-4 text-white"></i></button>
             <div class="text-center font-black">
-                <h3 id="ficha-nome" class="text-xl font-black uppercase text-game-accent italic leading-none font-black font-black">---</h3>
-                <p id="ficha-ean-disp" class="text-[9px] font-mono text-slate-500 mt-1 font-black"></p>
+                <h3 id="ficha-nome" class="text-xl font-black uppercase text-game-accent italic leading-none">---</h3>
+                <p id="ficha-ean-disp" class="text-[9px] font-mono text-slate-500 mt-1"></p>
             </div>
-            <div id="ficha-corpo" class="space-y-2 max-h-60 overflow-y-auto no-scrollbar shadow-inner p-2 rounded-xl bg-slate-900/30 font-black font-black"></div>
-            <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-800 font-black">
-                <button onclick="iniciarEdicaoProduto()" class="bg-game-cyan/10 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] border border-game-cyan/20 btn-press font-black font-black">Corrigir Nome</button>
-                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px] border border-game-danger/20 btn-press font-black">Apagar Tudo</button>
+            <div id="ficha-corpo" class="space-y-2 max-h-60 overflow-y-auto no-scrollbar shadow-inner p-2 rounded-xl bg-slate-900/30"></div>
+            <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-800">
+                <button onclick="iniciarEdicaoProduto()" class="bg-game-cyan/10 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] border border-game-cyan/20 btn-press">Corrigir Nome</button>
+                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px] border border-game-danger/20 btn-press">Apagar Tudo</button>
             </div>
         </div>
     </div>
 
     <!-- SCANNER -->
-    <div id="modal-scanner-generico" class="hidden fixed inset-0 z-[2000] bg-black flex flex-col font-black">
+    <div id="modal-scanner-generico" class="hidden fixed inset-0 z-[2000] bg-black flex flex-col">
         <div id="reader-generico" class="flex-1"></div>
         <button onclick="fecharScannerGenerico()" class="bg-game-danger p-6 text-white font-black uppercase tracking-widest btn-press">Fechar Câmera</button>
     </div>
@@ -347,18 +344,18 @@
     <!-- SENHA -->
     <div id="modal-auth" class="hidden fixed inset-0 z-[3000] bg-slate-950/90 flex items-center justify-center p-4">
         <div class="glass p-8 rounded-3xl border border-game-accent w-full max-w-xs text-center space-y-4 shadow-2xl animate-fadeIn">
-            <h3 class="text-white font-black uppercase italic leading-none">Precisa de Senha</h3>
+            <h3 class="text-white font-black uppercase italic leading-none">Acesso Restrito</h3>
             <input type="password" id="auth-pass" placeholder="DIGITE A SENHA" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-center text-white outline-none focus:border-game-cyan shadow-inner font-black">
             <div class="flex gap-2"><button onclick="validarAuthGamer()" class="flex-1 bg-game-accent p-3 rounded-xl text-white font-black btn-press uppercase tracking-widest text-xs">LIBERAR</button></div>
         </div>
     </div>
 
-    <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-[9000] flex flex-col gap-2 pointer-events-none font-black font-black font-black"></div>
+    <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-[9000] flex flex-col gap-2 pointer-events-none"></div>
 
-    <nav class="glass border-t border-game-cyan/30 fixed bottom-0 left-0 right-0 z-50 py-3 px-6 flex justify-around items-center rounded-t-[1.5rem] shadow-2xl font-black">
-        <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-1 text-game-cyan btn-press font-black"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Início</span></button>
-        <button onclick="navigate('blitz-flow')" class="flex flex-col items-center gap-1 text-game-success btn-press font-black"><i data-lucide="zap" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Contagem</span></button>
-        <button onclick="navigate('consulta')" class="flex flex-col items-center gap-1 text-slate-400 btn-press font-black"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Estoque</span></button>
+    <nav class="glass border-t border-game-cyan/30 fixed bottom-0 left-0 right-0 z-50 py-3 px-6 flex justify-around items-center rounded-t-[1.5rem] shadow-2xl">
+        <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-1 text-game-cyan btn-press"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Início</span></button>
+        <button onclick="navigate('blitz-flow')" class="flex flex-col items-center gap-1 text-game-success btn-press"><i data-lucide="zap" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Contagem</span></button>
+        <button onclick="navigate('consulta')" class="flex flex-col items-center gap-1 text-slate-400 btn-press"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Estoque</span></button>
     </nav>
 
     <script>
@@ -372,7 +369,7 @@
             {id:'prat', nome:'Prateleira', temLaco: false}, 
             {id:'gel', nome:'Geladeira', temLaco: true}, 
             {id:'orel', nome:'Orelhas', temLaco: false}, 
-            {id:'ilha', nome:'Ilhas', temLaco: true}, // AGORA COM LAÇOS
+            {id:'ilha', nome:'Ilhas', temLaco: true}, 
             {id:'ponta', nome:'Ponta', temLaco: false}, 
             {id:'dep', nome:'Depósito', temLaco: true}
         ];
@@ -409,7 +406,8 @@
 
         function navigate(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`view-${id}`).classList.remove('hidden');
+            const target = document.getElementById(`view-${id}`);
+            if (target) target.classList.remove('hidden');
             if(id === 'consulta') renderizarConsulta();
             if(id === 'blitz-flow') resetBlitzInterface();
             lucide.createIcons();
@@ -430,7 +428,7 @@
 
         function confirmarExcluirRascunho() {
             const ean = localStorage.getItem('alns_last_cloud_ean');
-            abrirCheckCustom("Apagar Trabalho", `<div class='text-center'>Deseja excluir a contagem salva de <b>${document.getElementById('cloud-draft-name').innerText}</b>?</div>`, async () => {
+            abrirCheckCustom("Apagar Trabalho", `<div class='text-center'>Deseja excluir a contagem de <b>${document.getElementById('cloud-draft-name').innerText}</b>?</div>`, async () => {
                 await supabaseClient.from('blitz_drafts').delete().eq('ean', ean);
                 checkCloudDrafts();
                 showToast('APAGADO', 'danger');
@@ -449,11 +447,12 @@
         }
 
         async function saveDraftToCloud() {
-            document.getElementById('cloud-status').innerText = "SALVANDO...";
+            document.getElementById('cloud-status').innerText = "SINCRONIZANDO...";
             await supabaseClient.from('blitz_drafts').upsert({
                 ean: blitzState.ean, prod: blitzState.prod, lotes: blitzState.lotes,
                 answers: blitzState.answers, current_lote_idx: blitzState.currentLoteIdx,
-                current_sector_idx: blitzState.currentSectorIdx
+                current_sector_idx: blitzState.currentSectorIdx,
+                updated_at: new Date()
             });
             document.getElementById('cloud-status').innerText = "OK";
         }
@@ -492,7 +491,7 @@
             const nome = document.getElementById('blitz-cad-nome').value.toUpperCase();
             const cat = document.getElementById('blitz-cad-cat').value;
             if(!nome || !cat) return;
-            const { data: p, error } = await supabaseClient.from('produtos').insert({ ean: blitzState.ean, nome, categoria: cat }).select().single();
+            const { data: p, error } = await supabaseClient.from('produtos').insert({ ean: blitzState.ean, nome, categoria: cat, updated_at: new Date() }).select().single();
             if(!error) {
                 blitzState.prod = p;
                 document.querySelectorAll('.step-tela').forEach(s => s.classList.remove('active'));
@@ -525,6 +524,7 @@
             document.getElementById('blitz-sector-badge').innerText = `DATA ${blitzState.currentLoteIdx+1}/${blitzState.lotes.length}`;
             document.getElementById('blitz-sector-name').innerText = s.nome;
             document.getElementById('blitz-sector-val').innerText = l.split('-').reverse().join('/');
+            
             document.getElementById('blitz-laco-area').style.display = s.temLaco ? 'block' : 'none';
             ['soltas','f-qtd','f-un','l-qtd','l-f','l-u'].forEach(id => document.getElementById(`blitz-inp-${id}`).value = '');
         }
@@ -536,6 +536,7 @@
             const lq = uNum(document.getElementById('blitz-inp-l-qtd').value);
             const lf = uNum(document.getElementById('blitz-inp-l-f').value);
             const lu = uNum(document.getElementById('blitz-inp-l-u').value);
+            
             const tot = un + (fq * fu) + (lq * lf * lu); 
             const date = blitzState.lotes[blitzState.currentLoteIdx];
             if(!blitzState.answers[date]) blitzState.answers[date] = {};
@@ -551,11 +552,11 @@
             document.getElementById('step-final').classList.add('active');
             let h = ''; let g = 0;
             Object.keys(blitzState.answers).forEach(d => {
-                let sub = 0; h += `<div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800 mb-2 shadow-inner"><p class="text-[10px] font-black text-game-cyan uppercase font-black">${d.split('-').reverse().join('/')}</p>`;
+                let sub = 0; h += `<div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800 mb-2 shadow-inner font-black"><p class="text-[10px] font-black text-game-cyan uppercase font-black">${d.split('-').reverse().join('/')}</p>`;
                 SETORES.forEach(s => { const v = blitzState.answers[d][s.id] || 0; sub += v; h += `<div class="flex justify-between text-[8px] uppercase font-bold opacity-60"><span>${s.nome}</span><span>${fNum(v)}</span></div>`; });
-                h += `<p class="text-right font-black text-game-success text-xs border-t border-slate-800 mt-1 uppercase pt-1">Total: ${fNum(sub)}</p></div>`; g += sub;
+                h += `<p class="text-right font-black text-game-success text-xs border-t border-slate-800 mt-1 uppercase pt-1">Total Lote: ${fNum(sub)}</p></div>`; g += sub;
             });
-            h += `<div class="p-4 bg-game-success/20 border-2 border-game-success rounded-2xl text-center font-black"><p class="text-[9px] font-black uppercase text-game-success mb-1">TOTAL GERAL</p><h4 class="text-3xl font-black text-white font-black font-black">${fNum(g)} UN</h4></div>`;
+            h += `<div class="p-4 bg-game-success/20 border-2 border-game-success rounded-2xl text-center"><p class="text-[9px] font-black uppercase text-game-success mb-1">TOTAL NO ESTOQUE</p><h4 class="text-3xl font-black text-white">${fNum(g)} UN</h4></div>`;
             document.getElementById('blitz-resumo-corpo').innerHTML = h;
         }
 
@@ -564,22 +565,25 @@
             const datas = Object.keys(blitzState.answers);
             const processarProximaData = async (index) => {
                 if (index >= datas.length) {
-                    await supabaseClient.from('blitz_drafts').delete().eq('ean', blitzState.ean);
+                    await supabaseClient.from('produtos').update({ updated_at: new Date() }).eq('ean', ean);
+                    await supabaseClient.from('blitz_drafts').delete().eq('ean', ean);
                     showToast('SINCRONIZADO'); atualizarDashboard(); voltarParaBase();
                     return;
                 }
                 const d = datas[index];
                 let tot = 0; SETORES.forEach(s => tot += blitzState.answers[d][s.id] || 0);
                 const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
+
                 const salvarEProximo = async () => {
-                    if(vEx) await supabaseClient.from('validades').update({ qtd: tot }).eq('id', vEx.id);
-                    else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: tot });
+                    if(vEx) await supabaseClient.from('validades').update({ qtd: tot, created_at: new Date() }).eq('id', vEx.id);
+                    else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: tot, created_at: new Date() });
                     processarProximaData(index + 1);
                 };
+
                 if (vEx) {
                     const diff = tot - vEx.qtd;
                     const dFormat = d.split('-').reverse().join('/');
-                    const corpo = `<div class="mb-2 text-game-cyan font-black text-center font-black">${dFormat}</div><div class="flex justify-between font-black"><span>No Sistema:</span><span>${fNum(vEx.qtd)}</span></div><div class="flex justify-between font-black"><span>Na Contagem:</span><span class="text-game-cyan">${fNum(tot)}</span></div><div class="flex justify-between border-t border-slate-700 pt-1 font-black"><span>Saldo:</span><span class="${diff >= 0 ? 'text-game-success' : 'text-game-danger'}">${diff > 0 ? '+' : ''}${fNum(diff)}</span></div>`;
+                    const corpo = `<div class="mb-2 text-game-cyan font-black text-center font-black">${dFormat}</div><div class="flex justify-between"><span>No Sistema:</span><span>${fNum(vEx.qtd)}</span></div><div class="flex justify-between"><span>Na Blitz:</span><span class="text-game-cyan">${fNum(tot)}</span></div><div class="flex justify-between border-t border-slate-700 pt-1 font-black"><span>Saldo:</span><span class="${diff >= 0 ? 'text-game-success' : 'text-game-danger'}">${diff > 0 ? '+' : ''}${fNum(diff)}</span></div>`;
                     abrirCheckCustom("Data já existe", corpo, salvarEProximo);
                 } else { await salvarEProximo(); }
             };
@@ -620,45 +624,22 @@
             const cat = document.getElementById('reg-cat').value;
             const d = document.getElementById('reg-data').value;
             const q = uNum(document.getElementById('reg-qtd').value);
+
             const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
             const realizarSalvamento = async () => {
-                await supabaseClient.from('produtos').upsert({ ean, nome, categoria: cat }, { onConflict: 'ean' });
-                if(vEx) await supabaseClient.from('validades').update({ qtd: q }).eq('id', vEx.id);
-                else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: q });
+                await supabaseClient.from('produtos').upsert({ ean, nome, categoria: cat, updated_at: new Date() }, { onConflict: 'ean' });
+                if(vEx) await supabaseClient.from('validades').update({ qtd: q, created_at: new Date() }).eq('id', vEx.id);
+                else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: q, created_at: new Date() });
                 showToast('SALVO!'); atualizarDashboard(); voltarParaBase();
             };
             if (vEx) {
                 const diff = q - vEx.qtd;
                 const corpo = `<div class="flex justify-between font-black"><span>No Sistema:</span><span>${fNum(vEx.qtd)}</span></div><div class="flex justify-between font-black"><span>Novo:</span><span class="text-game-cyan">${fNum(q)}</span></div><div class="flex justify-between border-t border-slate-700 pt-1 font-black"><span>Saldo:</span><span class="${diff >= 0 ? 'text-game-success' : 'text-game-danger'}">${diff > 0 ? '+' : ''}${fNum(diff)}</span></div>`;
-                abrirCheckCustom("Data já existe", corpo, realizarSalvamento);
+                abrirCheckCustom("Data Existente", corpo, realizarSalvamento);
             } else { realizarSalvamento(); }
         }
 
-        // --- CALCS ---
-        function calcGondola() {
-            const f = uNum(document.getElementById('cv-f').value);
-            const p = uNum(document.getElementById('cv-p').value);
-            const a = uNum(document.getElementById('cv-a').value);
-            document.getElementById('cv-res').innerText = fNum(f * p * a);
-            const l = uNum(document.getElementById('cl-l').value);
-            const fl = uNum(document.getElementById('cl-f').value);
-            const uf = uNum(document.getElementById('cl-u').value);
-            document.getElementById('cl-res').innerText = fNum(l * fl * uf);
-        }
-
-        function executarCronos(dir) {
-            const b = document.getElementById('cron-data').value; if(!b) return;
-            const q = parseInt(document.getElementById('cron-qtd').value) || 0;
-            const un = document.getElementById('cron-un').value;
-            const d = new Date(b + 'T00:00:00');
-            if(un === 'dias') d.setDate(d.getDate() + (q * dir));
-            else if(un === 'meses') d.setMonth(d.getMonth() + (q * dir));
-            else d.setFullYear(d.getFullYear() + (q * dir));
-            document.getElementById('cron-res').innerText = d.toLocaleDateString('pt-BR');
-            document.getElementById('cron-res').classList.remove('hidden');
-        }
-
-        // --- LISTA ---
+        // --- LISTA / FICHA ---
         function renderizarConsulta(soCriticos = false) {
             const f = document.getElementById('global-search').value.toUpperCase();
             const container = document.getElementById('container-consulta'); container.innerHTML = '';
@@ -671,7 +652,7 @@
                 let h = `<div class="glass rounded-2xl overflow-hidden border border-slate-800"><div class="bg-slate-800/50 p-3 text-[10px] text-game-cyan flex justify-between uppercase font-black"><span>📦 ${cat}</span><span>${prods.length} ITENS</span></div><div class="p-2 space-y-2">`;
                 prods.forEach(p => {
                     const tot = p.validades.reduce((acc,v)=>acc+v.qtd, 0); const temCrit = p.validades.some(v => new Date(v.data + 'T00:00:00') <= limite);
-                    h += `<div onclick="abrirFicha('${p.ean}')" class="flex justify-between items-center p-3 bg-slate-900/30 rounded-xl border border-slate-800 cursor-pointer ${temCrit ? 'border-l-4 border-l-game-danger shadow-[inset_0_0_10px_rgba(239,68,68,0.2)]' : ''}"><div><h4 class="text-xs font-black uppercase text-white">${p.nome}</h4><p class="text-[8px] font-mono text-slate-500 font-black">${p.ean}</p></div><span class="text-xs font-black ${temCrit ? 'text-game-danger' : 'text-game-success'}">${fNum(tot)}</span></div>`;
+                    h += `<div onclick="abrirFicha('${p.ean}')" class="flex justify-between items-center p-3 bg-slate-900/30 rounded-xl border border-slate-800 cursor-pointer ${temCrit ? 'border-l-4 border-l-game-danger shadow-[inset_0_0_10px_rgba(239,68,68,0.2)]' : ''}"><div><h4 class="text-xs font-black uppercase text-white font-black font-black">${p.nome}</h4><p class="text-[8px] font-mono text-slate-500 font-black">${p.ean}</p></div><span class="text-xs font-black ${temCrit ? 'text-game-danger' : 'text-game-success'}">${fNum(tot)}</span></div>`;
                 });
                 container.innerHTML += h + `</div></div>`;
             });
@@ -684,21 +665,37 @@
             document.getElementById('ficha-ean-disp').innerText = `CÓD: ${p.ean}`;
             const agora = new Date(); const limite = new Date(); limite.setDate(agora.getDate() + 7);
             let h = `<div class="space-y-2">`;
+            
+            // Ordenar por validade
             p.validades.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(v => {
                 const isCrit = new Date(v.data + 'T00:00:00') <= limite;
-                h += `<div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800 text-sm italic shadow-inner font-black"><div class="flex flex-col leading-none font-black"><span class="${isCrit ? 'text-game-danger underline font-black' : 'text-white'}">${v.data.split('-').reverse().join('/')}</span><span class="text-[9px] text-slate-500 mt-1 uppercase font-bold">${fNum(v.qtd)} UN</span></div><button onclick="solicitarExclusaoData('${ean}', '${v.data}')" class="p-2 bg-game-danger/10 text-game-danger rounded-lg btn-press"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
+                // Formatar data de atualização/criação
+                const dataReg = v.created_at ? new Date(v.created_at).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : '--/--';
+                const horaReg = v.created_at ? new Date(v.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '';
+                
+                h += `<div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 shadow-inner font-black">
+                    <div class="flex justify-between items-center">
+                        <div class="flex flex-col leading-none">
+                            <span class="${isCrit ? 'text-game-danger underline' : 'text-white'} text-sm">${v.data.split('-').reverse().join('/')}</span>
+                            <span class="text-[9px] text-slate-400 mt-1 uppercase">${fNum(v.qtd)} UNIDADES</span>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-[7px] text-slate-500 uppercase">Anotado em:</p>
+                             <p class="text-[9px] text-game-cyan font-black leading-tight">${dataReg} às ${horaReg}</p>
+                        </div>
+                        <button onclick="solicitarExclusaoData('${ean}', '${v.data}')" class="p-2 ml-3 bg-game-danger/10 text-game-danger rounded-lg btn-press"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>`;
             });
             document.getElementById('ficha-corpo').innerHTML = h + `</div>`;
             document.getElementById('modal-ficha').classList.remove('hidden'); lucide.createIcons();
         }
 
-        function iniciarEdicaoProduto() { authCallback = () => { fecharFicha(); const p = db.produtos.find(it => it.ean === pAtivoEan); navigate('registro-rapido'); document.getElementById('reg-titulo').innerText = "Corrigir: " + p.nome; document.getElementById('reg-ean').value = p.ean; document.getElementById('reg-nome').value = p.nome; document.getElementById('reg-cat').value = p.categoria; document.getElementById('reg-ean').disabled = false; document.getElementById('reg-nome').disabled = false; document.getElementById('reg-cat').disabled = false; }; document.getElementById('modal-auth').classList.remove('hidden'); }
-
-        // --- UTILS ---
+        // --- OUTROS ---
         function fNum(n) { return new Intl.NumberFormat('pt-BR').format(n || 0); }
         function uNum(s) { if(!s) return 0; return parseInt(s.toString().replace(/\./g, '')) || 0; }
         function formatarInputMoeda(i) { let v = i.value.replace(/\D/g, ''); i.value = v ? new Intl.NumberFormat('pt-BR').format(parseInt(v)) : ''; }
-        function showToast(m, type='success') { const t = document.createElement('div'); t.className = `p-4 rounded-xl border-2 ${type==='success'?'border-game-cyan':'border-game-danger'} bg-game-card text-white font-black uppercase text-[10px] animate-bounce shadow-2xl z-[9500] font-black`; t.innerText = m; document.getElementById('toast-container').appendChild(t); setTimeout(() => t.remove(), 2500); }
+        function showToast(m, type='success') { const t = document.createElement('div'); t.className = `p-4 rounded-xl border-2 ${type==='success'?'border-game-cyan':'border-game-danger'} bg-game-card text-white font-black uppercase text-[10px] animate-bounce shadow-2xl z-[9500] font-black font-black`; t.innerText = m; document.getElementById('toast-container').appendChild(t); setTimeout(() => t.remove(), 2500); }
         function realizarLogin(e) { e.preventDefault(); if(document.getElementById('login-senha').value.toLowerCase() === 'alns') { sessionStorage.setItem('alns_logado', 'true'); document.getElementById('view-login').classList.add('hidden'); } }
         function verificarSessao() { if (sessionStorage.getItem('alns_logado') === 'true') document.getElementById('view-login').classList.add('hidden'); }
         function realizarLogout() { sessionStorage.removeItem('alns_logado'); location.reload(); }
@@ -712,6 +709,17 @@
         function validarAuthGamer() { if(document.getElementById('auth-pass').value.toLowerCase() === 'alns') { document.getElementById('modal-auth').classList.add('hidden'); document.getElementById('auth-pass').value = ''; if(authCallback) authCallback(); } else { showToast('SENHA INCORRETA', 'danger'); } }
         function dispararScannerGenerico(id) { document.getElementById('modal-scanner-generico').classList.remove('hidden'); html5QrCodeGenerico = new Html5Qrcode("reader-generico"); html5QrCodeGenerico.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => { fecharScannerGenerico(); if(id === 'global-search') executarPesquisaGlobal(text); else { document.getElementById(id).value = text; if(id === 'reg-ean' || id === 'blitz-ean') { limparEan(document.getElementById(id)); if(id === 'reg-ean') autocompletarProdutoRegistro(text); } } }, () => {}); }
         function fecharScannerGenerico() { if(html5QrCodeGenerico) html5QrCodeGenerico.stop().then(() => { document.getElementById('modal-scanner-generico').classList.add('hidden'); }); }
+        function iniciarEdicaoProduto() { authCallback = () => { fecharFicha(); const p = db.produtos.find(it => it.ean === pAtivoEan); navigate('registro-rapido'); document.getElementById('reg-titulo').innerText = "Corrigir: " + p.nome; document.getElementById('reg-ean').value = p.ean; document.getElementById('reg-nome').value = p.nome; document.getElementById('reg-cat').value = p.categoria; document.getElementById('reg-ean').disabled = false; document.getElementById('reg-nome').disabled = false; document.getElementById('reg-cat').disabled = false; }; document.getElementById('modal-auth').classList.remove('hidden'); }
+        function calcGondola() {
+            const f = uNum(document.getElementById('cv-f').value); const p = uNum(document.getElementById('cv-p').value); const a = uNum(document.getElementById('cv-a').value); document.getElementById('cv-res').innerText = fNum(f * p * a);
+            const l = uNum(document.getElementById('cl-l').value); const fl = uNum(document.getElementById('cl-f').value); const uf = uNum(document.getElementById('cl-u').value); document.getElementById('cl-res').innerText = fNum(l * fl * uf);
+        }
+        function executarCronos(dir) {
+            const b = document.getElementById('cron-data').value; if(!b) return;
+            const q = parseInt(document.getElementById('cron-qtd').value) || 0; const un = document.getElementById('cron-un').value; const d = new Date(b + 'T00:00:00');
+            if(un === 'dias') d.setDate(d.getDate() + (q * dir)); else if(un === 'meses') d.setMonth(d.getMonth() + (q * dir)); else d.setFullYear(d.getFullYear() + (q * dir));
+            document.getElementById('cron-res').innerText = d.toLocaleDateString('pt-BR'); document.getElementById('cron-res').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
