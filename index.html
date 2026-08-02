@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ALNS - ULTIMATE CORE V13.2</title>
-    <!-- Bibliotecas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -14,44 +13,16 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        game: {
-                            base: '#020617', card: '#0f172a', accent: '#8b5cf6',
-                            cyan: '#06b6d4', danger: '#ef4444', success: '#22c55e', warning: '#f59e0b'
-                        }
-                    }
-                }
-            }
+            theme: { extend: { colors: { game: { base: '#020617', card: '#0f172a', accent: '#8b5cf6', cyan: '#06b6d4', danger: '#ef4444', success: '#22c55e', warning: '#f59e0b' } } } }
         }
     </script>
     <style>
-        body { font-family: 'Rajdhani', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { font-family: 'Rajdhani', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; user-select: none; }
         .glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(139, 92, 246, 0.2); }
-        .neon-text-purple { text-shadow: 0 0 12px rgba(139, 92, 246, 0.9); }
         .btn-press:active { transform: scale(0.96); opacity: 0.8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        input, select { user-select: text; font-family: inherit; }
-        
-        .alns-symbol {
-            width: 50px; height: 46px; border: 2px solid #8b5cf6; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; background: rgba(139, 92, 246, 0.1);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); cursor: pointer;
-        }
-        .alns-symbol span { font-weight: 800; font-size: 1.1rem; color: #8b5cf6; }
-        .alns-symbol::after {
-            content: ""; position: absolute; inset: -5px;
-            border: 1px dashed #06b6d4; border-radius: 14px;
-            animation: spin 12s linear infinite;
-        }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
         .blitz-step { display: none; }
         .blitz-step.active { display: block !important; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .dash-card { min-height: 90px; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; border-radius: 1.5rem; border-left-width: 8px; transition: all 0.2s; position: relative; overflow: hidden; }
         .tool-header { display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 1px solid #1e293b; margin-bottom: 20px; }
     </style>
@@ -61,22 +32,21 @@
     <!-- LOGIN HUD -->
     <div id="view-login" class="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center p-4">
         <div class="glass p-10 rounded-[3rem] max-w-md w-full text-center space-y-6 border-t-8 border-game-accent shadow-2xl">
-            <div class="alns-symbol mx-auto mb-2"><span>AL</span></div>
-            <h1 class="text-3xl font-black neon-text-purple italic uppercase leading-none text-white">ALNS V13.2</h1>
+            <h1 class="text-3xl font-black italic uppercase text-white">ALNS V13.2</h1>
             <form onsubmit="realizarLogin(event)" class="space-y-4">
-                <input type="password" id="login-senha" placeholder="SENHA" required class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-center font-black focus:border-game-cyan uppercase text-white shadow-inner text-lg tracking-widest">
-                <button type="submit" class="w-full bg-game-accent text-white p-4 rounded-2xl font-black uppercase btn-press tracking-widest shadow-lg">CONECTAR</button>
+                <input type="password" id="login-senha" placeholder="SENHA" required class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-center font-black focus:border-game-cyan uppercase text-white shadow-inner text-lg">
+                <button type="submit" class="w-full bg-game-accent text-white p-4 rounded-2xl font-black uppercase btn-press">CONECTAR</button>
             </form>
         </div>
     </div>
 
     <!-- HUD SUPERIOR -->
     <header class="glass sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b border-game-accent/30 shadow-xl">
-        <div class="flex items-center gap-3">
-            <div class="alns-symbol" onclick="voltarParaBase()"><span>AL</span></div>
-            <div class="leading-none" onclick="voltarParaBase()">
-                <h2 class="text-xs font-black tracking-tighter uppercase text-game-cyan">A.L.N.S.</h2>
-                <span class="text-[7px] font-bold text-slate-500 uppercase italic">SINCRONIA ATIVA</span>
+        <div class="flex items-center gap-3" onclick="voltarParaBase()">
+            <div class="w-10 h-10 border-2 border-game-accent rounded-lg flex items-center justify-center text-game-accent font-black">AL</div>
+            <div>
+                <h2 class="text-xs font-black uppercase text-game-cyan">A.L.N.S.</h2>
+                <span id="cloud-status" class="text-[7px] font-bold text-slate-500 uppercase italic">Nuvem Sincronizada</span>
             </div>
         </div>
         <div class="flex gap-2">
@@ -85,185 +55,90 @@
         </div>
     </header>
 
-    <!-- BARRA DE PESQUISA -->
-    <div class="bg-slate-950/90 backdrop-blur-md sticky top-[75px] z-40 p-3 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto flex gap-2 text-white">
-            <div class="relative flex-1">
-                <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-game-cyan"></i>
-                <input type="text" id="global-search" oninput="executarPesquisaGlobal(this.value)" placeholder="PESQUISAR EAN OU NOME..." class="w-full bg-slate-900 border border-slate-700 pl-10 pr-4 py-2 rounded-xl text-sm focus:border-game-cyan outline-none uppercase font-black tracking-widest text-white">
-            </div>
-            <button onclick="dispararScannerGenerico('global-search')" class="bg-game-cyan text-slate-950 px-4 py-2 rounded-xl font-black btn-press"><i data-lucide="camera" class="w-4 h-4"></i></button>
-        </div>
-    </div>
-
-    <!-- MAIN CONTAINER -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
         
-        <!-- DASHBOARD (BASE) -->
+        <!-- DASHBOARD -->
         <section id="view-dashboard" class="space-y-4 animate-fadeIn">
-            <div id="draft-alert" class="hidden glass border-l-4 border-game-warning p-4 rounded-2xl flex justify-between items-center">
+            <!-- ALERTA DE RASCUNHO EM NUVEM -->
+            <div id="cloud-draft-alert" class="hidden glass border-l-4 border-game-warning p-4 rounded-2xl flex justify-between items-center animate-pulse">
                 <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 bg-game-warning rounded-full animate-ping"></div>
-                    <p class="text-[10px] font-black uppercase text-game-warning">Blitz em pausa: <span id="draft-name"></span></p>
+                    <i data-lucide="cloud-download" class="text-game-warning"></i>
+                    <p class="text-[10px] font-black uppercase text-game-warning">Blitz pendente na Nuvem: <span id="cloud-draft-name"></span></p>
                 </div>
-                <button onclick="resgatarBlitz()" class="text-[10px] font-black bg-game-warning text-slate-950 px-3 py-1 rounded-lg">CONTINUAR</button>
+                <button onclick="resgatarBlitzNuvem()" class="text-[10px] font-black bg-game-warning text-slate-950 px-3 py-1 rounded-lg">ABRIR</button>
             </div>
 
             <div class="grid grid-cols-1 gap-3">
                 <button onclick="navigate('blitz-flow')" class="dash-card glass border-l-game-success text-white btn-press">
-                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Operação de Campo</span><h2 class="text-lg font-black text-game-success uppercase italic leading-none">Blitz</h2></div>
-                    <i data-lucide="zap" class="text-game-success w-7 h-7"></i>
+                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Campo</span><h2 class="text-lg font-black text-game-success uppercase italic">Operação Blitz</h2></div>
+                    <i data-lucide="zap" class="text-game-success"></i>
                 </button>
-                <button onclick="navigate('registro-rapido')" class="dash-card glass border-l-game-cyan text-white btn-press">
-                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Input Central</span><h2 class="text-lg font-black text-game-cyan uppercase italic leading-none">Registro Direto</h2></div>
-                    <i data-lucide="plus-circle" class="text-game-cyan w-7 h-7"></i>
-                </button>
-                <button onclick="navigate('calc-mercadorias')" class="dash-card glass border-l-game-accent text-white btn-press">
-                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Módulo Logística</span><h2 class="text-lg font-black text-game-accent uppercase italic leading-none">Calculadora</h2></div>
-                    <i data-lucide="layers" class="text-game-accent w-7 h-7"></i>
-                </button>
-                <button onclick="navigate('calc-validade')" class="dash-card glass border-l-game-warning text-white btn-press">
-                    <div class="text-left"><span class="text-[8px] font-black text-slate-500 uppercase">Módulo Temporal</span><h2 class="text-lg font-black text-game-warning uppercase italic leading-none">Validades</h2></div>
-                    <i data-lucide="calendar" class="text-game-warning w-7 h-7"></i>
+                <button onclick="navigate('consulta')" class="dash-card glass border-l-game-cyan text-white btn-press">
+                    <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Dados</span><h2 class="text-lg font-black text-game-cyan uppercase italic">Matrix de Estoque</h2></div>
+                    <i data-lucide="database" class="text-game-cyan"></i>
                 </button>
             </div>
-
+            
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <div onclick="navigate('consulta')" class="glass p-5 rounded-3xl border border-slate-800 cursor-pointer btn-press group">
+                <div onclick="navigate('consulta')" class="glass p-5 rounded-3xl border border-slate-800 text-center">
                     <p class="text-[9px] font-black text-slate-500 uppercase">Cadastrados</p>
-                    <h3 id="dash-total" class="text-3xl font-black text-white mt-1 leading-none group-hover:text-game-cyan">0</h3>
+                    <h3 id="dash-total" class="text-3xl font-black text-white">0</h3>
                 </div>
-                <div onclick="abrirFiltroCritico()" class="glass p-5 rounded-3xl border border-slate-800 cursor-pointer btn-press group text-right">
-                    <p class="text-[9px] font-black text-game-danger uppercase italic">Vencendo (7D)</p>
-                    <h3 id="dash-vencidos" class="text-3xl font-black text-game-danger mt-1 leading-none">0</h3>
-                </div>
-            </div>
-        </section>
-
-        <!-- REGISTRO DIRETO -->
-        <section id="view-registro-rapido" class="hidden space-y-4 animate-fadeIn">
-            <div class="glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4 text-white">
-                <div class="tool-header">
-                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-cyan"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black uppercase text-game-cyan italic">Registro Direto</h2>
-                </div>
-                <form id="form-reg" onsubmit="salvarRegistroDireto(event)" class="space-y-4">
-                    <div class="flex gap-2">
-                        <input type="text" id="reg-ean" placeholder="CÓDIGO EAN" required class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-mono text-game-cyan">
-                        <button type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-4 rounded-xl"><i data-lucide="scan"></i></button>
-                    </div>
-                    <input type="text" id="reg-nome" placeholder="NOME DO PRODUTO" required class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none uppercase font-black">
-                    <select id="reg-cat" required class="w-full bg-slate-900 border border-slate-800 p-3.5 rounded-xl outline-none font-black uppercase">
-                        <option value="">CATEGORIA</option>
-                        <option value="Mercearia">🛒 Mercearia</option><option value="Bebidas">🥤 Bebidas</option><option value="Perfumaria">🧴 Perfumaria</option><option value="Limpeza">🧹 Limpeza</option><option value="Alho">🧄 Alho</option><option value="Bazar">🏠 Bazar</option>
-                    </select>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="date" id="reg-data" required class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-black text-white">
-                        <input type="text" id="reg-qtd" placeholder="QTD" required oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-black text-game-success text-center text-xl">
-                    </div>
-                    <button type="submit" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase tracking-widest shadow-xl">SALVAR</button>
-                </form>
-            </div>
-        </section>
-
-        <!-- CALCULADORA MERCADORIA -->
-        <section id="view-calc-mercadorias" class="hidden space-y-4 animate-fadeIn text-white">
-            <div class="glass p-5 rounded-[2rem] border-t-8 border-game-success shadow-2xl">
-                <div class="tool-header">
-                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-success"><i data-lucide="chevron-left"></i></button>
-                    <h3 class="text-xs font-black uppercase text-game-success">Cubagem de Gôndola</h3>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input type="text" id="cv-f" placeholder="FRENTE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center">
-                    <input type="text" id="cv-p" placeholder="PROFUNDIDADE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center">
-                    <input type="text" id="cv-a" placeholder="ALTURA" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center">
-                </div>
-                <div class="mt-4 p-4 bg-game-success/10 border border-game-success/20 rounded-xl text-center"><h4 id="cv-res" class="text-5xl font-black text-game-success">0</h4></div>
-            </div>
-        </section>
-
-        <!-- CALCULADORA VALIDADE -->
-        <section id="view-calc-validade" class="hidden max-w-xl mx-auto animate-fadeIn text-white font-black">
-            <div class="glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4 text-center">
-                <div class="tool-header">
-                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-lg text-game-warning"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black text-game-warning uppercase italic">Calculadora Temporal</h2>
-                </div>
-                <input type="date" id="cron-data" class="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl text-center text-xl text-white">
-                <div class="flex gap-2">
-                    <input type="number" id="cron-qtd" value="1" class="w-24 bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-2xl">
-                    <select id="cron-un" class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase">
-                        <option value="dias">Dias</option><option value="meses">Meses</option><option value="anos">Anos</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="executarCronos(1)" class="bg-game-warning text-slate-950 p-4 rounded-xl font-black">VENCIMENTO</button>
-                    <button onclick="executarCronos(-1)" class="bg-slate-800 text-game-warning p-4 rounded-xl font-black">FABRICAÇÃO</button>
-                </div>
-                <div id="cron-res" class="hidden p-6 bg-game-warning/10 border border-game-warning/30 rounded-2xl text-3xl font-black text-game-warning italic">---</div>
-            </div>
-        </section>
-
-        <!-- CONSULTA (MATRIX) -->
-        <section id="view-consulta" class="hidden space-y-4 animate-fadeIn">
-            <div class="glass p-3 rounded-2xl border border-slate-800 mb-2">
-                <div class="tool-header mb-0 border-0 pb-0">
-                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-cyan"><i data-lucide="chevron-left"></i></button>
-                    <h1 class="text-xl font-black uppercase italic border-l-4 border-game-cyan pl-3">Matrix de Dados</h1>
+                <div onclick="abrirFiltroCritico()" class="glass p-5 rounded-3xl border border-slate-800 text-center">
+                    <p class="text-[9px] font-black text-game-danger uppercase">Vencendo (7D)</p>
+                    <h3 id="dash-vencidos" class="text-3xl font-black text-game-danger">0</h3>
                 </div>
             </div>
-            <div id="container-consulta" class="space-y-4 pb-10"></div>
         </section>
 
         <!-- BLITZ FLOW -->
         <section id="view-blitz-flow" class="hidden max-w-xl mx-auto space-y-4 animate-fadeIn text-white font-black">
-            <!-- Step 0: Início -->
+            <!-- Step 0: EAN -->
             <div id="blitz-step-0" class="blitz-step active glass p-8 rounded-[2rem] border-t-8 border-game-success text-center space-y-6">
                 <div class="tool-header border-0 mb-0 pb-0">
                     <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-success"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black uppercase italic text-game-success">Missão Blitz</h2>
+                    <h2 class="text-xl font-black uppercase text-game-success">Nova Missão</h2>
                 </div>
                 <div class="flex gap-2">
-                    <input type="text" id="blitz-ean" class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl outline-none font-mono text-center text-game-success text-lg" placeholder="EAN">
+                    <input type="text" id="blitz-ean" class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center text-game-success text-lg" placeholder="SCAN EAN">
                     <button onclick="dispararScannerGenerico('blitz-ean')" class="bg-game-success text-slate-950 px-4 rounded-xl"><i data-lucide="camera"></i></button>
                 </div>
-                <button onclick="checkBlitzProduto()" class="w-full bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase">LOCALIZAR REGISTRO</button>
+                <button onclick="checkBlitzProduto()" class="w-full bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase">VERIFICAR NUVEM</button>
             </div>
 
             <!-- Step Cad: Novo Produto -->
             <div id="blitz-step-cad" class="blitz-step glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4">
-                <h2 class="text-lg font-black text-game-warning uppercase italic text-center">Novo Item</h2>
-                <input type="text" id="blitz-cad-nome" placeholder="NOME DO ITEM" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none uppercase">
-                <select id="blitz-cad-cat" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none uppercase">
+                <h2 class="text-lg font-black text-game-warning uppercase italic text-center">Produto Desconhecido</h2>
+                <input type="text" id="blitz-cad-nome" placeholder="NOME DO ITEM" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase">
+                <select id="blitz-cad-cat" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase">
                     <option value="Mercearia">🛒 Mercearia</option><option value="Bebidas">🥤 Bebidas</option><option value="Perfumaria">🧴 Perfumaria</option><option value="Limpeza">🧹 Limpeza</option><option value="Alho">🧄 Alho</option><option value="Bazar">🏠 Bazar</option>
                 </select>
-                <button onclick="salvarNovoProdutoBlitz()" class="w-full bg-game-warning text-slate-950 p-4 rounded-xl font-black uppercase">SALVAR E SEGUIR</button>
+                <button onclick="salvarNovoProdutoBlitz()" class="w-full bg-game-warning text-slate-950 p-4 rounded-xl font-black uppercase">CADASTRAR E SEGUIR</button>
             </div>
 
-            <!-- Step Lotes: Quantos lotes -->
+            <!-- Step Datas: Quantidade de Lotes -->
             <div id="blitz-step-datas" class="blitz-step glass p-10 rounded-[2rem] border-t-8 border-game-accent text-center space-y-5">
-                <h2 class="text-lg font-black text-game-accent uppercase italic">Quantos Lotes?</h2>
+                <h2 class="text-lg font-black text-game-accent uppercase italic">Quantos lotes existem?</h2>
                 <input type="number" id="blitz-qtd-datas" value="1" min="1" class="w-24 bg-slate-950 border-2 border-game-accent p-4 rounded-2xl text-3xl font-black text-center text-game-accent">
-                <button onclick="definirLotesBlitz()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase">CONFIGURAR LOTES</button>
+                <button onclick="definirLotesBlitz()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase">CONFIGURAR</button>
             </div>
 
-            <!-- Step Dates: Definir as datas -->
+            <!-- Step Set-Dates: Calendário -->
             <div id="blitz-step-set-dates" class="blitz-step glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4">
-                <h2 class="text-lg font-black uppercase text-center text-game-cyan">Datas de Vencimento</h2>
+                <h2 class="text-lg font-black uppercase text-center text-game-cyan">Definir Validades</h2>
                 <div id="blitz-dates-inputs" class="space-y-3"></div>
                 <button onclick="startContagemSetores()" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase">INICIAR COLETA</button>
             </div>
 
-            <!-- Step Sector: Coleta por setor -->
+            <!-- Step Sector: Contagem -->
             <div id="blitz-step-sector" class="blitz-step glass p-5 rounded-[2rem] border-t-8 border-game-success space-y-5">
-                <div class="flex justify-between items-start border-b border-slate-800 pb-3">
+                <div class="flex justify-between items-start">
                     <div>
-                        <span id="blitz-sector-badge" class="text-[8px] font-black bg-game-success/20 text-game-success px-2 py-1 rounded-full uppercase">LOTE 1/1</span>
+                        <span id="blitz-sector-badge" class="text-[8px] font-black bg-game-success/20 text-game-success px-2 py-1 rounded-full uppercase">---</span>
                         <h2 id="blitz-sector-name" class="text-xl font-black uppercase text-white italic mt-1 leading-none">---</h2>
                     </div>
                     <div class="text-right">
-                        <p class="text-[8px] font-black text-slate-500 uppercase italic">Vencimento</p>
-                        <p id="blitz-sector-val" class="text-[10px] font-black text-game-cyan">--/--/--</p>
+                        <p id="blitz-sector-val" class="text-sm font-black text-game-cyan">--/--/--</p>
                     </div>
                 </div>
                 <div class="space-y-4">
@@ -275,47 +150,29 @@
                 </div>
                 <div class="flex gap-2">
                     <button onclick="voltarSetorBlitz()" class="flex-1 bg-slate-800 text-slate-500 p-4 rounded-xl uppercase text-[10px]">Voltar</button>
-                    <button onclick="confirmarSetorBlitz()" class="flex-[3] bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase">Confirmar <i data-lucide="chevron-right"></i></button>
+                    <button onclick="pausarBlitzCloud()" class="flex-1 bg-slate-900 text-game-warning p-4 rounded-xl uppercase text-[10px] border border-game-warning/30">Pausar</button>
+                    <button onclick="confirmarSetorBlitz()" class="flex-[2] bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase">Confirmar</button>
                 </div>
             </div>
 
             <!-- Step Final: Resumo -->
             <div id="blitz-step-final" class="blitz-step glass p-8 rounded-[3rem] border-t-8 border-game-accent space-y-6 text-center">
-                 <h2 class="text-xl font-black uppercase italic neon-text-purple">Blitz Finalizada</h2>
+                 <h2 class="text-xl font-black uppercase italic">Blitz Finalizada</h2>
                  <div id="blitz-resumo-corpo" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar text-left"></div>
-                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase shadow-xl">SINCRONIZAR TUDO</button>
+                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase shadow-xl">SINCRONIZAR COM MATRIX</button>
             </div>
         </section>
+
+        <!-- MATRIX DE DADOS (CONSULTA) -->
+        <section id="view-consulta" class="hidden space-y-4">
+            <div class="glass p-3 rounded-2xl flex items-center justify-between">
+                <button onclick="voltarParaBase()" class="p-2 bg-slate-800 rounded-xl"><i data-lucide="chevron-left"></i></button>
+                <h1 class="text-xl font-black uppercase italic">Matrix de Dados</h1>
+                <div class="w-10"></div>
+            </div>
+            <div id="container-consulta" class="space-y-4 pb-10"></div>
+        </section>
     </main>
-
-    <!-- MODAIS E HUD EXTRAS -->
-    <div id="modal-portal" class="hidden fixed inset-0 z-[150] bg-slate-950/95 flex items-center justify-center p-4 text-center">
-        <div class="glass p-8 rounded-[2rem] max-w-sm w-full border-t-8 border-game-cyan space-y-6">
-            <h3 id="portal-nome" class="text-lg font-black uppercase text-game-cyan italic leading-tight">---</h3>
-            <p id="portal-ean" class="text-[10px] font-mono text-slate-500 uppercase"></p>
-            <div class="grid grid-cols-1 gap-2.5">
-                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Ficha Técnica</span> <i data-lucide="info" class="w-4 h-4 text-game-cyan"></i></button>
-                <button onclick="portalAcao('registro')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Registro Único</span> <i data-lucide="plus" class="w-4 h-4 text-game-warning"></i></button>
-                <button onclick="portalAcao('blitz')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Iniciar Blitz</span> <i data-lucide="zap" class="w-4 h-4 text-game-success"></i></button>
-            </div>
-            <button onclick="fecharPortal()" class="text-[10px] font-black uppercase text-slate-500 italic">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modal-ficha" class="hidden fixed inset-0 z-[160] bg-slate-950/95 flex items-center justify-center p-4">
-        <div class="glass p-6 rounded-[2rem] max-w-lg w-full border-l-8 border-game-accent relative space-y-5 shadow-2xl">
-            <button onclick="fecharFicha()" class="absolute top-4 right-4 p-1.5 bg-slate-800 rounded-full"><i data-lucide="x" class="w-4 h-4 text-white"></i></button>
-            <div class="text-center">
-                <h3 id="ficha-nome" class="text-xl font-black uppercase text-game-accent italic">---</h3>
-                <p id="ficha-ean" class="text-[9px] font-mono text-slate-500 uppercase"></p>
-            </div>
-            <div id="ficha-corpo" class="space-y-2"></div>
-            <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-800">
-                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px]">Eliminar Item</button>
-                <button onclick="fecharFicha()" class="bg-slate-800 text-white p-3 rounded-xl font-black uppercase text-[9px]">Fechar</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Scanner Modal -->
     <div id="modal-scanner-generico" class="hidden fixed inset-0 z-[2000] bg-black flex flex-col">
@@ -323,129 +180,106 @@
         <button onclick="fecharScannerGenerico()" class="bg-game-danger p-6 text-white font-black uppercase">Fechar Câmera</button>
     </div>
 
-    <!-- Auth Modal -->
-    <div id="modal-auth" class="hidden fixed inset-0 z-[3000] bg-slate-950/90 flex items-center justify-center p-4">
-        <div class="glass p-8 rounded-3xl border border-game-accent w-full max-w-xs text-center space-y-4">
-            <h3 class="text-white font-black uppercase italic">Autorização Requerida</h3>
-            <input type="password" id="auth-pass" placeholder="SENHA" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-center text-white">
-            <div class="flex gap-2">
-                <button onclick="validarAuthGamer()" class="flex-1 bg-game-accent p-3 rounded-xl font-black text-white">OK</button>
-                <button onclick="fecharAuthGamer()" class="flex-1 bg-slate-800 p-3 rounded-xl font-black text-slate-400">CANCELAR</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Notificações -->
     <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-[5000] flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- NAV INFERIOR -->
-    <nav class="glass border-t border-game-accent/30 fixed bottom-0 left-0 right-0 z-50 py-3 px-6 flex justify-around items-center rounded-t-[1.5rem]">
-        <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-1 text-game-cyan btn-press"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[8px] font-black uppercase tracking-widest">Base</span></button>
-        <button onclick="navigate('blitz-flow')" class="flex flex-col items-center gap-1 text-game-success btn-press"><i data-lucide="zap" class="w-6 h-6"></i><span class="text-[8px] font-black uppercase tracking-widest">Blitz</span></button>
-        <button onclick="navigate('consulta')" class="flex flex-col items-center gap-1 text-slate-400 btn-press"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[8px] font-black uppercase tracking-widest">Data</span></button>
-    </nav>
-
     <script>
-        // --- CONFIG & SUPABASE ---
         const SUPABASE_URL = 'https://zwtvekbsfzjrsnisireg.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_5i19XNHPnnVVH5Vrqfj52g_hlyrNWo2';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let db = { produtos: [] };
-        let rascunhoBlitz = JSON.parse(localStorage.getItem('alns_blitz_draft')) || null;
         let blitzState = { ean: '', prod: null, lotes: [], currentSectorIdx: 0, currentLoteIdx: 0, answers: {} };
-        const SETORES = [
-            {id: 'prateleira', nome: 'Prateleira'}, {id: 'geladeira', nome: 'Geladeira'},
-            {id: 'orelhas', nome: 'Orelhas'}, {id: 'ilhas', nome: 'Ilhas'},
-            {id: 'ponta', nome: 'Ponta de Gôndola'}, {id: 'deposito', nome: 'Depósito'}
-        ];
-        
-        let html5QrCodeGenerico = null;
-        let pAtivoEan = null;
-        let authCallback = null;
+        const SETORES = [{id:'prat', nome:'Prateleira'}, {id:'gel', nome:'Geladeira'}, {id:'orel', nome:'Orelhas'}, {id:'ilha', nome:'Ilhas'}, {id:'ponta', nome:'Ponta'}, {id:'dep', nome:'Depósito'}];
 
         document.addEventListener('DOMContentLoaded', () => { 
             lucide.createIcons(); 
             verificarSessao(); 
             atualizarDashboard(); 
-            checkDraft();
+            checkCloudDrafts();
         });
 
-        // --- UTILS ---
-        function fNum(n) { return new Intl.NumberFormat('pt-BR').format(n || 0); }
-        function uNum(s) { if(!s) return 0; return parseInt(s.toString().replace(/\./g, '')) || 0; }
-        function formatarInputMoeda(i) {
-            let v = i.value.replace(/\D/g, '');
-            i.value = v ? new Intl.NumberFormat('pt-BR').format(parseInt(v)) : '';
-        }
-
+        // --- CORE FUNCTIONS ---
         async function atualizarDashboard() {
-            try {
-                const { data, error } = await supabaseClient.from('produtos').select('*, validades(*)');
-                if (error) throw error;
-                db.produtos = data || [];
-                const agora = new Date(); agora.setHours(0,0,0,0);
-                const limite = new Date(); limite.setDate(agora.getDate() + 7);
-                let v = 0;
-                db.produtos.forEach(p => p.validades.forEach(val => { 
-                    if(new Date(val.data + 'T00:00:00') <= limite) v++; 
-                }));
-                document.getElementById('dash-total').innerText = fNum(db.produtos.length);
-                document.getElementById('dash-vencidos').innerText = fNum(v);
-                if(!document.getElementById('view-consulta').classList.contains('hidden')) renderizarConsulta();
-            } catch (e) { console.error(e); }
+            const { data } = await supabaseClient.from('produtos').select('*, validades(*)');
+            db.produtos = data || [];
+            const agora = new Date(); const limite = new Date(); limite.setDate(agora.getDate() + 7);
+            let v = 0;
+            db.produtos.forEach(p => p.validades.forEach(val => { if(new Date(val.data + 'T00:00:00') <= limite) v++; }));
+            document.getElementById('dash-total').innerText = db.produtos.length;
+            document.getElementById('dash-vencidos').innerText = v;
         }
 
         function navigate(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-            const target = document.getElementById(`view-${id}`);
-            if(target) target.classList.remove('hidden');
+            document.getElementById(`view-${id}`).classList.remove('hidden');
             if(id === 'consulta') renderizarConsulta();
-            if(id === 'blitz-flow' && !rascunhoBlitz) resetBlitzInterface();
             lucide.createIcons();
-            window.scrollTo(0,0);
         }
 
-        function voltarParaBase() { navigate('dashboard'); }
+        function voltarParaBase() { navigate('dashboard'); checkCloudDrafts(); }
 
-        function realizarLogin(e) {
-            e.preventDefault();
-            if(document.getElementById('login-senha').value.toLowerCase() === 'alns') {
-                sessionStorage.setItem('alns_logado', 'true');
-                document.getElementById('view-login').classList.add('hidden');
-                atualizarDashboard();
-            } else { showToast('ERRO', 'danger'); }
-        }
-        function verificarSessao() { if (sessionStorage.getItem('alns_logado') === 'true') document.getElementById('view-login').classList.add('hidden'); }
-        function realizarLogout() { sessionStorage.removeItem('alns_logado'); location.reload(); }
-
-        // --- ACTIONS ---
-        async function salvarRegistroDireto(e) {
-            e.preventDefault();
-            const ean = document.getElementById('reg-ean').value;
-            const nome = document.getElementById('reg-nome').value.toUpperCase();
-            const cat = document.getElementById('reg-cat').value;
-            const d = document.getElementById('reg-data').value;
-            const q = uNum(document.getElementById('reg-qtd').value);
-
-            await supabaseClient.from('produtos').upsert({ ean, nome, categoria: cat }, { onConflict: 'ean' });
-            const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
-            if(vEx) await supabaseClient.from('validades').update({ qtd: q }).eq('id', vEx.id);
-            else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: q });
-
-            showToast('ARQUIVADO'); e.target.reset(); await atualizarDashboard(); navigate('dashboard');
+        // --- CLOUD SYNC LOGIC ---
+        async function saveDraftToCloud() {
+            document.getElementById('cloud-status').innerText = "SINCRONIZANDO...";
+            const { error } = await supabaseClient.from('blitz_drafts').upsert({
+                ean: blitzState.ean,
+                prod: blitzState.prod,
+                lotes: blitzState.lotes,
+                answers: blitzState.answers,
+                current_lote_idx: blitzState.currentLoteIdx,
+                current_sector_idx: blitzState.currentSectorIdx
+            });
+            if(!error) document.getElementById('cloud-status').innerText = "NUVEM ATUALIZADA";
         }
 
-        // --- BLITZ ---
-        function resetBlitzInterface() {
-            document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
-            document.getElementById('blitz-step-0').classList.add('active');
-            document.getElementById('blitz-ean').value = '';
+        async function checkCloudDrafts() {
+            const { data } = await supabaseClient.from('blitz_drafts').select('*').order('updated_at', { ascending: false }).limit(1).single();
+            if(data) {
+                document.getElementById('cloud-draft-name').innerText = data.prod.nome;
+                document.getElementById('cloud-draft-alert').classList.remove('hidden');
+                localStorage.setItem('alns_last_cloud_ean', data.ean);
+            } else {
+                document.getElementById('cloud-draft-alert').classList.add('hidden');
+            }
         }
 
+        async function resgatarBlitzNuvem() {
+            const ean = localStorage.getItem('alns_last_cloud_ean');
+            const { data } = await supabaseClient.from('blitz_drafts').select('*').eq('ean', ean).single();
+            if(data) {
+                blitzState = { 
+                    ean: data.ean, prod: data.prod, lotes: data.lotes, 
+                    answers: data.answers, currentLoteIdx: data.current_lote_idx, 
+                    currentSectorIdx: data.current_sector_idx 
+                };
+                navigate('blitz-flow');
+                abrirSetorBlitz();
+            }
+        }
+
+        async function pausarBlitzCloud() {
+            await saveDraftToCloud();
+            showToast('SALVO NA NUVEM', 'warning');
+            voltarParaBase();
+        }
+
+        // --- BLITZ FLOW ---
         async function checkBlitzProduto() {
             const ean = document.getElementById('blitz-ean').value;
             if(!ean) return;
+            
+            // Verifica se já existe rascunho na nuvem para este EAN específico
+            const { data: cloudDraft } = await supabaseClient.from('blitz_drafts').select('*').eq('ean', ean).single();
+            
+            if(cloudDraft) {
+                if(confirm("Rascunho encontrado na nuvem para este item. Deseja continuar?")) {
+                    blitzState = { ean: cloudDraft.ean, prod: cloudDraft.prod, lotes: cloudDraft.lotes, answers: cloudDraft.answers, currentLoteIdx: cloudDraft.current_lote_idx, currentSectorIdx: cloudDraft.current_sector_idx };
+                    abrirSetorBlitz();
+                    return;
+                }
+            }
+
             blitzState.ean = ean;
             const { data: p } = await supabaseClient.from('produtos').select('*').eq('ean', ean).single();
             document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
@@ -457,34 +291,21 @@
             }
         }
 
-        async function salvarNovoProdutoBlitz() {
-            const nome = document.getElementById('blitz-cad-nome').value.toUpperCase();
-            const cat = document.getElementById('blitz-cad-cat').value;
-            if(!nome || !cat) return;
-            const { data: p, error } = await supabaseClient.from('produtos').insert({ ean: blitzState.ean, nome, categoria: cat }).select().single();
-            if(!error) {
-                blitzState.prod = p;
-                document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
-                document.getElementById('blitz-step-datas').classList.add('active');
-            }
-        }
-
         function definirLotesBlitz() {
             const qtd = parseInt(document.getElementById('blitz-qtd-datas').value) || 1;
             const container = document.getElementById('blitz-dates-inputs');
             container.innerHTML = '';
-            for(let i=0; i<qtd; i++) {
-                container.innerHTML += `<input type="date" class="blitz-date-field w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-white mb-2">`;
-            }
+            for(let i=0; i<qtd; i++) container.innerHTML += `<input type="date" class="blitz-date-field w-full bg-slate-950 border border-slate-800 p-4 rounded-xl outline-none font-bold text-white mb-2">`;
             document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
             document.getElementById('blitz-step-set-dates').classList.add('active');
         }
 
         function startContagemSetores() {
             const dates = Array.from(document.querySelectorAll('.blitz-date-field')).map(i => i.value);
-            if(dates.some(d => !d)) { showToast('Defina as datas', 'danger'); return; }
+            if(dates.some(d => !d)) return showToast('Defina as datas', 'danger');
             blitzState.lotes = dates;
             blitzState.currentLoteIdx = 0; blitzState.currentSectorIdx = 0; blitzState.answers = {};
+            saveDraftToCloud(); // Primeiro save na nuvem com a estrutura pronta
             abrirSetorBlitz();
         }
 
@@ -493,13 +314,13 @@
             const l = blitzState.lotes[blitzState.currentLoteIdx];
             document.querySelectorAll('.blitz-step').forEach(step => step.classList.remove('active'));
             document.getElementById('blitz-step-sector').classList.add('active');
-            document.getElementById('blitz-sector-badge').innerText = `Lote ${blitzState.currentLoteIdx+1}/${blitzState.lotes.length}`;
+            document.getElementById('blitz-sector-badge').innerText = `LOTE ${blitzState.currentLoteIdx+1}/${blitzState.lotes.length}`;
             document.getElementById('blitz-sector-name').innerText = s.nome;
             document.getElementById('blitz-sector-val').innerText = l.split('-').reverse().join('/');
             ['soltas','f-qtd','f-un'].forEach(id => document.getElementById(`blitz-inp-${id}`).value = '');
         }
 
-        function confirmarSetorBlitz() {
+        async function confirmarSetorBlitz() {
             const un = uNum(document.getElementById('blitz-inp-soltas').value);
             const fq = uNum(document.getElementById('blitz-inp-f-qtd').value);
             const fu = uNum(document.getElementById('blitz-inp-f-un').value);
@@ -509,188 +330,66 @@
             if(!blitzState.answers[date]) blitzState.answers[date] = {};
             blitzState.answers[date][SETORES[blitzState.currentSectorIdx].id] = tot;
             
-            localStorage.setItem('alns_blitz_draft', JSON.stringify(blitzState));
-            checkDraft();
+            // Sync nuvem a cada confirmação de setor
+            await saveDraftToCloud();
 
             blitzState.currentSectorIdx++;
-            if(blitzState.currentSectorIdx >= SETORES.length) { 
-                blitzState.currentSectorIdx = 0; 
-                blitzState.currentLoteIdx++; 
-            }
-            if(blitzState.currentLoteIdx >= blitzState.lotes.length) {
-                renderizarResumoBlitz();
-            } else {
-                abrirSetorBlitz();
-            }
-        }
-
-        function voltarSetorBlitz() {
-            if(blitzState.currentSectorIdx === 0 && blitzState.currentLoteIdx === 0) { resetBlitzInterface(); return; }
-            blitzState.currentSectorIdx--;
-            if(blitzState.currentSectorIdx < 0) { blitzState.currentLoteIdx--; blitzState.currentSectorIdx = SETORES.length - 1; }
-            abrirSetorBlitz();
-        }
-
-        function renderizarResumoBlitz() {
-            document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
-            document.getElementById('blitz-step-final').classList.add('active');
-            let h = ''; let g = 0;
-            Object.keys(blitzState.answers).forEach(d => {
-                let sub = 0; h += `<div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800 space-y-1"><p class="text-[10px] font-black text-game-cyan uppercase">${d.split('-').reverse().join('/')}</p>`;
-                SETORES.forEach(s => { const v = blitzState.answers[d][s.id] || 0; sub += v; h += `<div class="flex justify-between text-[8px] uppercase font-bold opacity-60"><span>${s.nome}</span><span>${fNum(v)}</span></div>`; });
-                h += `<p class="text-right font-black text-game-success text-xs border-t border-slate-800 mt-1 uppercase">TOTAL: ${fNum(sub)}</p></div>`;
-                g += sub;
-            });
-            h += `<div class="p-4 bg-game-success/20 border-2 border-game-success rounded-2xl text-center"><p class="text-[9px] font-black uppercase text-game-success mb-1">TOTAL FINAL</p><h4 class="text-3xl font-black text-white">${fNum(g)} UN</h4></div>`;
-            document.getElementById('blitz-resumo-corpo').innerHTML = h;
+            if(blitzState.currentSectorIdx >= SETORES.length) { blitzState.currentSectorIdx = 0; blitzState.currentLoteIdx++; }
+            
+            if(blitzState.currentLoteIdx >= blitzState.lotes.length) renderizarResumoBlitz();
+            else abrirSetorBlitz();
         }
 
         async function concluirBlitzMatrix() {
             const ean = blitzState.ean;
             for (const d of Object.keys(blitzState.answers)) {
-                let tot = 0; 
-                SETORES.forEach(s => tot += blitzState.answers[d][s.id] || 0);
+                let tot = 0; SETORES.forEach(s => tot += blitzState.answers[d][s.id] || 0);
                 const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
                 if(vEx) await supabaseClient.from('validades').update({ qtd: tot }).eq('id', vEx.id);
                 else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: tot });
             }
-            localStorage.removeItem('alns_blitz_draft'); 
-            rascunhoBlitz = null; 
-            checkDraft();
-            showToast('SINCRONIZADO'); 
-            await atualizarDashboard(); 
-            navigate('dashboard');
+            // Limpa a nuvem após concluir
+            await supabaseClient.from('blitz_drafts').delete().eq('ean', blitzState.ean);
+            showToast('SINCRONIZADO COM MATRIX');
+            await atualizarDashboard();
+            voltarParaBase();
         }
 
-        // --- CONSULTA ---
-        function renderizarConsulta(soCriticos = false) {
-            const f = document.getElementById('global-search').value.toUpperCase();
-            const container = document.getElementById('container-consulta');
-            container.innerHTML = '';
-            const agora = new Date(); agora.setHours(0,0,0,0);
-            const limite = new Date(); limite.setDate(agora.getDate() + 7);
-            const cats = ['Mercearia', 'Bebidas', 'Perfumaria', 'Limpeza', 'Alho', 'Bazar'];
-            
-            cats.forEach(cat => {
-                let prods = db.produtos.filter(p => p.categoria === cat && (p.nome.includes(f) || p.ean.includes(f)));
-                if(soCriticos) prods = prods.filter(p => p.validades.some(v => new Date(v.data + 'T00:00:00') <= limite));
-                if(prods.length === 0) return;
-                
-                let h = `<div class="glass rounded-2xl overflow-hidden border border-slate-800"><div class="bg-slate-800/50 p-3 text-[10px] text-game-cyan flex justify-between uppercase font-black"><span>📦 ${cat}</span><span>${prods.length} ITENS</span></div><div class="p-2 space-y-2">`;
-                prods.forEach(p => {
-                    const tot = p.validades.reduce((acc,v)=>acc+v.qtd, 0);
-                    const temCrit = p.validades.some(v => new Date(v.data + 'T00:00:00') <= limite);
-                    h += `<div onclick="abrirFicha('${p.ean}')" class="flex justify-between items-center p-3 bg-slate-900/30 rounded-xl border border-slate-800 cursor-pointer ${temCrit ? 'border-l-4 border-l-game-danger' : ''}"><div><h4 class="text-xs font-black uppercase text-white">${p.nome}</h4><p class="text-[8px] font-mono text-slate-500 uppercase mt-1 font-bold">${p.ean}</p></div><span class="text-xs font-black ${temCrit ? 'text-game-danger' : 'text-game-success'}">${fNum(tot)}</span></div>`;
-                });
-                container.innerHTML += h + `</div></div>`;
-            });
-            lucide.createIcons();
+        // --- UTILIDADES ---
+        function fNum(n) { return new Intl.NumberFormat('pt-BR').format(n || 0); }
+        function uNum(s) { return parseInt(s.toString().replace(/\./g, '')) || 0; }
+        function formatarInputMoeda(i) {
+            let v = i.value.replace(/\D/g, '');
+            i.value = v ? new Intl.NumberFormat('pt-BR').format(parseInt(v)) : '';
         }
-
-        function abrirFicha(ean) {
-            const p = db.produtos.find(p => p.ean === ean);
-            if(!p) return;
-            pAtivoEan = ean;
-            document.getElementById('ficha-nome').innerText = p.nome;
-            document.getElementById('ficha-ean').innerText = `ID: ${p.ean}`;
-            const agora = new Date(); agora.setHours(0,0,0,0);
-            const limite = new Date(); limite.setDate(agora.getDate() + 7);
-            
-            let h = `<div class="space-y-2">`;
-            p.validades.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(v => {
-                const isCrit = new Date(v.data + 'T00:00:00') <= limite;
-                h += `<div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800 text-sm italic">
-                    <div class="flex flex-col leading-none font-black"><span class="${isCrit ? 'text-game-danger underline' : 'text-white'}">${v.data.split('-').reverse().join('/')}</span><span class="text-[9px] text-slate-500 mt-1 uppercase">${fNum(v.qtd)} UNIDADES</span></div>
-                    <button onclick="solicitarExclusaoData('${ean}', '${v.data}')" class="p-2 bg-game-danger/10 text-game-danger rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
-            });
-            document.getElementById('ficha-corpo').innerHTML = h + `</div>`;
-            document.getElementById('modal-ficha').classList.remove('hidden');
-            lucide.createIcons();
+        function showToast(m, type='success') {
+            const t = document.createElement('div');
+            t.className = `p-4 rounded-xl border-2 ${type==='success'?'border-game-cyan':'border-game-warning'} bg-game-card text-white font-black uppercase text-[10px] animate-bounce shadow-2xl`;
+            t.innerText = m;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 2500);
         }
-
-        // --- HUD LOGIC ---
-        function checkDraft() { 
-            rascunhoBlitz = JSON.parse(localStorage.getItem('alns_blitz_draft'));
-            if(rascunhoBlitz && rascunhoBlitz.prod) { 
-                document.getElementById('draft-name').innerText = rascunhoBlitz.prod.nome; 
-                document.getElementById('draft-alert').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('draft-alert').classList.add('hidden'); 
-            } 
-        }
-        function resgatarBlitz() { blitzState = rascunhoBlitz; navigate('blitz-flow'); abrirSetorBlitz(); }
-
-        function showToast(m, type='success') { 
-            const t = document.createElement('div'); 
-            t.className = `p-4 rounded-xl border-2 ${type==='success'?'border-game-cyan':'border-game-danger'} bg-game-card text-white font-black uppercase text-[10px] animate-bounce`; 
-            t.innerText = m; 
-            document.getElementById('toast-container').appendChild(t); 
-            setTimeout(() => t.remove(), 2500); 
-        }
-
-        function executarPesquisaGlobal(val) {
-            if (val.length < 3) return;
-            const match = db.produtos.find(p => p.ean === val || p.nome.includes(val.toUpperCase()));
-            if(match) { 
-                pAtivoEan = match.ean; 
-                document.getElementById('portal-nome').innerText = match.nome; 
-                document.getElementById('portal-ean').innerText = `ID: ${match.ean}`; 
-                document.getElementById('modal-portal').classList.remove('hidden'); 
-                document.getElementById('global-search').value = ''; 
-            } else if (val.length >= 8) {
-                pAtivoEan = val;
-                document.getElementById('portal-nome').innerText = "ITEM NOVO"; 
-                document.getElementById('portal-ean').innerText = `ID: ${val}`; 
-                document.getElementById('modal-portal').classList.remove('hidden'); 
-                document.getElementById('global-search').value = ''; 
-            }
-        }
-
-        function portalAcao(t) {
-            fecharPortal();
-            if(t === 'ficha') abrirFicha(pAtivoEan);
-            if(t === 'registro') { navigate('registro-rapido'); document.getElementById('reg-ean').value = pAtivoEan; }
-            if(t === 'blitz') { navigate('blitz-flow'); document.getElementById('blitz-ean').value = pAtivoEan; checkBlitzProduto(); }
-        }
-
-        function fecharPortal() { document.getElementById('modal-portal').classList.add('hidden'); }
-        function fecharFicha() { document.getElementById('modal-ficha').classList.add('hidden'); }
-        function abrirFiltroCritico() { navigate('consulta'); renderizarConsulta(true); }
-
-        function solicitarExclusaoData(ean, data) { authCallback = async () => { await supabaseClient.from('validades').delete().eq('produto_ean', ean).eq('data', data); await atualizarDashboard(); abrirFicha(ean); }; document.getElementById('modal-auth').classList.remove('hidden'); }
-        function confirmarExclusaoItemCompleto() { authCallback = async () => { await supabaseClient.from('produtos').delete().eq('ean', pAtivoEan); await atualizarDashboard(); fecharFicha(); navigate('dashboard'); }; document.getElementById('modal-auth').classList.remove('hidden'); }
+        function realizarLogin(e) { e.preventDefault(); if(document.getElementById('login-senha').value.toLowerCase() === 'alns') { sessionStorage.setItem('alns_logado', 'true'); document.getElementById('view-login').classList.add('hidden'); } }
+        function verificarSessao() { if (sessionStorage.getItem('alns_logado') === 'true') document.getElementById('view-login').classList.add('hidden'); }
+        function realizarLogout() { sessionStorage.removeItem('alns_logado'); location.reload(); }
         
-        function validarAuthGamer() { if(document.getElementById('auth-pass').value.toLowerCase() === 'alns') { document.getElementById('modal-auth').classList.add('hidden'); document.getElementById('auth-pass').value = ''; if(authCallback) authCallback(); } else { showToast('SENHA INCORRETA', 'danger'); } }
-        function fecharAuthGamer() { document.getElementById('modal-auth').classList.add('hidden'); }
-
         function dispararScannerGenerico(id) {
             document.getElementById('modal-scanner-generico').classList.remove('hidden');
             html5QrCodeGenerico = new Html5Qrcode("reader-generico");
             html5QrCodeGenerico.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
                 fecharScannerGenerico();
-                if(id === 'global-search') executarPesquisaGlobal(text);
-                else document.getElementById(id).value = text;
+                document.getElementById(id).value = text;
             }, () => {});
         }
-        function fecharScannerGenerico() { if(html5QrCodeGenerico) html5QrCodeGenerico.stop().then(()=>{ document.getElementById('modal-scanner-generico').classList.add('hidden'); }); }
+        function fecharScannerGenerico() { if(html5QrCodeGenerico) html5QrCodeGenerico.stop().then(() => { document.getElementById('modal-scanner-generico').classList.add('hidden'); }); }
         
-        function calcGondola() {
-            const f = uNum(document.getElementById('cv-f').value);
-            const p = uNum(document.getElementById('cv-p').value);
-            const a = uNum(document.getElementById('cv-a').value);
-            document.getElementById('cv-res').innerText = fNum(f * p * a);
-        }
-        function executarCronos(dir) {
-            const b = document.getElementById('cron-data').value;
-            if(!b) return;
-            const q = parseInt(document.getElementById('cron-qtd').value) || 0;
-            const un = document.getElementById('cron-un').value;
-            const d = new Date(b + 'T00:00:00');
-            if(un === 'dias') d.setDate(d.getDate() + (q * dir));
-            else if(un === 'meses') d.setMonth(d.getMonth() + (q * dir));
-            else d.setFullYear(d.getFullYear() + (q * dir));
-            document.getElementById('cron-res').innerText = d.toLocaleDateString('pt-BR');
-            document.getElementById('cron-res').classList.remove('hidden');
+        function renderizarConsulta() {
+            const container = document.getElementById('container-consulta');
+            container.innerHTML = '';
+            db.produtos.forEach(p => {
+                const tot = p.validades.reduce((acc,v)=>acc+v.qtd, 0);
+                container.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><h4 class="font-black uppercase">${p.nome}</h4><p class="text-[9px] text-slate-500">${p.ean}</p></div><span class="text-game-cyan font-black">${tot}</span></div>`;
+            });
         }
     </script>
 </body>
