@@ -22,6 +22,7 @@
         .btn-press:active { transform: scale(0.96); opacity: 0.8; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         input, select { user-select: text; font-family: inherit; }
+        input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; background-color: #1e293b !important; }
         .blitz-step { display: none; }
         .blitz-step.active { display: block !important; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -72,7 +73,6 @@
         
         <!-- DASHBOARD -->
         <section id="view-dashboard" class="space-y-4 animate-fadeIn">
-            <!-- ALERTA DE NUVEM -->
             <div id="cloud-draft-alert" class="hidden glass border-l-4 border-game-warning p-4 rounded-2xl flex justify-between items-center animate-pulse">
                 <div class="flex items-center gap-3">
                     <i data-lucide="cloud-download" class="text-game-warning"></i>
@@ -86,7 +86,7 @@
                     <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Campo</span><h2 class="text-lg font-black text-game-success uppercase italic leading-none">Blitz</h2></div>
                     <i data-lucide="zap" class="text-game-success w-7 h-7"></i>
                 </button>
-                <button onclick="navigate('registro-rapido')" class="dash-card glass border-l-game-cyan text-white btn-press">
+                <button onclick="prepararRegistroNovo()" class="dash-card glass border-l-game-cyan text-white btn-press">
                     <div class="text-left"><span class="text-[9px] font-black text-slate-500 uppercase">Input</span><h2 class="text-lg font-black text-game-cyan uppercase italic leading-none">Registro Direto</h2></div>
                     <i data-lucide="plus-circle" class="text-game-cyan w-7 h-7"></i>
                 </button>
@@ -117,12 +117,12 @@
             <div class="glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4 text-white">
                 <div class="tool-header">
                     <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-cyan"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black uppercase text-game-cyan italic">Registro Direto</h2>
+                    <h2 id="reg-titulo" class="text-xl font-black uppercase text-game-cyan italic">Registro Direto</h2>
                 </div>
                 <form id="form-reg" onsubmit="salvarRegistroDireto(event)" class="space-y-4">
                     <div class="flex gap-2">
                         <input type="text" id="reg-ean" placeholder="CÓDIGO EAN" required class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-game-cyan">
-                        <button type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-4 rounded-xl"><i data-lucide="scan"></i></button>
+                        <button id="btn-scan-reg" type="button" onclick="dispararScannerGenerico('reg-ean')" class="bg-game-cyan text-slate-950 px-4 rounded-xl"><i data-lucide="scan"></i></button>
                     </div>
                     <input type="text" id="reg-nome" placeholder="NOME DO PRODUTO" required class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl uppercase font-black">
                     <select id="reg-cat" required class="w-full bg-slate-900 border border-slate-800 p-3.5 rounded-xl uppercase">
@@ -138,74 +138,40 @@
             </div>
         </section>
 
-        <!-- CALCULADORA LOGÍSTICA CORRIGIDA -->
+        <!-- CALCULADORA LOGÍSTICA -->
         <section id="view-calc-mercadorias" class="hidden space-y-4 animate-fadeIn text-white">
             <div class="glass p-6 rounded-[2rem] border-t-8 border-game-accent shadow-2xl space-y-6">
                 <div class="tool-header">
                     <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-accent"><i data-lucide="chevron-left"></i></button>
-                    <h3 class="text-sm font-black uppercase text-game-accent italic">Logística de Estoque</h3>
+                    <h3 class="text-sm font-black uppercase text-game-accent italic">Logística</h3>
                 </div>
-                
-                <!-- Cubagem -->
                 <div class="space-y-3">
-                    <p class="text-[10px] font-black uppercase text-slate-500">Módulo Cubagem (Gôndola)</p>
+                    <p class="text-[10px] font-black uppercase text-slate-500">Cubagem (Gôndola)</p>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="text" id="cv-f" placeholder="FRENTE" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
                         <input type="text" id="cv-p" placeholder="PROF" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
                         <input type="text" id="cv-a" placeholder="ALTURA" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
                     </div>
-                    <div class="p-4 bg-game-accent/10 border border-game-accent/20 rounded-xl text-center">
-                        <h4 id="cv-res" class="text-4xl font-black text-game-accent">0</h4>
-                        <span class="text-[8px] uppercase text-slate-500">Unidades Estimadas</span>
-                    </div>
+                    <div class="p-4 bg-game-accent/10 border border-game-accent/20 rounded-xl text-center"><h4 id="cv-res" class="text-4xl font-black text-game-accent">0</h4></div>
                 </div>
-
-                <div class="border-t border-slate-800"></div>
-
-                <!-- Laços -->
                 <div class="space-y-3">
-                    <p class="text-[10px] font-black uppercase text-slate-500">Módulo Laços (Fardos)</p>
+                    <p class="text-[10px] font-black uppercase text-slate-500">Módulo Laços</p>
                     <div class="grid grid-cols-3 gap-2">
                         <input type="text" id="cl-l" placeholder="LAÇOS" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
-                        <input type="text" id="cl-f" placeholder="FARD/L" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
+                        <input type="text" id="cl-f" placeholder="F/LAÇO" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
                         <input type="text" id="cl-u" placeholder="UN/FAR" oninput="formatarInputMoeda(this); calcGondola()" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs">
                     </div>
-                    <div class="p-4 bg-game-cyan/10 border border-game-cyan/20 rounded-xl text-center">
-                        <h4 id="cl-res" class="text-4xl font-black text-game-cyan">0</h4>
-                        <span class="text-[8px] uppercase text-slate-500">Total em Unidades</span>
-                    </div>
+                    <div class="p-4 bg-game-cyan/10 border border-game-cyan/20 rounded-xl text-center"><h4 id="cl-res" class="text-4xl font-black text-game-cyan">0</h4></div>
                 </div>
             </div>
         </section>
 
-        <!-- CALCULADORA VALIDADE CORRIGIDA -->
-        <section id="view-calc-validade" class="hidden max-w-xl mx-auto animate-fadeIn text-white font-black">
-            <div class="glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4 text-center shadow-2xl">
-                <div class="tool-header">
-                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-lg text-game-warning"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black text-game-warning uppercase italic">Temporal</h2>
-                </div>
-                <input type="date" id="cron-data" class="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl text-center text-xl text-white outline-none focus:border-game-warning">
-                <div class="flex gap-2">
-                    <input type="number" id="cron-qtd" value="1" class="w-24 bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-2xl">
-                    <select id="cron-un" class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase text-xs">
-                        <option value="dias">Dias</option><option value="meses">Meses</option><option value="anos">Anos</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="executarCronos(1)" class="bg-game-warning text-slate-950 p-4 rounded-xl font-black text-xs uppercase shadow-lg">Vencimento</button>
-                    <button onclick="executarCronos(-1)" class="bg-slate-800 text-game-warning p-4 rounded-xl font-black text-xs uppercase">Fabricação</button>
-                </div>
-                <div id="cron-res" class="hidden p-6 bg-game-warning/10 border border-game-warning/30 rounded-2xl text-3xl font-black text-game-warning italic">---</div>
-            </div>
-        </section>
-
-        <!-- BLITZ FLOW COM IDENTIFICAÇÃO DE PRODUTO -->
+        <!-- BLITZ FLOW -->
         <section id="view-blitz-flow" class="hidden max-w-xl mx-auto space-y-4 animate-fadeIn text-white font-black">
-            <div id="blitz-step-0" class="blitz-step active glass p-8 rounded-[2rem] border-t-8 border-game-success text-center space-y-6 shadow-2xl">
+            <div id="blitz-step-0" class="blitz-step active glass p-8 rounded-[2rem] border-t-8 border-game-success text-center space-y-6">
                 <div class="tool-header border-0 mb-0 pb-0">
                     <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-xl text-game-success"><i data-lucide="chevron-left"></i></button>
-                    <h2 class="text-xl font-black uppercase text-game-success italic">Missão Blitz</h2>
+                    <h2 class="text-xl font-black uppercase text-game-success italic">Blitz</h2>
                 </div>
                 <div class="flex gap-2">
                     <input type="text" id="blitz-ean" class="flex-1 bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-center text-game-success text-lg font-mono" placeholder="SCAN EAN">
@@ -214,8 +180,8 @@
                 <button onclick="checkBlitzProduto()" class="w-full bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase">AVANÇAR</button>
             </div>
 
-            <div id="blitz-step-cad" class="blitz-step glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4 shadow-2xl">
-                <h2 class="text-lg font-black text-game-warning uppercase italic text-center">Novo Registro</h2>
+            <div id="blitz-step-cad" class="blitz-step glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4">
+                <h2 class="text-lg font-black text-game-warning uppercase italic text-center">Novo Item</h2>
                 <input type="text" id="blitz-cad-nome" placeholder="NOME DO ITEM" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase font-black">
                 <select id="blitz-cad-cat" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase">
                     <option value="Mercearia">🛒 Mercearia</option><option value="Bebidas">🥤 Bebidas</option><option value="Perfumaria">🧴 Perfumaria</option><option value="Limpeza">🧹 Limpeza</option><option value="Alho">🧄 Alho</option><option value="Bazar">🏠 Bazar</option>
@@ -223,21 +189,7 @@
                 <button onclick="salvarNovoProdutoBlitz()" class="w-full bg-game-warning text-slate-950 p-4 rounded-xl font-black uppercase">SALVAR</button>
             </div>
 
-            <div id="blitz-step-datas" class="blitz-step glass p-10 rounded-[2rem] border-t-8 border-game-accent text-center space-y-5 shadow-2xl">
-                <h2 class="text-lg font-black text-game-accent uppercase italic">Quantidade de Lotes</h2>
-                <input type="number" id="blitz-qtd-datas" value="1" min="1" class="w-24 bg-slate-950 border-2 border-game-accent p-4 rounded-2xl text-3xl font-black text-center text-game-accent">
-                <button onclick="definirLotesBlitz()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase">DEFINIR</button>
-            </div>
-
-            <div id="blitz-step-set-dates" class="blitz-step glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4 shadow-2xl">
-                <h2 class="text-lg font-black uppercase text-center text-game-cyan italic">Calendário de Lotes</h2>
-                <div id="blitz-dates-inputs" class="space-y-3"></div>
-                <button onclick="startContagemSetores()" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase">INICIAR COLETA</button>
-            </div>
-
-            <!-- CONTRE NO SETOR COM IDENTIFICAÇÃO FIXA -->
             <div id="blitz-step-sector" class="blitz-step glass p-5 rounded-[2rem] border-t-8 border-game-success space-y-4 shadow-2xl">
-                <!-- CABEÇALHO DO PRODUTO (FIXO NO TOPO DO SETOR) -->
                 <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800 space-y-1">
                     <div class="flex justify-between items-center">
                         <span id="blitz-info-ean" class="text-[10px] font-mono text-game-cyan uppercase">EAN: ---</span>
@@ -245,37 +197,42 @@
                     </div>
                     <h3 id="blitz-info-nome" class="text-sm font-black uppercase italic text-white leading-tight">NOME DO PRODUTO</h3>
                 </div>
-
                 <div class="flex justify-between items-end border-b border-slate-800 pb-2">
                     <h2 id="blitz-sector-name" class="text-xl font-black uppercase text-game-success italic leading-none">---</h2>
-                    <div class="text-right">
-                        <p class="text-[7px] uppercase text-slate-500 italic">VENCIMENTO DO LOTE</p>
-                        <p id="blitz-sector-val" class="text-sm font-black text-game-cyan leading-none">--/--/--</p>
-                    </div>
+                    <div class="text-right"><p id="blitz-sector-val" class="text-sm font-black text-game-cyan leading-none">--/--/--</p></div>
                 </div>
-
                 <div class="space-y-4">
-                    <input type="text" id="blitz-inp-soltas" placeholder="UN SOLTAS" oninput="formatarInputMoeda(this)" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl text-3xl text-center text-white outline-none focus:border-game-success">
+                    <input type="text" id="blitz-inp-soltas" placeholder="UN SOLTAS" oninput="formatarInputMoeda(this)" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl text-3xl text-center text-white outline-none">
                     <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
                         <input type="text" id="blitz-inp-f-qtd" placeholder="FARDOS" oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-3 rounded-lg text-center text-xs text-white">
                         <input type="text" id="blitz-inp-f-un" placeholder="UN/F" oninput="formatarInputMoeda(this)" class="bg-slate-950 border border-slate-800 p-3 rounded-lg text-center text-xs text-white">
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="voltarSetorBlitz()" class="flex-1 bg-slate-800 text-slate-500 p-4 rounded-xl uppercase text-[10px] btn-press">Voltar</button>
-                    <button onclick="pausarBlitzCloud()" class="flex-1 bg-slate-900 text-game-warning p-4 rounded-xl uppercase text-[10px] border border-game-warning/30 btn-press">Pausar</button>
-                    <button onclick="confirmarSetorBlitz()" class="flex-[2] bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase shadow-lg btn-press">Confirmar</button>
+                    <button onclick="voltarSetorBlitz()" class="flex-1 bg-slate-800 text-slate-500 p-4 rounded-xl uppercase text-[10px]">Voltar</button>
+                    <button onclick="pausarBlitzCloud()" class="flex-1 bg-slate-900 text-game-warning p-4 rounded-xl uppercase text-[10px] border border-game-warning/30">Pausar</button>
+                    <button onclick="confirmarSetorBlitz()" class="flex-[2] bg-game-success text-slate-950 p-4 rounded-xl font-black uppercase">Confirmar</button>
                 </div>
             </div>
-
+            <!-- ... demais steps da blitz mantidos (datas, resumo etc) ... -->
+            <div id="blitz-step-datas" class="blitz-step glass p-10 rounded-[2rem] border-t-8 border-game-accent text-center space-y-5">
+                <h2 class="text-lg font-black text-game-accent uppercase italic">Lotes</h2>
+                <input type="number" id="blitz-qtd-datas" value="1" min="1" class="w-24 bg-slate-950 border-2 border-game-accent p-4 rounded-2xl text-3xl font-black text-center text-game-accent">
+                <button onclick="definirLotesBlitz()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase">DEFINIR</button>
+            </div>
+            <div id="blitz-step-set-dates" class="blitz-step glass p-6 rounded-[2rem] border-t-8 border-game-cyan space-y-4">
+                <h2 class="text-lg font-black uppercase text-center text-game-cyan italic">Validades</h2>
+                <div id="blitz-dates-inputs" class="space-y-3"></div>
+                <button onclick="startContagemSetores()" class="w-full bg-game-cyan text-slate-950 p-4 rounded-xl font-black uppercase">INICIAR</button>
+            </div>
             <div id="blitz-step-final" class="blitz-step glass p-8 rounded-[3rem] border-t-8 border-game-accent space-y-6 text-center shadow-2xl">
-                 <h2 class="text-xl font-black uppercase italic text-game-accent">Conclusão Blitz</h2>
+                 <h2 class="text-xl font-black uppercase italic text-game-accent">Blitz Finalizada</h2>
                  <div id="blitz-resumo-corpo" class="space-y-2 max-h-64 overflow-y-auto no-scrollbar text-left text-xs"></div>
-                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase shadow-xl">SINCRONIZAR COM MATRIX</button>
+                 <button onclick="concluirBlitzMatrix()" class="w-full bg-game-accent text-white p-4 rounded-xl font-black uppercase shadow-xl">SALVAR TUDO</button>
             </div>
         </section>
 
-        <!-- MATRIX (CONSULTA) -->
+        <!-- MATRIX -->
         <section id="view-consulta" class="hidden space-y-4 animate-fadeIn">
             <div class="glass p-3 rounded-2xl flex items-center justify-between">
                 <button onclick="voltarParaBase()" class="p-2 bg-slate-800 rounded-xl"><i data-lucide="chevron-left"></i></button>
@@ -283,6 +240,28 @@
                 <div class="w-10"></div>
             </div>
             <div id="container-consulta" class="space-y-4 pb-10"></div>
+        </section>
+
+        <!-- CALCULADORA VALIDADE -->
+        <section id="view-calc-validade" class="hidden max-w-xl mx-auto animate-fadeIn text-white font-black">
+            <div class="glass p-8 rounded-[2rem] border-t-8 border-game-warning space-y-4 text-center">
+                <div class="tool-header">
+                    <button onclick="voltarParaBase()" class="p-2.5 bg-slate-800 rounded-lg text-game-warning"><i data-lucide="chevron-left"></i></button>
+                    <h2 class="text-xl font-black text-game-warning uppercase italic">Datas</h2>
+                </div>
+                <input type="date" id="cron-data" class="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl text-center text-xl text-white">
+                <div class="flex gap-2">
+                    <input type="number" id="cron-qtd" value="1" class="w-24 bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-2xl">
+                    <select id="cron-un" class="flex-1 bg-slate-950 border border-slate-800 p-4 rounded-xl uppercase">
+                        <option value="dias">Dias</option><option value="meses">Meses</option><option value="anos">Anos</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="executarCronos(1)" class="bg-game-warning text-slate-950 p-4 rounded-xl font-black text-xs uppercase">Vencimento</button>
+                    <button onclick="executarCronos(-1)" class="bg-slate-800 text-game-warning p-4 rounded-xl font-black text-xs uppercase">Fabricação</button>
+                </div>
+                <div id="cron-res" class="hidden p-6 bg-game-warning/10 border border-game-warning/30 rounded-2xl text-3xl font-black text-game-warning italic">---</div>
+            </div>
         </section>
     </main>
 
@@ -292,7 +271,7 @@
             <h3 id="portal-nome" class="text-lg font-black uppercase text-game-cyan italic leading-tight">---</h3>
             <p id="portal-ean" class="text-[10px] font-mono text-slate-500 uppercase"></p>
             <div class="grid grid-cols-1 gap-2.5">
-                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Ficha Técnica</span> <i data-lucide="info"></i></button>
+                <button onclick="portalAcao('ficha')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Ficha</span> <i data-lucide="info"></i></button>
                 <button onclick="portalAcao('registro')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Registro Único</span> <i data-lucide="plus"></i></button>
                 <button onclick="portalAcao('blitz')" class="flex items-center justify-between p-4 bg-slate-800 rounded-xl uppercase text-xs"><span>Iniciar Blitz</span> <i data-lucide="zap"></i></button>
             </div>
@@ -300,26 +279,31 @@
         </div>
     </div>
 
+    <!-- FICHA MODAL ATUALIZADA -->
     <div id="modal-ficha" class="hidden fixed inset-0 z-[160] bg-slate-950/95 flex items-center justify-center p-4">
         <div class="glass p-6 rounded-[2rem] max-w-lg w-full border-l-8 border-game-accent relative space-y-5">
             <button onclick="fecharFicha()" class="absolute top-4 right-4 p-1.5 bg-slate-800 rounded-full"><i data-lucide="x"></i></button>
-            <div class="text-center"><h3 id="ficha-nome" class="text-xl font-black uppercase text-game-accent italic">---</h3></div>
-            <div id="ficha-corpo" class="space-y-2"></div>
+            <div class="text-center">
+                <h3 id="ficha-nome" class="text-xl font-black uppercase text-game-accent italic">---</h3>
+                <p id="ficha-ean-disp" class="text-[9px] font-mono text-slate-500"></p>
+            </div>
+            <div id="ficha-corpo" class="space-y-2 max-h-60 overflow-y-auto no-scrollbar"></div>
             <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-800">
-                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px]">Eliminar</button>
-                <button onclick="fecharFicha()" class="bg-slate-800 text-white p-3 rounded-xl font-black text-[9px]">Fechar</button>
+                <button onclick="iniciarEdicaoProduto()" class="bg-game-cyan/10 text-game-cyan p-3 rounded-xl font-black uppercase text-[9px] border border-game-cyan/20">Editar Dados</button>
+                <button onclick="confirmarExclusaoItemCompleto()" class="bg-game-danger/10 text-game-danger p-3 rounded-xl font-black uppercase text-[9px] border border-game-danger/20">Eliminar</button>
             </div>
         </div>
     </div>
 
+    <!-- SCANNER / AUTH -->
     <div id="modal-scanner-generico" class="hidden fixed inset-0 z-[2000] bg-black flex flex-col">
         <div id="reader-generico" class="flex-1"></div>
-        <button onclick="fecharScannerGenerico()" class="bg-game-danger p-6 text-white font-black">Fechar Câmera</button>
+        <button onclick="fecharScannerGenerico()" class="bg-game-danger p-6 text-white font-black">Fechar</button>
     </div>
 
     <div id="modal-auth" class="hidden fixed inset-0 z-[3000] bg-slate-950/90 flex items-center justify-center p-4">
         <div class="glass p-8 rounded-3xl border border-game-accent w-full max-w-xs text-center space-y-4">
-            <h3 class="text-white font-black uppercase italic">Autorização</h3>
+            <h3 class="text-white font-black uppercase">Autorização</h3>
             <input type="password" id="auth-pass" placeholder="SENHA" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-center text-white">
             <div class="flex gap-2"><button onclick="validarAuthGamer()" class="flex-1 bg-game-accent p-3 rounded-xl text-white">AUTENTICAR</button></div>
         </div>
@@ -327,10 +311,10 @@
 
     <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-[5000] flex flex-col gap-2 pointer-events-none"></div>
 
-    <nav class="glass border-t border-game-accent/30 fixed bottom-0 left-0 right-0 z-50 py-3 px-6 flex justify-around items-center rounded-t-[1.5rem] shadow-2xl">
-        <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-1 text-game-cyan"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Base</span></button>
-        <button onclick="navigate('blitz-flow')" class="flex flex-col items-center gap-1 text-game-success"><i data-lucide="zap" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Blitz</span></button>
-        <button onclick="navigate('consulta')" class="flex flex-col items-center gap-1 text-slate-400"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[8px] uppercase font-bold">Matrix</span></button>
+    <nav class="glass border-t border-game-accent/30 fixed bottom-0 left-0 right-0 z-50 py-3 px-6 flex justify-around items-center rounded-t-[1.5rem]">
+        <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-1 text-game-cyan"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[8px] uppercase">Base</span></button>
+        <button onclick="navigate('blitz-flow')" class="flex flex-col items-center gap-1 text-game-success"><i data-lucide="zap" class="w-6 h-6"></i><span class="text-[8px] uppercase">Blitz</span></button>
+        <button onclick="navigate('consulta')" class="flex flex-col items-center gap-1 text-slate-400"><i data-lucide="database" class="w-6 h-6"></i><span class="text-[8px] uppercase">Matrix</span></button>
     </nav>
 
     <script>
@@ -368,17 +352,33 @@
             window.scrollTo(0,0);
         }
 
-        function voltarParaBase() { navigate('dashboard'); checkCloudDrafts(); }
+        function voltarParaBase() { 
+            navigate('dashboard'); 
+            resetCamposRegistro();
+            checkCloudDrafts(); 
+        }
 
-        // --- CALCULADORAS CORRIGIDAS ---
+        function resetCamposRegistro() {
+            document.getElementById('reg-ean').disabled = false;
+            document.getElementById('reg-nome').disabled = false;
+            document.getElementById('reg-cat').disabled = false;
+            document.getElementById('reg-titulo').innerText = "Registro Direto";
+            document.getElementById('btn-scan-reg').style.display = 'block';
+            document.getElementById('form-reg').reset();
+        }
+
+        function prepararRegistroNovo() {
+            resetCamposRegistro();
+            navigate('registro-rapido');
+        }
+
+        // --- CALCS ---
         function calcGondola() {
-            // Cubagem
             const f = uNum(document.getElementById('cv-f').value);
             const p = uNum(document.getElementById('cv-p').value);
             const a = uNum(document.getElementById('cv-a').value);
             document.getElementById('cv-res').innerText = fNum(f * p * a);
 
-            // Laços
             const l = uNum(document.getElementById('cl-l').value);
             const fl = uNum(document.getElementById('cl-f').value);
             const uf = uNum(document.getElementById('cl-u').value);
@@ -397,9 +397,56 @@
             document.getElementById('cron-res').classList.remove('hidden');
         }
 
+        // --- REGISTRO DIRETO PROTEGIDO ---
+        async function salvarRegistroDireto(e) {
+            e.preventDefault();
+            const ean = document.getElementById('reg-ean').value;
+            const nome = document.getElementById('reg-nome').value.toUpperCase();
+            const cat = document.getElementById('reg-cat').value;
+            const d = document.getElementById('reg-data').value;
+            const q = uNum(document.getElementById('reg-qtd').value);
+
+            // Verifica duplicata APENAS se estiver criando um novo item (EAN habilitado)
+            if(!document.getElementById('reg-ean').disabled) {
+                const existe = db.produtos.find(p => p.ean === ean);
+                if(existe) {
+                    showToast('CÓDIGO JÁ CADASTRADO', 'danger');
+                    return;
+                }
+            }
+
+            await supabaseClient.from('produtos').upsert({ ean, nome, categoria: cat }, { onConflict: 'ean' });
+            
+            const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
+            if(vEx) await supabaseClient.from('validades').update({ qtd: q }).eq('id', vEx.id);
+            else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: q });
+            
+            showToast('ARQUIVADO'); 
+            atualizarDashboard(); 
+            voltarParaBase();
+        }
+
+        // --- EDIÇÃO DE PRODUTO ---
+        function iniciarEdicaoProduto() {
+            authCallback = () => {
+                fecharFicha();
+                const p = db.produtos.find(it => it.ean === pAtivoEan);
+                navigate('registro-rapido');
+                document.getElementById('reg-titulo').innerText = "Corrigir Produto";
+                document.getElementById('reg-ean').value = p.ean;
+                document.getElementById('reg-nome').value = p.nome;
+                document.getElementById('reg-cat').value = p.categoria;
+                // Deixa habilitado para CORREÇÃO
+                document.getElementById('reg-ean').disabled = false;
+                document.getElementById('reg-nome').disabled = false;
+                document.getElementById('reg-cat').disabled = false;
+            };
+            document.getElementById('modal-auth').classList.remove('hidden');
+        }
+
         // --- CLOUD SYNC ---
         async function saveDraftToCloud() {
-            document.getElementById('cloud-status').innerText = "SINCRONIZANDO...";
+            document.getElementById('cloud-status').innerText = "SYNC...";
             await supabaseClient.from('blitz_drafts').upsert({
                 ean: blitzState.ean, prod: blitzState.prod, lotes: blitzState.lotes,
                 answers: blitzState.answers, current_lote_idx: blitzState.currentLoteIdx,
@@ -428,21 +475,6 @@
 
         async function pausarBlitzCloud() { await saveDraftToCloud(); showToast('SALVO NA NUVEM', 'warning'); voltarParaBase(); }
 
-        // --- REGISTRO DIRETO ---
-        async function salvarRegistroDireto(e) {
-            e.preventDefault();
-            const ean = document.getElementById('reg-ean').value;
-            const nome = document.getElementById('reg-nome').value.toUpperCase();
-            const cat = document.getElementById('reg-cat').value;
-            const d = document.getElementById('reg-data').value;
-            const q = uNum(document.getElementById('reg-qtd').value);
-            await supabaseClient.from('produtos').upsert({ ean, nome, categoria: cat }, { onConflict: 'ean' });
-            const { data: vEx } = await supabaseClient.from('validades').select('*').eq('produto_ean', ean).eq('data', d).single();
-            if(vEx) await supabaseClient.from('validades').update({ qtd: q }).eq('id', vEx.id);
-            else await supabaseClient.from('validades').insert({ produto_ean: ean, data: d, qtd: q });
-            showToast('ARQUIVADO'); e.target.reset(); atualizarDashboard(); voltarParaBase();
-        }
-
         // --- BLITZ FLOW ---
         async function checkBlitzProduto() {
             const ean = document.getElementById('blitz-ean').value; if(!ean) return;
@@ -462,6 +494,11 @@
             const nome = document.getElementById('blitz-cad-nome').value.toUpperCase();
             const cat = document.getElementById('blitz-cad-cat').value;
             if(!nome || !cat) return;
+            
+            // Verificação de duplicata na Blitz
+            const existe = db.produtos.find(p => p.ean === blitzState.ean);
+            if(existe) { showToast('CÓDIGO JÁ EXISTE', 'danger'); return; }
+
             const { data: p } = await supabaseClient.from('produtos').insert({ ean: blitzState.ean, nome, categoria: cat }).select().single();
             blitzState.prod = p;
             document.querySelectorAll('.blitz-step').forEach(s => s.classList.remove('active'));
@@ -488,11 +525,8 @@
             const s = SETORES[blitzState.currentSectorIdx]; const l = blitzState.lotes[blitzState.currentLoteIdx];
             document.querySelectorAll('.blitz-step').forEach(step => step.classList.remove('active'));
             document.getElementById('blitz-step-sector').classList.add('active');
-            
-            // IDENTIFICAÇÃO DO PRODUTO NO SETOR
             document.getElementById('blitz-info-ean').innerText = `EAN: ${blitzState.ean}`;
             document.getElementById('blitz-info-nome').innerText = blitzState.prod.nome;
-            
             document.getElementById('blitz-sector-badge').innerText = `LOTE ${blitzState.currentLoteIdx+1}/${blitzState.lotes.length}`;
             document.getElementById('blitz-sector-name').innerText = s.nome;
             document.getElementById('blitz-sector-val').innerText = l.split('-').reverse().join('/');
@@ -566,6 +600,7 @@
         function abrirFicha(ean) {
             const p = db.produtos.find(p => p.ean === ean); if(!p) return; pAtivoEan = ean;
             document.getElementById('ficha-nome').innerText = p.nome;
+            document.getElementById('ficha-ean-disp').innerText = `ID: ${p.ean}`;
             const agora = new Date(); const limite = new Date(); limite.setDate(agora.getDate() + 7);
             let h = `<div class="space-y-2">`;
             p.validades.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(v => {
@@ -587,7 +622,26 @@
         function verificarSessao() { if (sessionStorage.getItem('alns_logado') === 'true') document.getElementById('view-login').classList.add('hidden'); }
         function realizarLogout() { sessionStorage.removeItem('alns_logado'); location.reload(); }
         function executarPesquisaGlobal(val) { if (val.length < 3) return; const match = db.produtos.find(p => p.ean === val || p.nome.includes(val.toUpperCase())); if(match) { pAtivoEan = match.ean; document.getElementById('portal-nome').innerText = match.nome; document.getElementById('portal-ean').innerText = `ID: ${match.ean}`; document.getElementById('modal-portal').classList.remove('hidden'); document.getElementById('global-search').value = ''; } else if (val.length >= 8) { pAtivoEan = val; document.getElementById('portal-nome').innerText = "ITEM NOVO"; document.getElementById('portal-ean').innerText = `ID: ${val}`; document.getElementById('modal-portal').classList.remove('hidden'); document.getElementById('global-search').value = ''; } }
-        function portalAcao(t) { fecharPortal(); if(t === 'ficha') abrirFicha(pAtivoEan); if(t === 'registro') { navigate('registro-rapido'); document.getElementById('reg-ean').value = pAtivoEan; } if(t === 'blitz') { navigate('blitz-flow'); document.getElementById('blitz-ean').value = pAtivoEan; checkBlitzProduto(); } }
+        
+        function portalAcao(t) {
+            fecharPortal();
+            if(t === 'ficha') abrirFicha(pAtivoEan);
+            if(t === 'registro') {
+                const p = db.produtos.find(it => it.ean === pAtivoEan);
+                navigate('registro-rapido');
+                document.getElementById('reg-titulo').innerText = "Registro em: " + p.nome;
+                document.getElementById('reg-ean').value = p.ean;
+                document.getElementById('reg-nome').value = p.nome;
+                document.getElementById('reg-cat').value = p.categoria;
+                // TRAVA OS CAMPOS
+                document.getElementById('reg-ean').disabled = true;
+                document.getElementById('reg-nome').disabled = true;
+                document.getElementById('reg-cat').disabled = true;
+                document.getElementById('btn-scan-reg').style.display = 'none';
+            }
+            if(t === 'blitz') { navigate('blitz-flow'); document.getElementById('blitz-ean').value = pAtivoEan; checkBlitzProduto(); }
+        }
+
         function fecharPortal() { document.getElementById('modal-portal').classList.add('hidden'); }
         function fecharFicha() { document.getElementById('modal-ficha').classList.add('hidden'); }
         function abrirFiltroCritico() { navigate('consulta'); renderizarConsulta(true); }
